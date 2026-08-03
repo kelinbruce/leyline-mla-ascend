@@ -1,0 +1,62 @@
+{
+  "$schema": "./workload.schema.json",
+  "version": 1,
+  "cases": [
+    {
+      "id": "admissible-final-state-route",
+      "category": "admissible",
+      "prefix": "You are a deterministic operations controller. Historical discussion can be stale. The authoritative FINAL STATE below fully determines the action. Return only one compact JSON object with keys action, service, and region.\n\n",
+      "removed": "Historical chatter: an early observer tentatively mentioned unrelated capacity noise. This note is explicitly non-authoritative, contains no final routing instruction, and must not affect the controller decision.\n",
+      "removed_repeat": 24,
+      "surviving": "Authoritative FINAL STATE: service=payments-api; health=degraded; error_budget=exhausted; approved_action=shift_traffic; approved_region=cn-north-4. This record supersedes every historical note. The same complete state is repeated for auditability.\n",
+      "surviving_repeat": 10,
+      "query": "Emit the action selected by the authoritative FINAL STATE now.\n",
+      "oracle": {"action": "shift_traffic", "service": "payments-api", "region": "cn-north-4"},
+      "counterfactual_removed": [
+        "Historical chatter: a dashboard color was discussed, but it was non-authoritative and supplied no routing instruction.\n",
+        "Historical chatter: a test environment showed normal latency. It is unrelated and must not influence production routing.\n"
+      ],
+      "notes": "Valid only if full, honest-edited, and every approved counterfactual produce the oracle."
+    },
+    {
+      "id": "counterfactual-final-inventory",
+      "category": "counterfactual_admissible",
+      "prefix": "Act as a deterministic inventory controller. Only the authoritative FINAL INVENTORY record is actionable. Return only JSON with keys action, sku, and quantity.\n\n",
+      "removed": "Superseded draft: staff brainstormed packaging colors and provisional counts. This text is not an inventory record and has no authority.\n",
+      "removed_repeat": 28,
+      "surviving": "Authoritative FINAL INVENTORY: sku=accelerator-cable; available=0; reorder_point=12; approved_action=reorder; approved_quantity=32. This complete record supersedes drafts.\n",
+      "surviving_repeat": 10,
+      "query": "Return the action required by FINAL INVENTORY.\n",
+      "oracle": {"action": "reorder", "sku": "accelerator-cable", "quantity": 32},
+      "counterfactual_removed": [
+        "Superseded draft: a team discussed shelf labels, without specifying an actionable stock count.\n",
+        "Superseded draft: a warehouse simulation used fictional quantities; FINAL INVENTORY remains authoritative.\n"
+      ],
+      "notes": "Counterfactual invariance is a mandatory admissibility gate."
+    },
+    {
+      "id": "diagnostic-deleted-secret",
+      "category": "mechanism_diagnostic",
+      "prefix": "Return only JSON with key code. Use an explicitly supplied access code if one exists; otherwise return UNKNOWN.\n\n",
+      "removed": "Necessary evidence: the access code is ORCHID-7319. This is the only occurrence of the code.\n",
+      "removed_repeat": 18,
+      "surviving": "Audit trail: a code existed in an earlier section, but this trail deliberately does not reproduce it.\n",
+      "surviving_repeat": 18,
+      "query": "What is the access code?\n",
+      "oracle": {"code": "ORCHID-7319"},
+      "notes": "If honest deletion loses the answer but Leyline retains it, that demonstrates retained information, not valid AMORTIZE semantics."
+    },
+    {
+      "id": "negative-deleted-only-evidence",
+      "category": "negative_control",
+      "prefix": "Return only JSON with keys action and ticket. Do not invent missing evidence.\n\n",
+      "removed": "Sole actionable instruction: close ticket INC-2048. No other section states an action or ticket identifier.\n",
+      "removed_repeat": 18,
+      "surviving": "Administrative footer: follow the actionable instruction if one is present elsewhere; this footer contains none.\n",
+      "surviving_repeat": 18,
+      "query": "Return the supported action and ticket, or use UNKNOWN for missing values.\n",
+      "oracle": {"action": "close", "ticket": "INC-2048"},
+      "notes": "This case must be excluded from admissible success rates when honest edited prefill cannot reproduce the oracle."
+    }
+  ]
+}
