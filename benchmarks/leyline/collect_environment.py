@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: Apache-2.0
 
-"""Collect the exact software, model, runtime, and 910B environment manifest."""
+"""Collect the exact software, model, runtime, and Ascend environment manifest."""
 
 from __future__ import annotations
 
@@ -15,6 +15,8 @@ import sys
 import time
 from pathlib import Path
 from typing import Any
+
+from check_310p_capability import inspect_310p_capability
 
 
 def command(args: list[str], cwd: Path | None = None) -> dict[str, Any]:
@@ -93,6 +95,7 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
+    runtime_config = json.loads(args.runtime_config.read_text())
     manifest = {
         "schema_version": 1,
         "created_unix": time.time(),
@@ -112,7 +115,8 @@ def main() -> None:
             "tokenizer": args.tokenizer,
             "tokenizer_revision": args.tokenizer_revision,
         },
-        "runtime_config": json.loads(args.runtime_config.read_text()),
+        "runtime_config": runtime_config,
+        "leyline_310p_capability": inspect_310p_capability(args.vllm_ascend, runtime_config),
         "npu_smi": command(["npu-smi", "info"]),
         "topology": command(["npu-smi", "info", "-t", "topo"]),
         "cann_installation": {

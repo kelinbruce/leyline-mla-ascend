@@ -47,6 +47,7 @@ from vllm.v1.worker.cp_utils import get_total_cp_world_size
 
 from vllm_ascend._310p.block_table import MultiGroupBlockTable as MultiGroupBlockTable310
 from vllm_ascend._310p.kv_block_zeroer import AscendKVBlockZeroer310
+from vllm_ascend._310p.mla_runtime import is_local_leyline_connector, require_310p_mla_runtime
 from vllm_ascend._310p.npu_input_batch import NPUInputBatch310 as NPUInputBatch
 from vllm_ascend._310p.ops.rotary_embedding import prepare_mrope_cos_sin_slices_from_runner
 from vllm_ascend._310p.sample.rejection_sampler import AscendRejectionSampler310
@@ -739,16 +740,24 @@ class NPUModelRunner310(NPUModelRunner):
             Dict[str, torch.Tensor]: A map between layer names to their
             corresponding memory buffer for KV cache.
         """
-        # 310P limitation: KV transfer is not supported
-        if self.vllm_config.kv_transfer_config is not None:
-            logger.error("KV cache transfer is not supported.")
-            raise ValueError("KV cache transfer is not supported for 310P.")
+        kv_transfer_config = self.vllm_config.kv_transfer_config
+        if kv_transfer_config is not None and not is_local_leyline_connector(kv_transfer_config):
+            raise ValueError(
+                "KV cache transfer on 310P is restricted to the local "
+                "LeylineConnector with kv_role='kv_both' and "
+                "kv_load_failure_policy='recompute'."
+            )
+        if kv_transfer_config is not None and not self.model_config.use_mla:
+            raise ValueError("LeylineConnector on 310P requires a DeepSeek MLA model.")
         if self.use_sparse:
             logger.error("Deepseek Sparse Attention is not supported.")
             raise ValueError("Deepseek Sparse Attention is not supported for 310P.")
         if self.model_config.use_mla:
-            logger.error("MLAAttention is not supported.")
-            raise ValueError("MLAAttention is not supported for 310P.")
+            require_310p_mla_runtime(self.vllm_config)
+            # The parent path understands AscendMLAAttentionSpec and exposes
+            # separate logical cKV/Kpe tensors. The 310P GQA allocator below
+            # uses a different FRACTAL_NZ cache contract and must not handle MLA.
+            return super().initialize_kv_cache_tensors(kv_cache_config)
         # Initialize the memory buffer for KV cache
         kv_caches = self._allocate_kv_cache_tensors(kv_cache_config)
         # Set up cross-layer KV cache sharing

@@ -799,13 +799,18 @@ class NPUPlatform(Platform):
                 False,
                 False,
             ): "vllm_ascend._310p.attention.attention_v1.AscendAttentionBackend310",
-            # TODO If MLA/SFA is supported in the future, consider implementing the logic described in these comments.
-            # (True, False): "...AscendMLABackend310",
+            (True, False): "vllm_ascend._310p.attention.mla_v1.AscendMLABackend310",
+            # TODO If SFA is supported in the future, add an explicit backend.
             # (True, True):  "...AscendSFABackend310",
         }
 
         if is_310p():
-            return backend_map_310.get(key, backend_map_310[(False, False)])
+            if key not in backend_map_310:
+                raise NotImplementedError(
+                    "The requested 310P attention backend is not implemented: "
+                    f"use_mla={key[0]}, use_sparse={key[1]}."
+                )
+            return backend_map_310[key]
 
         return backend_map[(attn_selector_config.use_mla, attn_selector_config.use_sparse, use_compress)]
 

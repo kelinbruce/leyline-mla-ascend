@@ -830,6 +830,35 @@ class TestNPUPlatform(TestBase):
         result = self.platform.get_attn_backend_cls("ascend", attn_selector_config)
         self.assertEqual(result, "vllm_ascend.attention.attention_v1.AscendAttentionBackend")
 
+    @patch("vllm_ascend.platform.is_310p", return_value=True)
+    def test_get_attn_backend_cls_310p_mla_is_explicit(self, _mock_is_310p):
+        attn_selector_config = AttentionSelectorConfig(
+            dtype=torch.float16,
+            head_size=0,
+            kv_cache_dtype=None,
+            block_size=128,
+            use_mla=True,
+            use_sparse=False,
+        )
+
+        result = self.platform.get_attn_backend_cls("ascend", attn_selector_config)
+
+        self.assertEqual(result, "vllm_ascend._310p.attention.mla_v1.AscendMLABackend310")
+
+    @patch("vllm_ascend.platform.is_310p", return_value=True)
+    def test_get_attn_backend_cls_310p_sparse_mla_fails_closed(self, _mock_is_310p):
+        attn_selector_config = AttentionSelectorConfig(
+            dtype=torch.float16,
+            head_size=0,
+            kv_cache_dtype=None,
+            block_size=128,
+            use_mla=True,
+            use_sparse=True,
+        )
+
+        with self.assertRaisesRegex(NotImplementedError, "use_mla=True, use_sparse=True"):
+            self.platform.get_attn_backend_cls("ascend", attn_selector_config)
+
     def test_get_punica_wrapper(self):
         result = self.platform.get_punica_wrapper()
 

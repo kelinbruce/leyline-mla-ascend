@@ -30,16 +30,63 @@ class PromptPlan:
     delete_end: int
 
 
+REFERENCE_PREFIX = "reference_prefix"
+STRUCTURED_JSON = "structured_json"
+_EDIT_START = "<|leyline_delete_start_7f1d42|>"
+_EDIT_END = "<|leyline_delete_end_7f1d42|>"
+
+
 def _encode(tokenizer: Any, text: str, *, special: bool = False) -> list[int]:
     return list(tokenizer.encode(text, add_special_tokens=special))
 
 
-def build_prompt_plan(tokenizer: Any, case: dict[str, Any], removed: str | None = None) -> PromptPlan:
-    prefix = _encode(tokenizer, case["prefix"], special=True)
+def _case_text(case: dict[str, Any], removed: str | None) -> tuple[str, str, str]:
     removed_text = (removed if removed is not None else case["removed"]) * case.get("removed_repeat", 1)
-    removed_tokens = _encode(tokenizer, removed_text)
     surviving_text = case["surviving"] * case.get("surviving_repeat", 1)
-    suffix = _encode(tokenizer, surviving_text + case["query"])
+    return case["prefix"], removed_text, surviving_text + case["query"]
+
+
+def _chat_template_parts(tokenizer: Any, prefix: str, removed: str, suffix: str) -> tuple[str, str, str]:
+    content = prefix + removed + suffix
+    if _EDIT_START in content or _EDIT_END in content:
+        raise ValueError("workload contains a reserved Leyline edit marker")
+    rendered = tokenizer.apply_chat_template(
+        [{"role": "user", "content": prefix + _EDIT_START + removed + _EDIT_END + suffix}],
+        tokenize=False,
+        add_generation_prompt=True,
+    )
+    if not isinstance(rendered, str):
+        raise TypeError("tokenizer.apply_chat_template(..., tokenize=False) must return text")
+    before, separator, tail = rendered.partition(_EDIT_START)
+    if not separator:
+        raise ValueError("chat template did not preserve the Leyline start marker")
+    rendered_removed, separator, after = tail.partition(_EDIT_END)
+    if not separator:
+        raise ValueError("chat template did not preserve the Leyline end marker")
+    return before, rendered_removed, after
+
+
+def build_prompt_plan(
+    tokenizer: Any,
+    case: dict[str, Any],
+    removed: str | None = None,
+    *,
+    prompt_format: str = "raw",
+) -> PromptPlan:
+    prefix_text, removed_text, suffix_text = _case_text(case, removed)
+    if prompt_format == "raw":
+        prefix = _encode(tokenizer, prefix_text, special=True)
+        removed_tokens = _encode(tokenizer, removed_text)
+        suffix = _encode(tokenizer, suffix_text)
+    elif prompt_format == "chat_template":
+        rendered_prefix, rendered_removed, rendered_suffix = _chat_template_parts(
+            tokenizer, prefix_text, removed_text, suffix_text
+        )
+        prefix = _encode(tokenizer, rendered_prefix)
+        removed_tokens = _encode(tokenizer, rendered_removed)
+        suffix = _encode(tokenizer, rendered_suffix)
+    else:
+        raise ValueError(f"unsupported prompt_format: {prompt_format!r}")
     full = prefix + removed_tokens + suffix
     edited = prefix + suffix
     return PromptPlan(full, edited, len(prefix), len(prefix) + len(removed_tokens))
@@ -78,6 +125,10 @@ def request_completion(
         "temperature": 0,
         "max_tokens": max_tokens,
         "seed": 0,
+        # The harness has already applied BOS/chat formatting and must keep
+        # token indices identical to the declared deletion span.
+        "add_special_tokens": False,
+        "return_token_ids": True,
     }
     if kv_transfer_params is not None:
         payload["kv_transfer_params"] = kv_transfer_params
@@ -100,9 +151,11 @@ def request_completion(
         detail = exc.read().decode(errors="replace")
         raise RuntimeError(f"completion request failed ({exc.code}): {detail}") from exc
     elapsed_ms = (time.perf_counter() - started) * 1000
-    text = body["choices"][0]["text"]
+    choice = body["choices"][0]
+    text = choice["text"]
     return {
         "text": text,
+        "output_token_ids": choice.get("token_ids"),
         "structured": extract_json(text),
         "usage": body.get("usage"),
         "metrics": body.get("metrics"),
@@ -123,12 +176,111 @@ def _arm_prompt(arm: str, plan: PromptPlan) -> list[int]:
     return plan.full if arm in {"full", "cache_off"} else plan.edited
 
 
+def _evaluation_config(config: dict[str, Any]) -> tuple[str, int]:
+    evaluation = config.get("evaluation", {})
+    mode = evaluation.get("mode", REFERENCE_PREFIX)
+    if mode not in {REFERENCE_PREFIX, STRUCTURED_JSON}:
+        raise ValueError(f"unsupported evaluation mode: {mode!r}")
+    reference_tokens = int(evaluation.get("reference_tokens", 1))
+    if reference_tokens < 1:
+        raise ValueError("evaluation.reference_tokens must be at least 1")
+    return mode, reference_tokens
+
+
+def _annotate_match(
+    result: dict[str, Any],
+    *,
+    mode: str,
+    oracle: dict[str, Any],
+    reference: list[int] | None,
+    reference_tokens: int,
+) -> bool:
+    if mode == STRUCTURED_JSON:
+        matched = result["structured"] == oracle
+        result["matches_oracle"] = matched
+        return matched
+
+    output = result.get("output_token_ids")
+    ready = isinstance(reference, list) and len(reference) >= reference_tokens
+    matched = bool(
+        ready
+        and isinstance(output, list)
+        and len(output) >= reference_tokens
+        and output[:reference_tokens] == reference[:reference_tokens]
+    )
+    result["matches_reference"] = matched
+    return matched
+
+
+def evaluate_case_results(
+    case: dict[str, Any],
+    arms: dict[str, Any],
+    counterfactuals: list[dict[str, Any]],
+    *,
+    mode: str,
+    reference_tokens: int,
+) -> dict[str, Any]:
+    oracle = case["oracle"]
+    full_result = arms.get("full")
+    reference = full_result.get("output_token_ids") if full_result is not None else None
+    matches: dict[str, bool] = {}
+    for arm, result in arms.items():
+        matches[arm] = _annotate_match(
+            result,
+            mode=mode,
+            oracle=oracle,
+            reference=reference,
+            reference_tokens=reference_tokens,
+        )
+    counterfactual_matches = [
+        _annotate_match(
+            result,
+            mode=mode,
+            oracle=oracle,
+            reference=reference,
+            reference_tokens=reference_tokens,
+        )
+        for result in counterfactuals
+    ]
+
+    if mode == STRUCTURED_JSON:
+        full_ready = matches.get("full")
+        target = "declared_structured_oracle"
+    else:
+        full_ready = isinstance(reference, list) and len(reference) >= reference_tokens
+        target = f"first_{reference_tokens}_generated_token_ids_from_full"
+    full_ok = bool(full_ready)
+    honest_ok = matches.get("honest_edited")
+    counterfactual_ok = all(counterfactual_matches)
+    declared_admissible = case["category"] in {"admissible", "counterfactual_admissible"}
+    admitted = bool(declared_admissible and full_ok and honest_ok and counterfactual_ok)
+    semantic_admitted = admitted if mode == STRUCTURED_JSON else False
+    reference_admitted = admitted if mode == REFERENCE_PREFIX else False
+    return {
+        "mode": mode,
+        "match_target": target,
+        "reference_tokens": reference_tokens if mode == REFERENCE_PREFIX else None,
+        "semantic_oracle_validated": mode == STRUCTURED_JSON,
+        "gates": {
+            "full_matches": full_ready,
+            "honest_edited_matches": honest_ok,
+            "counterfactuals_match": counterfactual_ok,
+            "admitted": admitted,
+            "semantic_admitted": semantic_admitted,
+            "reference_admitted": reference_admitted,
+            "leyline_matches": matches.get("leyline", False),
+        },
+    }
+
+
 def run_case(case: dict[str, Any], tokenizer: Any, config: dict[str, Any]) -> dict[str, Any]:
     endpoints = config["arms"]
     model = config["model"]
     api_key = config.get("api_key")
     max_tokens = int(config.get("max_tokens", 64))
-    plan = build_prompt_plan(tokenizer, case)
+    prompt_format = config.get("prompt_format", "raw")
+    evaluation_mode, reference_tokens = _evaluation_config(config)
+    plan = build_prompt_plan(tokenizer, case, prompt_format=prompt_format)
     oracle = case["oracle"]
     arms: dict[str, Any] = {}
 
@@ -143,7 +295,6 @@ def run_case(case: dict[str, Any], tokenizer: Any, config: dict[str, Any]) -> di
             max_tokens=max_tokens,
             cache_salt=uuid.uuid4().hex,
         )
-        result["matches_oracle"] = result["structured"] == oracle
         arms[arm] = result
 
     if "leyline" in endpoints:
@@ -167,13 +318,12 @@ def run_case(case: dict[str, Any], tokenizer: Any, config: dict[str, Any]) -> di
             kv_transfer_params=_directive("amortize", session_id, plan),
             cache_salt=cache_salt,
         )
-        result["matches_oracle"] = result["structured"] == oracle
         result["record"] = record
         arms["leyline"] = result
 
     counterfactuals = []
     for index, removed in enumerate(case.get("counterfactual_removed", [])) if "full" in endpoints else []:
-        variant = build_prompt_plan(tokenizer, case, removed)
+        variant = build_prompt_plan(tokenizer, case, removed, prompt_format=prompt_format)
         result = request_completion(
             endpoints["full"],
             model,
@@ -183,14 +333,15 @@ def run_case(case: dict[str, Any], tokenizer: Any, config: dict[str, Any]) -> di
             cache_salt=uuid.uuid4().hex,
         )
         result["variant"] = index
-        result["matches_oracle"] = result["structured"] == oracle
         counterfactuals.append(result)
 
-    full_ok = arms.get("full", {}).get("matches_oracle")
-    honest_ok = arms.get("honest_edited", {}).get("matches_oracle")
-    counterfactual_ok = all(item["matches_oracle"] for item in counterfactuals)
-    declared_admissible = case["category"] in {"admissible", "counterfactual_admissible"}
-    admitted = bool(declared_admissible and full_ok and honest_ok and counterfactual_ok)
+    evaluation = evaluate_case_results(
+        case,
+        arms,
+        counterfactuals,
+        mode=evaluation_mode,
+        reference_tokens=reference_tokens,
+    )
     return {
         "id": case["id"],
         "category": case["category"],
@@ -200,15 +351,10 @@ def run_case(case: dict[str, Any], tokenizer: Any, config: dict[str, Any]) -> di
             "deleted": plan.delete_end - plan.delete_start,
         },
         "oracle": oracle,
+        "evaluation": {key: value for key, value in evaluation.items() if key != "gates"},
         "arms": arms,
         "counterfactuals": counterfactuals,
-        "gates": {
-            "full_matches": full_ok,
-            "honest_edited_matches": honest_ok,
-            "counterfactuals_match": counterfactual_ok,
-            "admitted": admitted,
-            "leyline_matches": arms.get("leyline", {}).get("matches_oracle", False),
-        },
+        "gates": evaluation["gates"],
     }
 
 
@@ -219,7 +365,7 @@ class NpuMemorySampler:
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
 
-    def __enter__(self) -> "NpuMemorySampler":
+    def __enter__(self) -> NpuMemorySampler:
         self._thread = threading.Thread(target=self._sample, daemon=True)
         self._thread.start()
         return self
@@ -288,7 +434,7 @@ def summarize_performance(results: list[dict[str, Any]], wall_seconds: float, me
 def run_performance(
     case: dict[str, Any], tokenizer: Any, config: dict[str, Any], concurrencies: list[int], repetitions: int
 ) -> list[dict[str, Any]]:
-    plan = build_prompt_plan(tokenizer, case)
+    plan = build_prompt_plan(tokenizer, case, prompt_format=config.get("prompt_format", "raw"))
     api_key = config.get("api_key")
     model = config["model"]
     max_tokens = int(config.get("max_tokens", 64))
@@ -383,7 +529,7 @@ def main() -> None:
     )
     cases = [run_case(case, tokenizer, config) for case in workloads["cases"]]
     report: dict[str, Any] = {
-        "schema_version": 1,
+        "schema_version": 2,
         "created_unix": time.time(),
         "config": {key: value for key, value in config.items() if key != "api_key"},
         "cases": cases,

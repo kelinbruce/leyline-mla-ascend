@@ -91,6 +91,63 @@ def test_model_forward_updates_mtp_full_graph_params_before_replay() -> None:
 
 
 class TestNPUModelRunner310(TestBase):
+    def test_mla_cache_initialization_delegates_to_parent_layout(self):
+        runner = object.__new__(NPUModelRunner310)
+        runner.use_sparse = False
+        runner.model_config = SimpleNamespace(use_mla=True)
+        runner.vllm_config = SimpleNamespace(kv_transfer_config=None)
+        expected = {"layer": (torch.empty(0), torch.empty(0))}
+
+        with (
+            patch(
+                "vllm_ascend._310p.model_runner_310p.require_310p_mla_runtime"
+            ) as mock_require,
+            patch.object(
+                NPUModelRunner310.__mro__[1],
+                "initialize_kv_cache_tensors",
+                return_value=expected,
+            ) as mock_parent,
+        ):
+            result = runner.initialize_kv_cache_tensors(MagicMock())
+
+        self.assertIs(result, expected)
+        mock_require.assert_called_once_with(runner.vllm_config)
+        mock_parent.assert_called_once()
+
+    def test_non_leyline_kv_connector_remains_rejected(self):
+        runner = object.__new__(NPUModelRunner310)
+        runner.use_sparse = False
+        runner.model_config = SimpleNamespace(use_mla=False)
+        runner.vllm_config = SimpleNamespace(
+            kv_transfer_config=SimpleNamespace(
+                kv_connector="OtherConnector",
+                kv_connector_module_path="other.module",
+                kv_role="kv_both",
+                kv_load_failure_policy="recompute",
+            )
+        )
+
+        with self.assertRaisesRegex(ValueError, "restricted to the local LeylineConnector"):
+            runner.initialize_kv_cache_tensors(MagicMock())
+
+    def test_leyline_connector_requires_mla_model(self):
+        runner = object.__new__(NPUModelRunner310)
+        runner.use_sparse = False
+        runner.model_config = SimpleNamespace(use_mla=False)
+        runner.vllm_config = SimpleNamespace(
+            kv_transfer_config=SimpleNamespace(
+                kv_connector="LeylineConnector",
+                kv_connector_module_path=(
+                    "vllm_ascend.distributed.kv_transfer.leyline.connector"
+                ),
+                kv_role="kv_both",
+                kv_load_failure_policy="recompute",
+            )
+        )
+
+        with self.assertRaisesRegex(ValueError, "requires a DeepSeek MLA model"):
+            runner.initialize_kv_cache_tensors(MagicMock())
+
     def test_may_reinitialize_input_batch_expands_prefix_mamba_block_table(self):
         runner = object.__new__(NPUModelRunner310)
         runner.max_num_reqs = 8

@@ -10,6 +10,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+from run_validation import evaluate_case_results
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
@@ -31,6 +33,14 @@ def main() -> None:
                     "category": case["category"],
                     "prompt_tokens": case["prompt_tokens"],
                     "oracle": case["oracle"],
+                    "evaluation": case.get(
+                        "evaluation",
+                        {
+                            "mode": "structured_json",
+                            "reference_tokens": None,
+                            "semantic_oracle_validated": True,
+                        },
+                    ),
                     "arms": {},
                     "counterfactuals": [],
                 },
@@ -40,21 +50,19 @@ def main() -> None:
                 target["counterfactuals"] = case["counterfactuals"]
 
     for case in merged_cases.values():
-        arms = case["arms"]
-        full_ok = arms.get("full", {}).get("matches_oracle", False)
-        honest_ok = arms.get("honest_edited", {}).get("matches_oracle", False)
-        counterfactual_ok = all(item["matches_oracle"] for item in case["counterfactuals"])
-        declared = case["category"] in {"admissible", "counterfactual_admissible"}
-        case["gates"] = {
-            "full_matches": full_ok,
-            "honest_edited_matches": honest_ok,
-            "counterfactuals_match": counterfactual_ok,
-            "admitted": bool(declared and full_ok and honest_ok and counterfactual_ok),
-            "leyline_matches": arms.get("leyline", {}).get("matches_oracle", False),
-        }
+        evaluation = case["evaluation"]
+        evaluated = evaluate_case_results(
+            case,
+            case["arms"],
+            case["counterfactuals"],
+            mode=evaluation["mode"],
+            reference_tokens=int(evaluation.get("reference_tokens") or 1),
+        )
+        case["evaluation"] = {key: value for key, value in evaluated.items() if key != "gates"}
+        case["gates"] = evaluated["gates"]
 
     merged = {
-        "schema_version": 1,
+        "schema_version": 2,
         "sources": [str(path.resolve()) for path in args.reports],
         "environments": [doc["environment"] for doc in documents if "environment" in doc],
         "cases": list(merged_cases.values()),

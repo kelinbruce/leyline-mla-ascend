@@ -1,6 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from types import SimpleNamespace
+from unittest.mock import patch
+
+import torch
 
 from vllm_ascend.distributed.kv_transfer.leyline.connector import (
     LeylineConnector,
@@ -58,6 +61,46 @@ def _connector() -> tuple[LeylineConnector, _BlockPool]:
     connector._invalid_block_ids = set()
     connector._worker_results = {}
     return connector, pool
+
+
+def _runtime_config(dtype: torch.dtype, cache_dtype: str) -> tuple[SimpleNamespace, SimpleNamespace]:
+    config = SimpleNamespace(
+        model_config=SimpleNamespace(
+            dtype=dtype,
+            enforce_eager=True,
+            quantization=None,
+            hf_text_config=SimpleNamespace(
+                model_type="deepseek_v2",
+                rope_scaling={"type": "yarn"},
+            ),
+        ),
+        parallel_config=SimpleNamespace(
+            tensor_parallel_size=4,
+            decode_context_parallel_size=1,
+            prefill_context_parallel_size=1,
+        ),
+        cache_config=SimpleNamespace(
+            cache_dtype=cache_dtype,
+            block_size=128,
+            enable_prefix_caching=True,
+        ),
+        speculative_config=None,
+        scheduler_config=SimpleNamespace(enable_chunked_prefill=True),
+    )
+    return config, SimpleNamespace(kv_cache_groups=[object()])
+
+
+def test_runtime_matrix_uses_fp16_only_on_310p() -> None:
+    fp16_config, kv_cache_config = _runtime_config(torch.float16, "auto")
+    bf16_config, _ = _runtime_config(torch.bfloat16, "auto")
+
+    with patch("vllm_ascend.distributed.kv_transfer.leyline.connector.is_310p", return_value=True):
+        assert LeylineConnector._is_supported_runtime(fp16_config, kv_cache_config)
+        assert not LeylineConnector._is_supported_runtime(bf16_config, kv_cache_config)
+
+    with patch("vllm_ascend.distributed.kv_transfer.leyline.connector.is_310p", return_value=False):
+        assert LeylineConnector._is_supported_runtime(bf16_config, kv_cache_config)
+        assert not LeylineConnector._is_supported_runtime(fp16_config, kv_cache_config)
 
 
 def _request(

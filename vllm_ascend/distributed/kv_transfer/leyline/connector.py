@@ -34,6 +34,7 @@ from vllm_ascend.distributed.kv_transfer.leyline.protocol import (
 )
 from vllm_ascend.distributed.kv_transfer.leyline.reference import deepseek_yarn_inv_freq
 from vllm_ascend.ops.leyline_mla import transform_mla_cache
+from vllm_ascend.utils import is_310p
 
 if TYPE_CHECKING:
     from vllm.config import VllmConfig
@@ -213,14 +214,28 @@ class LeylineConnector(KVConnectorBase_V1, SupportsHMA):
         cache = vllm_config.cache_config
         scheduler = vllm_config.scheduler_config
         rope_parameters = LeylineConnector._rope_parameters(model.hf_text_config)
+        if is_310p():
+            model_dtype_supported = getattr(model, "dtype", None) == torch.float16
+            cache_dtype_supported = str(cache.cache_dtype) in {
+                "auto",
+                "float16",
+                "torch.float16",
+            }
+        else:
+            model_dtype_supported = getattr(model, "dtype", None) == torch.bfloat16
+            cache_dtype_supported = str(cache.cache_dtype) in {
+                "auto",
+                "bfloat16",
+                "torch.bfloat16",
+            }
         return bool(
             getattr(model.hf_text_config, "model_type", None) == "deepseek_v2"
             and rope_parameters.get("rope_type", rope_parameters.get("type"))
             in {"yarn", "deepseek_yarn"}
-            and str(getattr(model, "dtype", None)) == "torch.bfloat16"
+            and model_dtype_supported
             and getattr(model, "enforce_eager", False)
             and getattr(model, "quantization", None) is None
-            and str(cache.cache_dtype) in {"auto", "bfloat16", "torch.bfloat16"}
+            and cache_dtype_supported
             and parallel.tensor_parallel_size == 4
             and parallel.decode_context_parallel_size == 1
             and parallel.prefill_context_parallel_size == 1
