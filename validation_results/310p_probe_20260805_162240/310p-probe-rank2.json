@@ -1,0 +1,106 @@
+{
+  "ascend_home_path": "/usr/local/Ascend/ascend-toolkit/latest",
+  "cache": {
+    "block_size": 128,
+    "dtype": "float16",
+    "logical_ckv_shape": [
+      "num_blocks",
+      128,
+      1,
+      512
+    ],
+    "logical_kpe_shape": [
+      "num_blocks",
+      128,
+      1,
+      64
+    ]
+  },
+  "cann": {
+    "contents": "Version=9.1.0\nversion_dir=cann\nrequired_package_runtime_version=\"9.1\"\nrequired_package_ge-executor_version=\"9.1\"\nrequired_package_metadef_version=\"9.1\"\nrequired_package_opbase_version=\"9.1\"\nrequired_package_bisheng-compiler_version=\"9.1\"\nrequired_package_tbe-tik_version=\"9.1\"\ntimestamp=20260618_154217194",
+    "path": "/usr/local/Ascend/ascend-toolkit/latest/compiler/version.info"
+  },
+  "checkout_head": "8e787206eaedc7dcb5ee205161066f39d463fa37",
+  "checkout_status": null,
+  "device": "Ascend310P3",
+  "model": {
+    "dtype": "float16",
+    "name": "/home/foundation_model/DeepSeek-V2-Lite",
+    "revision": "local",
+    "tokenizer_revision": "local"
+  },
+  "npu_smi": "+--------------------------------------------------------------------------------------------------------+\n| npu-smi 25.0.rc1                                 Version: 25.0.rc1                                     |\n+-------------------------------+-----------------+------------------------------------------------------+\n| NPU     Name                  | Health          | Power(W)     Temp(C)           Hugepages-Usage(page) |\n| Chip    Device                | Bus-Id          | AICore(%)    Memory-Usage(MB)                        |\n+===============================+=================+======================================================+\n| 0       310P3                 | OK              | NA           58                375   / 375           |\n| 0       0                     | 0000:01:00.0    | 0            2659 / 44280                            |\n+-------------------------------+-----------------+------------------------------------------------------+\n| 0       310P3                 | OK              | NA           57                12317 / 12317         |\n| 1       1                     | 0000:01:00.0    | 0            25913/ 43693                            |\n+===============================+=================+======================================================+\n| 32      310P3                 | OK              | NA           63                11163 / 11163         |\n| 0       2                     | 0000:02:00.0    | 0            23579/ 44280                            |\n+-------------------------------+-----------------+------------------------------------------------------+\n| 32      310P3                 | OK              | NA           62                8156  / 8156          |\n| 1       3                     | 0000:02:00.0    | 0            18055/ 43693                            |\n+===============================+=================+======================================================+\n| 32768   310P3                 | OK              | NA           50                0     / 0             |\n| 0       4                     | 0000:81:00.0    | 0            1443 / 44280                            |\n+-------------------------------+-----------------+------------------------------------------------------+\n| 32768   310P3                 | OK              | NA           50                0     / 0             |\n| 1       5                     | 0000:81:00.0    | 0            1497 / 43693                            |\n+===============================+=================+======================================================+\n| 32800   310P3                 | OK              | NA           49                64    / 64            |\n| 0       6                     | 0000:82:00.0    | 0            1653 / 44280                            |\n+-------------------------------+-----------------+------------------------------------------------------+\n| 32800   310P3                 | OK              | NA           46                0     / 0             |\n| 1       7                     | 0000:82:00.0    | 0            1441 / 43693                            |\n+===============================+=================+======================================================+\n+-------------------------------+-----------------+------------------------------------------------------+\n| NPU     Chip                  | Process id      | Process name             | Process memory(MB)        |\n+===============================+=================+======================================================+\n| 0       0                     | 3000880         |                          | 95                        |\n| 0       0                     | 3000882         |                          | 94                        |\n| 0       0                     | 3000885         |                          | 95                        |\n| 0       0                     | 1831797         |                          | 685                       |\n| 0       1                     | 3000880         |                          | 24711                     |\n+===============================+=================+======================================================+\n| 32      0                     | 3000882         |                          | 22407                     |\n| 32      1                     | 3000885         |                          | 16393                     |\n+===============================+=================+======================================================+\n| No running processes found in NPU 32768                                                                |\n+===============================+=================+======================================================+\n| 32800   0                     | 1583967         |                          | 208                       |\n+===============================+=================+======================================================+",
+  "probes": [
+    {
+      "duration_ms": 9240.0186304003,
+      "name": "required_operator_presence",
+      "passed": true
+    },
+    {
+      "duration_ms": 9526.369221508503,
+      "name": "basic_fp16_matmul",
+      "passed": true
+    },
+    {
+      "duration_ms": 1091.4259608834982,
+      "error": "Tensor-likes are not close!\n\nMismatched elements: 66 / 4096 (1.6%)\nGreatest absolute difference: 5.2094459533691406e-05 at index (419,) (up to 2e-05 allowed)\nGreatest relative difference: 5.2094459533691406e-05 at index (419,) (up to 2e-05 allowed)",
+      "error_type": "AssertionError",
+      "name": "fp32_cos_sin",
+      "passed": false
+    },
+    {
+      "duration_ms": 924.855250865221,
+      "name": "fp16_cache_gather_scatter",
+      "passed": true
+    },
+    {
+      "duration_ms": 10561.705350875854,
+      "name": "fp16_leyline_rotation",
+      "passed": true
+    },
+    {
+      "duration_ms": 1461.2056408077478,
+      "error": "npu_kv_rmsnorm_rope_cache:../third_party/op-plugin/op_plugin/ops/opapi/KvRmsNormRopeCacheNpuOpApi.cpp:88 NPU function error: call aclnnKvRmsNormRopeCache failed, error code is 161001\n[ERROR] 2026-08-05-16:06:23 (PID:32909, Device:0, RankID:-1) ERR00100 PTA call acl api failed.\n[PID: 32909] 2026-08-05-16:06:23.880.755 Execution_Error(EZ1009): Failed to execute operator KvRmsNormRopeCache_0. Reason: SoC version ascend310p verification failed. This SoC is not configured through the AddConfig API of the OpDef class.\nTraceBack (most recent call last):\n        Check nnopExecutor != nullptr failed\n        Assert ((executor) != nullptr) failed\n",
+      "error_type": "RuntimeError",
+      "name": "fp16_mla_cache_write",
+      "passed": false
+    },
+    {
+      "duration_ms": 3.3379308879375458,
+      "error": "npu_fused_infer_attention_score_symint:../third_party/op-plugin/op_plugin/ops/opapi/FusedInferAttentionScoreKernelNpuOpApi.cpp:425 NPU function error: call aclnnFusedInferAttentionScoreV3 failed, error code is 161001\n[ERROR] 2026-08-05-16:06:23 (PID:32909, Device:0, RankID:-1) ERR00100 PTA call acl api failed.\n[PID: 32909] 2026-08-05-16:06:23.886.265 Execution_Error(EZ1009): Failed to execute operator FusedInferAttentionScore_0. Reason: SoC version ascend310p verification failed. This SoC is not configured through the AddConfig API of the OpDef class.\nTraceBack (most recent call last):\n        Check nnopExecutor != nullptr failed\n",
+      "error_type": "RuntimeError",
+      "name": "fp16_mla_prefill_attention",
+      "passed": false
+    },
+    {
+      "duration_ms": 2034.5679111778736,
+      "error": "npu_fused_infer_attention_score_v2_symint:../third_party/op-plugin/op_plugin/ops/opapi/FusedInferAttentionScoreV2KernelNpuOpApi.cpp:459 NPU function error: call aclnnFusedInferAttentionScoreV4 failed, error code is 161001\n[ERROR] 2026-08-05-16:06:25 (PID:32909, Device:0, RankID:-1) ERR00100 PTA call acl api failed.\n[PID: 32909] 2026-08-05-16:06:25.920.487 Execution_Error(EZ1009): Failed to execute operator FusedInferAttentionScore_0. Reason: SoC version ascend310p verification failed. This SoC is not configured through the AddConfig API of the OpDef class.\nTraceBack (most recent call last):\n        Check nnopExecutor != nullptr failed\n",
+      "error_type": "RuntimeError",
+      "name": "fp16_mla_paged_decode",
+      "passed": false
+    },
+    {
+      "duration_ms": 687.932200729847,
+      "error": "The Inner error is reported as above. The process exits for this inner error, and the current working operator name is AtbPagedCacheLoad.\nSince the operator is called asynchronously, the stacktrace may be inaccurate. If you want to get the accurate stacktrace, please set the environment variable ASCEND_LAUNCH_BLOCKING=1.\nNote: ASCEND_LAUNCH_BLOCKING=1 will force ops to run in synchronous mode, resulting in performance degradation. Please unset ASCEND_LAUNCH_BLOCKING in time after debugging.\n[ERROR] 2026-08-05-16:06:26 (PID:32909, Device:0, RankID:-1) ERR00100 PTA call acl api failed.\n[PID: 32909] 2026-08-05-16:06:00.554.099 Invalid_Argument(EH0012): aclrtAllocatorGetByStreamImpl failed, Parameter stream is invalid. Reason: The stream is not registered with any allocator.\n",
+      "error_type": "RuntimeError",
+      "name": "fp16_mla_chunked_cache_load",
+      "passed": false
+    }
+  ],
+  "python": "3.11.10",
+  "schema_version": 1,
+  "soc_version": "ascend310p3",
+  "status": "failed",
+  "topology": {
+    "decode_context_parallel_size": 1,
+    "prefill_context_parallel_size": 1,
+    "rank": 2,
+    "tensor_parallel_size": 4
+  },
+  "torch": "2.10.0+cpu",
+  "torch_npu": "2.10.0.post1.dev20260620",
+  "vllm": "0.23.0+empty",
+  "vllm_ascend": null,
+  "vllm_ascend_baseline": "05e095a202bdcfef4da61168eae34bfd3b99da13",
+  "vllm_checkout_head": "72506c98349d6bcd32b4e33eec7b5513453c1502"
+}
