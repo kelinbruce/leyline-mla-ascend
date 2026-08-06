@@ -167,6 +167,7 @@ from vllm_ascend.utils import (
     set_potential_max_tokens,
     should_skip_allreduce_across_dp_group,
 )
+from vllm_ascend.worker.leyline_logits_capture import capture_raw_first_token_logits
 from vllm_ascend.worker.npu_input_batch import NPUInputBatch
 from vllm_ascend.worker.pcp_utils import PCPAsyncSpecDecodeRebuildResult, PCPManager
 from vllm_ascend.worker.utils import AscendKVBlockZeroer, copy_snapshot_to_gpu
@@ -2475,6 +2476,12 @@ class NPUModelRunner(GPUModelRunner):
         self.execute_model_state = None
 
         # Apply structured output bitmasks if present.
+        if spec_decode_metadata is None:
+            capture_raw_first_token_logits(
+                logits,
+                self.input_batch._req_ids[: self.input_batch.num_reqs],
+                self.input_batch.req_output_token_ids[: self.input_batch.num_reqs],
+            )
         if grammar_output is not None:
             # here we are different from gpu_model_runner,
             # the apply_grammar_bitmask uses torch.compile to optimize this,ascend does not support it now

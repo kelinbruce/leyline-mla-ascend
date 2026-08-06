@@ -1,13 +1,17 @@
 {
-  "model": "deepseek-ai/DeepSeek-V2-Lite",
-  "tokenizer": "deepseek-ai/DeepSeek-V2-Lite",
+  "model": "deepseek-ai/DeepSeek-V2-Lite-Chat",
+  "tokenizer": "deepseek-ai/DeepSeek-V2-Lite-Chat",
   "tokenizer_revision": "PIN_TOKENIZER_COMMIT",
   "trust_remote_code": true,
   "max_tokens": 64,
-  "prompt_format": "raw",
+  "prompt_format": "chat_template",
   "evaluation": {
-    "mode": "reference_prefix",
-    "reference_tokens": 1
+    "mode": "structured_json"
+  },
+  "preflight": {
+    "prompt": "Return only this JSON: {\"ok\":true}",
+    "oracle": {"ok": true},
+    "max_tokens": 16
   },
   "diagnostics": {
     "top_logprobs": 10,

@@ -1,6 +1,11 @@
 # Leyline MLA validation on Ascend 910B
 
-This harness treats positional cache transformation and semantic admissibility as separate gates. A case is valid AMORTIZE evidence only when the full prompt, an honestly re-prefilled edited prompt, and every approved counterfactual of the removed span produce the declared structured oracle. A case where only Leyline retains deleted information is reported as a mechanism diagnostic and is never counted as valid evidence.
+This schema-v2 harness treats evaluation-baseline validity, Leyline execution, and cache numerical correctness as separate gates. It supports two explicit contracts:
+
+- `reference_prefix` with `prompt_format=raw` for the DeepSeek-V2-Lite base checkpoint. The full arm's returned generation IDs are the reference. This is behavioral/reference evidence, not structured semantic correctness.
+- `structured_json` with `prompt_format=chat_template` for DeepSeek-V2-Lite-Chat. A short instruction-following preflight must pass before any semantic admission or performance run.
+
+Schema-v1 reports cannot be merged with schema-v2 reports. Keep old results as historical evidence rather than assigning them the new semantics.
 
 ## Server modes
 
@@ -28,7 +33,7 @@ The `full`, `honest_edited`, `patched_disabled`, `vanilla_apc`, and `leyline` ar
 
 ## Correctness and semantic gates
 
-Copy `runner_config.example.json`, replace both revisions and endpoints, then run:
+Use `runner_config.example.json` for the base checkpoint or `runner_config.chat.example.json` for the Chat checkpoint. Replace both revisions and endpoints, then run:
 
 ```bash
 python3 benchmarks/leyline/collect_environment.py \
@@ -45,22 +50,41 @@ python3 benchmarks/leyline/run_validation.py \
   --output results/leyline/correctness.json
 ```
 
-Prompts are sent as explicit token-ID arrays. The harness tokenizes the prefix, removed span, and suffix separately, so the declared edit is exactly one deletion and cannot be changed into a replacement by tokenizer boundary merging. A unique `cache_salt` prevents accidental APC contamination between honest baselines; Leyline record/amortize pairs deliberately share one salt.
+Prompts are sent to `/v1/completions` as explicit token-ID arrays with `add_special_tokens=false`. Raw and chat-template modes each encode their canonical full and edited strings, then fail unless one contiguous token deletion turns full into edited. The Chat endpoint is useful for a manual instruction-following diagnostic, but it is not the canonical harness path because server-side formatting would hide deletion indices.
+
+The recommended 910 workflow has two parallel tracks after checkpoint/runtime identity is collected:
+
+1. Repair the evaluation baseline: run base/reference or Chat/structured preflight, then establish the applicable full, honest-edited, and counterfactual gates.
+2. Start mechanism diagnostics immediately: collect returned first-token IDs, top-N API log probabilities, common-prefix/divergence evidence, and per-layer/per-rank cache captures without making a semantic claim.
+
+Join the tracks only for acceptance. Leyline additionally requires `recorded=true`, `applied=true`, positive transformed tokens, no fallback, numerical success, and rollback success. A unique `cache_salt` prevents accidental APC contamination between honest baselines; Leyline record/amortize pairs deliberately share one salt.
+
+API top-token values are log probabilities. Their top-1/top-2 difference equals the corresponding logit margin, but they are still labeled `api_logprobs`. To collect full-vocabulary logits before grammar processing and sampling, set `VLLM_ASCEND_LEYLINE_RAW_LOGITS_DIR`; those rank-scoped artifacts are separately labeled `internal_raw_logits` with worker provenance and use the request ID retained in the correctness report. Raw-logit capture is limited to the non-speculative validation path.
 
 ## Numerical gate
 
-Capture mapped source rows and device-produced destination rows in an NPZ with arrays `source_ckv`, `actual_ckv`, `source_kpe`, `actual_kpe`, `old_positions`, `new_positions`, and `inv_freq`. Include position deltas 0, 1, 127, 128, 129, and 1024, then run:
+Enable worker capture only for correctness diagnostics:
 
 ```bash
-python3 benchmarks/leyline/compare_cache.py results/leyline/cache-capture.npz \
+export VLLM_ASCEND_LEYLINE_CAPTURE_DIR=results/leyline/cache-captures
+export VLLM_ASCEND_LEYLINE_CAPTURE_MAX_ROWS=64
+export VLLM_ASCEND_LEYLINE_CAPTURE_REQUIRED_DELTAS=0,1,127,128,129,1024
+```
+
+Each TP rank writes permission-restricted per-layer NPZ files plus a rank manifest. Source rows are cloned before the transform and destination rows are read after NPU synchronization. Include position deltas 0, 1, 127, 128, 129, and 1024 in the workload/captures, then run:
+
+```bash
+python3 benchmarks/leyline/compare_cache.py results/leyline/cache-captures \
+  --expected-layers model.layers.0.self_attn,model.layers.1.self_attn \
+  --expected-ranks 0,1,2,3 \
   --output results/leyline/cache-comparison.json
 ```
 
-cKV must be bitwise identical. Kpe is checked against the independent FP32, unit-magnitude YaRN delta reference; the tolerance should be tightened to the measured envelope of one native BF16 rotation after the first device capture.
+cKV must be bitwise identical. Kpe is checked against the independent FP32, unit-magnitude YaRN delta reference, with failures and aggregate errors reported per layer/rank. Missing required layer/rank pairs or position deltas fail the numerical gate.
 
 ## Performance gate
 
-Run performance only after numerical, rollback, and semantic gates pass:
+Run performance only after the selected semantic/reference baseline, Leyline execution, numerical, and rollback gates pass. Set both `performance_prerequisites` values to true only from recorded evidence, and disable both capture environment variables before starting:
 
 ```bash
 python3 benchmarks/leyline/run_validation.py \

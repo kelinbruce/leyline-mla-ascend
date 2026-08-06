@@ -18,6 +18,11 @@ from vllm.distributed.kv_transfer.kv_connector.v1.base import (
 from vllm.logger import init_logger
 from vllm.v1.outputs import KVConnectorOutput
 
+from vllm_ascend.distributed.kv_transfer.leyline.capture import (
+    capture_enabled,
+    finish_capture,
+    prepare_capture,
+)
 from vllm_ascend.distributed.kv_transfer.leyline.mapping import (
     DeletionMapping,
     build_slot_mapping,
@@ -536,6 +541,16 @@ class LeylineConnector(KVConnectorBase_V1, SupportsHMA):
                     request.destination_block_ids,
                     request.block_size,
                 )
+                expected_layers = [
+                    layer_name
+                    for layer_name, cache in self._kv_caches.items()
+                    if isinstance(cache, (tuple, list))
+                    and len(cache) >= 2
+                    and cache[0].ndim == 4
+                    and cache[1].ndim == 4
+                    and cache[0].shape[-1] == 512
+                    and cache[1].shape[-1] == 64
+                ]
                 for layer_name, cache in self._kv_caches.items():
                     if not isinstance(cache, (tuple, list)) or len(cache) < 2:
                         continue
@@ -545,6 +560,20 @@ class LeylineConnector(KVConnectorBase_V1, SupportsHMA):
                     if ckv_cache.shape[-1] != 512 or kpe_cache.shape[-1] != 64:
                         continue
                     inv_freq = torch.tensor(request.inv_freq, dtype=torch.float32, device=ckv_cache.device)
+                    pending_capture = prepare_capture(
+                        request_id=request.request_id,
+                        session_id=request.session_id,
+                        layer_name=layer_name,
+                        ckv_cache=ckv_cache,
+                        kpe_cache=kpe_cache,
+                        source_slots=slots.source_slots,
+                        destination_slots=slots.destination_slots,
+                        old_positions=slots.old_positions,
+                        new_positions=slots.new_positions,
+                        inv_freq=inv_freq,
+                        block_size=request.block_size,
+                        expected_layers=expected_layers,
+                    )
                     transform_mla_cache(
                         ckv_cache,
                         kpe_cache,
@@ -554,11 +583,15 @@ class LeylineConnector(KVConnectorBase_V1, SupportsHMA):
                         slots.new_positions,
                         inv_freq,
                     )
+                    if pending_capture is not None:
+                        torch.npu.synchronize()
+                        finish_capture(pending_capture, ckv_cache, kpe_cache)
                     transformed_layers += 1
                     logger.debug("Leyline transformed layer=%s request=%s", layer_name, request.request_id)
                 if transformed_layers == 0:
                     raise RuntimeError("no compatible MLA cache layers were registered")
-                torch.npu.synchronize()
+                if not capture_enabled():
+                    torch.npu.synchronize()
             except Exception:
                 logger.exception("Leyline cache transformation failed request=%s", request.request_id)
                 success = False

@@ -99,6 +99,27 @@ env_variables: dict[str, Callable[[], Any]] = {
     # Control the aclrtMemcpyBatchAsync compile path for KV cache offloading.
     # "1": force enable, "0": force disable, None: auto-detect from CANN headers.
     "VLLM_ASCEND_ENABLE_BATCH_MEMCPY": lambda: os.getenv("VLLM_ASCEND_ENABLE_BATCH_MEMCPY", None),
+    # Optional directory for rank-scoped Leyline cache-correctness captures.
+    # Disabled by default because capture synchronizes the NPU and copies data
+    # to the host; never enable it during performance measurements.
+    "VLLM_ASCEND_LEYLINE_CAPTURE_DIR": lambda: os.getenv("VLLM_ASCEND_LEYLINE_CAPTURE_DIR", None),
+    # Maximum transformed cache rows retained per request and layer.
+    "VLLM_ASCEND_LEYLINE_CAPTURE_MAX_ROWS": lambda: int(
+        os.getenv("VLLM_ASCEND_LEYLINE_CAPTURE_MAX_ROWS", "64")
+    ),
+    # Comma-separated old-minus-new position deltas prioritized by row capture.
+    "VLLM_ASCEND_LEYLINE_CAPTURE_REQUIRED_DELTAS": lambda: tuple(
+        int(value)
+        for value in os.getenv(
+            "VLLM_ASCEND_LEYLINE_CAPTURE_REQUIRED_DELTAS", "0,1,127,128,129,1024"
+        ).split(",")
+        if value
+    ),
+    # Optional directory for full-vocabulary, pre-sampler first-token logits.
+    # This is separate from OpenAI-compatible API log-probability evidence.
+    "VLLM_ASCEND_LEYLINE_RAW_LOGITS_DIR": lambda: os.getenv(
+        "VLLM_ASCEND_LEYLINE_RAW_LOGITS_DIR", None
+    ),
 }
 
 # end-env-vars-definition

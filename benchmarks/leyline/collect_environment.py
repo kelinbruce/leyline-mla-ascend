@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import importlib.metadata
 import json
 import os
@@ -15,6 +16,16 @@ import sys
 import time
 from pathlib import Path
 from typing import Any
+
+
+IDENTITY_FILES = (
+    "config.json",
+    "tokenizer_config.json",
+    "special_tokens_map.json",
+    "tokenizer.json",
+    "model.safetensors.index.json",
+)
+WEIGHT_SUFFIXES = (".safetensors", ".bin", ".pt")
 
 
 def command(args: list[str], cwd: Path | None = None) -> dict[str, Any]:
@@ -77,6 +88,79 @@ def cann_version_files() -> dict[str, str]:
     return result
 
 
+def sha256_file(path: Path, chunk_size: int = 8 * 1024 * 1024) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        while chunk := stream.read(chunk_size):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _selected_json(path: Path) -> dict[str, Any] | None:
+    try:
+        document = json.loads(path.read_text())
+    except (OSError, json.JSONDecodeError):
+        return None
+    keys = (
+        "model_type",
+        "architectures",
+        "torch_dtype",
+        "hidden_size",
+        "num_hidden_layers",
+        "num_attention_heads",
+        "num_key_value_heads",
+        "vocab_size",
+        "rope_scaling",
+        "chat_template",
+        "tokenizer_class",
+    )
+    return {key: document[key] for key in keys if key in document}
+
+
+def artifact_manifest(location: str, revision: str) -> dict[str, Any]:
+    started = time.perf_counter()
+    path = Path(location).expanduser()
+    manifest: dict[str, Any] = {
+        "requested": location,
+        "revision": revision,
+        "local": path.exists(),
+    }
+    if not path.exists():
+        manifest["hashing_seconds"] = time.perf_counter() - started
+        return manifest
+    resolved = path.resolve()
+    manifest["resolved_path"] = str(resolved)
+    if resolved.is_file():
+        files = [resolved]
+        root = resolved.parent
+    else:
+        root = resolved
+        files = [root / name for name in IDENTITY_FILES if (root / name).is_file()]
+        files.extend(
+            item
+            for item in sorted(root.iterdir())
+            if item.is_file() and item.suffix in WEIGHT_SUFFIXES
+        )
+    unique_files = list(dict.fromkeys(files))
+    manifest["artifacts"] = [
+        {
+            "path": str(path.relative_to(root)),
+            "size": path.stat().st_size,
+            "sha256": sha256_file(path),
+        }
+        for path in unique_files
+    ]
+    manifest["selected_configuration"] = {
+        path.name: selected
+        for path in unique_files
+        if path.suffix == ".json" and (selected := _selected_json(path)) is not None
+    }
+    tokenizer_config = manifest["selected_configuration"].get("tokenizer_config.json", {})
+    manifest["chat_template_present"] = bool(tokenizer_config.get("chat_template"))
+    manifest["hashing_seconds"] = time.perf_counter() - started
+    return manifest
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     repo = Path(__file__).resolve().parents[2]
@@ -94,7 +178,7 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
     manifest = {
-        "schema_version": 1,
+        "schema_version": 2,
         "created_unix": time.time(),
         "platform": platform.platform(),
         "python": {"version": sys.version, "executable": sys.executable},
@@ -111,6 +195,8 @@ def main() -> None:
             "revision": args.model_revision,
             "tokenizer": args.tokenizer,
             "tokenizer_revision": args.tokenizer_revision,
+            "checkpoint_identity": artifact_manifest(args.model, args.model_revision),
+            "tokenizer_identity": artifact_manifest(args.tokenizer, args.tokenizer_revision),
         },
         "runtime_config": json.loads(args.runtime_config.read_text()),
         "npu_smi": command(["npu-smi", "info"]),
