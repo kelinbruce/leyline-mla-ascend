@@ -1,0 +1,33 @@
+{
+  "model": "deepseek-v2-lite",
+  "tokenizer": "/opt/foundation_model/DeepSeek-V2-Lite",
+  "tokenizer_revision": "local",
+  "trust_remote_code": true,
+  "max_tokens": 64,
+  "prompt_format": "raw",
+  "evaluation": {
+    "mode": "reference_prefix",
+    "reference_tokens": 1
+  },
+  "diagnostics": {
+    "top_logprobs": 10,
+    "continue_after_preflight_failure": true,
+    "device_capture_enabled": false,
+    "raw_logits_capture_enabled": false
+  },
+  "performance_prerequisites": {
+    "numerical_passed": false,
+    "rollback_passed": false
+  },
+  "arms": {
+    "full": "http://127.0.0.1:9119",
+    "honest_edited": "http://127.0.0.1:9119",
+    "patched_disabled": "http://127.0.0.1:9119",
+    "vanilla_apc": "http://127.0.0.1:9119",
+    "leyline": "http://127.0.0.1:9119"
+  },
+  "npu_memory_command": [
+    "npu-smi",
+    "info"
+  ]
+}

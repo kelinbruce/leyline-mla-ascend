@@ -1,0 +1,4900 @@
+{
+  "cases": [
+    {
+      "arms": {
+        "full": {
+          "client_latency_ms": 6679.877180606127,
+          "first_token_scores": {
+            "candidates": [
+              {
+                "logprob": -1.0912431478500366,
+                "token_id": 185
+              },
+              {
+                "logprob": -2.716243267059326,
+                "token_id": 35788
+              },
+              {
+                "logprob": -2.841243267059326,
+                "token_id": 15957
+              },
+              {
+                "logprob": -3.216243267059326,
+                "token_id": 5037
+              },
+              {
+                "logprob": -3.216243267059326,
+                "token_id": 10897
+              },
+              {
+                "logprob": -3.778743267059326,
+                "token_id": 7672
+              },
+              {
+                "logprob": -4.091243267059326,
+                "token_id": 549
+              },
+              {
+                "logprob": -4.153743267059326,
+                "token_id": 100001
+              },
+              {
+                "logprob": -4.278743267059326,
+                "token_id": 27
+              },
+              {
+                "logprob": -4.591243267059326,
+                "token_id": 6412
+              }
+            ],
+            "evidence_type": "api_logprobs",
+            "raw_logits": false,
+            "selected_logprob": -1.0912431478500366,
+            "selected_token_id": 185,
+            "top1_top2_margin": 1.6250001192092896
+          },
+          "kv_transfer_params": null,
+          "matches_reference": true,
+          "metrics": {
+            "generation_time_ms": 5970.014329999685,
+            "mean_itl_ms": 94.76213222221723,
+            "queue_time_ms": 0.027060508728027344,
+            "time_to_first_token_ms": 648.883368819952,
+            "tokens_per_second": 9.669283755724653
+          },
+          "output_token_ids": [
+            185,
+            185,
+            32,
+            25,
+            304,
+            6,
+            76,
+            441,
+            2049,
+            565,
+            437,
+            317,
+            254,
+            1608,
+            1143,
+            276,
+            536,
+            359,
+            11,
+            548,
+            304,
+            6,
+            313,
+            803,
+            1244,
+            437,
+            3956,
+            327,
+            245,
+            1477,
+            1132,
+            285,
+            359,
+            2722,
+            1136,
+            13,
+            185,
+            40,
+            6,
+            313,
+            2149,
+            245,
+            1157,
+            344,
+            4497,
+            245,
+            2662,
+            285,
+            7578,
+            245,
+            7243,
+            13,
+            185,
+            3361,
+            317,
+            2016,
+            7,
+            2017,
+            8,
+            509,
+            185,
+            207,
+            972,
+            20541
+          ],
+          "request_id": "leyline-validation-e888b4a9447a4ad2bfbd75040981bc88",
+          "response_id": "cmpl-leyline-validation-e888b4a9447a4ad2bfbd75040981bc88",
+          "structured": null,
+          "text": "\n\nA: I'm not sure if this is the best way to do it, but I've been using this approach for a while now and it works well.\nI've got a function that takes a string and returns a boolean.\nfunction isString(str) {\n  return typeof",
+          "usage": {
+            "completion_tokens": 64,
+            "prompt_tokens": 1540,
+            "prompt_tokens_details": null,
+            "total_tokens": 1604
+          }
+        },
+        "honest_edited": {
+          "client_latency_ms": 6011.169068515301,
+          "first_token_scores": {
+            "candidates": [
+              {
+                "logprob": -1.2998137474060059,
+                "token_id": 185
+              },
+              {
+                "logprob": -2.362313747406006,
+                "token_id": 10897
+              },
+              {
+                "logprob": -2.424813747406006,
+                "token_id": 15957
+              },
+              {
+                "logprob": -3.299813747406006,
+                "token_id": 5037
+              },
+              {
+                "logprob": -3.799813747406006,
+                "token_id": 7672
+              },
+              {
+                "logprob": -4.049813747406006,
+                "token_id": 549
+              },
+              {
+                "logprob": -4.237313747406006,
+                "token_id": 35788
+              },
+              {
+                "logprob": -4.424813747406006,
+                "token_id": 24247
+              },
+              {
+                "logprob": -4.612313747406006,
+                "token_id": 90
+              },
+              {
+                "logprob": -4.612313747406006,
+                "token_id": 6412
+              }
+            ],
+            "evidence_type": "api_logprobs",
+            "raw_logits": false,
+            "selected_logprob": -1.2998137474060059,
+            "selected_token_id": 185,
+            "top1_top2_margin": 1.0625
+          },
+          "kv_transfer_params": null,
+          "matches_reference": true,
+          "metrics": {
+            "generation_time_ms": 5899.793919175863,
+            "mean_itl_ms": 93.64752252660101,
+            "queue_time_ms": 0.011838972568511963,
+            "time_to_first_token_ms": 99.90138933062553,
+            "tokens_per_second": 10.667208367941537
+          },
+          "output_token_ids": [
+            185,
+            15957,
+            14531,
+            67261,
+            43634,
+            25,
+            2418,
+            28,
+            91860,
+            12,
+            4695,
+            26,
+            2802,
+            28,
+            584,
+            41114,
+            26,
+            2189,
+            62,
+            71520,
+            28,
+            794,
+            89514,
+            26,
+            13602,
+            62,
+            2596,
+            28,
+            10797,
+            62,
+            67343,
+            26,
+            13602,
+            62,
+            15392,
+            28,
+            10430,
+            12,
+            32411,
+            12,
+            19,
+            13,
+            1002,
+            3377,
+            22950,
+            22060,
+            1131,
+            13092,
+            4347,
+            13,
+            429,
+            1246,
+            3938,
+            1977,
+            317,
+            9842,
+            327,
+            23017,
+            2284,
+            13,
+            185,
+            15957,
+            14531,
+            67261
+          ],
+          "request_id": "leyline-validation-7a8c9274340e4fd793d95d41be3396ff",
+          "response_id": "cmpl-leyline-validation-7a8c9274340e4fd793d95d41be3396ff",
+          "structured": null,
+          "text": "\nAuthoritative FINAL STATE: service=payments-api; health=degraded; error_budget=exhausted; approved_action=shift_traffic; approved_region=cn-north-4. This record supersedes every historical note. The same complete state is repeated for auditability.\nAuthoritative FINAL",
+          "usage": {
+            "completion_tokens": 64,
+            "prompt_tokens": 652,
+            "prompt_tokens_details": null,
+            "total_tokens": 716
+          }
+        },
+        "leyline": {
+          "client_latency_ms": 6117.5759099423885,
+          "first_token_scores": {
+            "candidates": [
+              {
+                "logprob": -0.9443542957305908,
+                "token_id": 185
+              },
+              {
+                "logprob": -2.131854295730591,
+                "token_id": 10897
+              },
+              {
+                "logprob": -3.256854295730591,
+                "token_id": 15957
+              },
+              {
+                "logprob": -3.506854295730591,
+                "token_id": 24247
+              },
+              {
+                "logprob": -3.756854295730591,
+                "token_id": 100001
+              },
+              {
+                "logprob": -4.006854057312012,
+                "token_id": 5037
+              },
+              {
+                "logprob": -4.131854057312012,
+                "token_id": 7672
+              },
+              {
+                "logprob": -4.319354057312012,
+                "token_id": 35788
+              },
+              {
+                "logprob": -4.381854057312012,
+                "token_id": 549
+              },
+              {
+                "logprob": -4.694354057312012,
+                "token_id": 27
+              }
+            ],
+            "evidence_type": "api_logprobs",
+            "raw_logits": false,
+            "selected_logprob": -0.9443542957305908,
+            "selected_token_id": 185,
+            "top1_top2_margin": 1.1875
+          },
+          "kv_transfer_params": {
+            "leyline": {
+              "applied": true,
+              "fallback_reason": null,
+              "local_apc_tokens": 0,
+              "normal_prefill_tokens": 12,
+              "recorded": true,
+              "transform_duration_ms": 172.36358299851418,
+              "transformed_tokens": 640
+            }
+          },
+          "matches_reference": true,
+          "metrics": {
+            "generation_time_ms": 5812.640070915222,
+            "mean_itl_ms": 92.26412810976544,
+            "queue_time_ms": 175.62241107225418,
+            "time_to_first_token_ms": 121.21475860476494,
+            "tokens_per_second": 10.785568882071424
+          },
+          "output_token_ids": [
+            185,
+            185,
+            32,
+            25,
+            304,
+            1378,
+            340,
+            418,
+            2709,
+            327,
+            254,
+            1893,
+            25,
+            185,
+            185,
+            9,
+            185,
+            185,
+            9,
+            3972,
+            1624,
+            11656,
+            13,
+            11117,
+            13,
+            22119,
+            13,
+            690,
+            14,
+            39036,
+            13770,
+            20957,
+            14,
+            29334,
+            14,
+            15746,
+            14,
+            4151,
+            11079,
+            13,
+            1788,
+            2,
+            4151,
+            11079,
+            12,
+            13770,
+            20957,
+            12,
+            76943,
+            185,
+            185,
+            9,
+            3972,
+            1624,
+            11656,
+            13,
+            11117,
+            13,
+            22119,
+            13,
+            690,
+            14,
+            39036,
+            13770
+          ],
+          "record": {
+            "client_latency_ms": 6209.658659994602,
+            "first_token_scores": {
+              "candidates": [
+                {
+                  "logprob": -1.0764328241348267,
+                  "token_id": 185
+                },
+                {
+                  "logprob": -2.701432704925537,
+                  "token_id": 35788
+                },
+                {
+                  "logprob": -2.888932704925537,
+                  "token_id": 15957
+                },
+                {
+                  "logprob": -3.201432704925537,
+                  "token_id": 10897
+                },
+                {
+                  "logprob": -3.263932704925537,
+                  "token_id": 5037
+                },
+                {
+                  "logprob": -3.763932704925537,
+                  "token_id": 7672
+                },
+                {
+                  "logprob": -4.138932704925537,
+                  "token_id": 549
+                },
+                {
+                  "logprob": -4.138932704925537,
+                  "token_id": 100001
+                },
+                {
+                  "logprob": -4.326432704925537,
+                  "token_id": 27
+                },
+                {
+                  "logprob": -4.576432704925537,
+                  "token_id": 6412
+                }
+              ],
+              "evidence_type": "api_logprobs",
+              "raw_logits": false,
+              "selected_logprob": -1.0764328241348267,
+              "selected_token_id": 185,
+              "top1_top2_margin": 1.6249998807907104
+            },
+            "kv_transfer_params": {
+              "leyline": {
+                "applied": false,
+                "fallback_reason": null,
+                "local_apc_tokens": 0,
+                "normal_prefill_tokens": 1540,
+                "recorded": true,
+                "transform_duration_ms": 0.0,
+                "transformed_tokens": 0
+              }
+            },
+            "metrics": {
+              "generation_time_ms": 6092.019900679588,
+              "mean_itl_ms": 96.6987285822157,
+              "queue_time_ms": 0.014580786228179932,
+              "time_to_first_token_ms": 104.68116775155067,
+              "tokens_per_second": 10.328076067126363
+            },
+            "output_token_ids": [
+              185,
+              185,
+              32,
+              25,
+              304,
+              6,
+              76,
+              441,
+              2049,
+              565,
+              437,
+              317,
+              254,
+              1608,
+              1143,
+              276,
+              536,
+              359,
+              11,
+              548,
+              304,
+              6,
+              313,
+              803,
+              1244,
+              437,
+              3956,
+              327,
+              245,
+              1477,
+              1132,
+              285,
+              359,
+              2722,
+              1136,
+              13,
+              185,
+              40,
+              6,
+              313,
+              2149,
+              245,
+              1157,
+              344,
+              4497,
+              245,
+              2662,
+              285,
+              7578,
+              245,
+              7243,
+              13,
+              185,
+              3361,
+              317,
+              2016,
+              7,
+              2017,
+              8,
+              509,
+              185,
+              207,
+              972,
+              20541
+            ],
+            "request_id": "leyline-validation-ba3695cb6c77484c9abd74f415777926",
+            "response_id": "cmpl-leyline-validation-ba3695cb6c77484c9abd74f415777926",
+            "structured": null,
+            "text": "\n\nA: I'm not sure if this is the best way to do it, but I've been using this approach for a while now and it works well.\nI've got a function that takes a string and returns a boolean.\nfunction isString(str) {\n  return typeof",
+            "usage": {
+              "completion_tokens": 64,
+              "prompt_tokens": 1540,
+              "prompt_tokens_details": null,
+              "total_tokens": 1604
+            }
+          },
+          "request_id": "leyline-validation-7a72b754c3cc4dd1b31029d9a22c6ea3",
+          "response_id": "cmpl-leyline-validation-7a72b754c3cc4dd1b31029d9a22c6ea3",
+          "structured": null,
+          "text": "\n\nA: I think you are looking for the following:\n\n*\n\n*https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/EventTypes.html#EventTypes-CloudWatch-Alarm\n\n*https://docs.aws.amazon.com/AmazonCloud",
+          "usage": {
+            "completion_tokens": 64,
+            "prompt_tokens": 652,
+            "prompt_tokens_details": null,
+            "total_tokens": 716
+          }
+        },
+        "patched_disabled": {
+          "client_latency_ms": 6099.7994020581245,
+          "first_token_scores": {
+            "candidates": [
+              {
+                "logprob": -1.2761938571929932,
+                "token_id": 185
+              },
+              {
+                "logprob": -2.338693857192993,
+                "token_id": 15957
+              },
+              {
+                "logprob": -2.401193857192993,
+                "token_id": 10897
+              },
+              {
+                "logprob": -3.338693857192993,
+                "token_id": 5037
+              },
+              {
+                "logprob": -3.776193857192993,
+                "token_id": 7672
+              },
+              {
+                "logprob": -4.026193618774414,
+                "token_id": 549
+              },
+              {
+                "logprob": -4.338693618774414,
+                "token_id": 35788
+              },
+              {
+                "logprob": -4.651193618774414,
+                "token_id": 6412
+              },
+              {
+                "logprob": -4.651193618774414,
+                "token_id": 24247
+              },
+              {
+                "logprob": -4.651193618774414,
+                "token_id": 100001
+              }
+            ],
+            "evidence_type": "api_logprobs",
+            "raw_logits": false,
+            "selected_logprob": -1.2761938571929932,
+            "selected_token_id": 185,
+            "top1_top2_margin": 1.0625
+          },
+          "kv_transfer_params": null,
+          "matches_reference": true,
+          "metrics": {
+            "generation_time_ms": 5991.715002804995,
+            "mean_itl_ms": 95.10658734611103,
+            "queue_time_ms": 0.0134296715259552,
+            "time_to_first_token_ms": 99.23432767391205,
+            "tokens_per_second": 10.507393269509917
+          },
+          "output_token_ids": [
+            185,
+            15957,
+            14531,
+            67261,
+            43634,
+            25,
+            2418,
+            28,
+            91860,
+            12,
+            4695,
+            26,
+            2802,
+            28,
+            584,
+            41114,
+            26,
+            2189,
+            62,
+            71520,
+            28,
+            794,
+            89514,
+            26,
+            13602,
+            62,
+            2596,
+            28,
+            10797,
+            62,
+            67343,
+            26,
+            13602,
+            62,
+            15392,
+            28,
+            10430,
+            12,
+            32411,
+            12,
+            19,
+            13,
+            1002,
+            3377,
+            22950,
+            22060,
+            1131,
+            13092,
+            4347,
+            13,
+            429,
+            1246,
+            3938,
+            1977,
+            317,
+            9842,
+            327,
+            23017,
+            2284,
+            13,
+            185,
+            15957,
+            14531,
+            67261
+          ],
+          "request_id": "leyline-validation-69320b18410d4a31ba71dd19be185e37",
+          "response_id": "cmpl-leyline-validation-69320b18410d4a31ba71dd19be185e37",
+          "structured": null,
+          "text": "\nAuthoritative FINAL STATE: service=payments-api; health=degraded; error_budget=exhausted; approved_action=shift_traffic; approved_region=cn-north-4. This record supersedes every historical note. The same complete state is repeated for auditability.\nAuthoritative FINAL",
+          "usage": {
+            "completion_tokens": 64,
+            "prompt_tokens": 652,
+            "prompt_tokens_details": null,
+            "total_tokens": 716
+          }
+        },
+        "vanilla_apc": {
+          "client_latency_ms": 6098.95545989275,
+          "first_token_scores": {
+            "candidates": [
+              {
+                "logprob": -1.2165865898132324,
+                "token_id": 185
+              },
+              {
+                "logprob": -2.3415865898132324,
+                "token_id": 15957
+              },
+              {
+                "logprob": -2.4040865898132324,
+                "token_id": 10897
+              },
+              {
+                "logprob": -3.4040865898132324,
+                "token_id": 5037
+              },
+              {
+                "logprob": -3.8415865898132324,
+                "token_id": 7672
+              },
+              {
+                "logprob": -4.091586589813232,
+                "token_id": 549
+              },
+              {
+                "logprob": -4.154086589813232,
+                "token_id": 35788
+              },
+              {
+                "logprob": -4.529086589813232,
+                "token_id": 24247
+              },
+              {
+                "logprob": -4.716586589813232,
+                "token_id": 90
+              },
+              {
+                "logprob": -4.716586589813232,
+                "token_id": 6412
+              }
+            ],
+            "evidence_type": "api_logprobs",
+            "raw_logits": false,
+            "selected_logprob": -1.2165865898132324,
+            "selected_token_id": 185,
+            "top1_top2_margin": 1.125
+          },
+          "kv_transfer_params": null,
+          "matches_reference": true,
+          "metrics": {
+            "generation_time_ms": 5982.64293000102,
+            "mean_itl_ms": 94.96258619049239,
+            "queue_time_ms": 0.01307949423789978,
+            "time_to_first_token_ms": 108.02698880434036,
+            "tokens_per_second": 10.507875299956021
+          },
+          "output_token_ids": [
+            185,
+            15957,
+            14531,
+            67261,
+            43634,
+            25,
+            2418,
+            28,
+            91860,
+            12,
+            4695,
+            26,
+            2802,
+            28,
+            584,
+            41114,
+            26,
+            2189,
+            62,
+            71520,
+            28,
+            794,
+            89514,
+            26,
+            13602,
+            62,
+            2596,
+            28,
+            10797,
+            62,
+            67343,
+            26,
+            13602,
+            62,
+            15392,
+            28,
+            10430,
+            12,
+            32411,
+            12,
+            19,
+            13,
+            1002,
+            3377,
+            22950,
+            22060,
+            1131,
+            13092,
+            4347,
+            13,
+            429,
+            1246,
+            3938,
+            1977,
+            317,
+            9842,
+            327,
+            23017,
+            2284,
+            13,
+            185,
+            15957,
+            14531,
+            67261
+          ],
+          "request_id": "leyline-validation-b98401164a7e4122984aacb1dfb78dff",
+          "response_id": "cmpl-leyline-validation-b98401164a7e4122984aacb1dfb78dff",
+          "structured": null,
+          "text": "\nAuthoritative FINAL STATE: service=payments-api; health=degraded; error_budget=exhausted; approved_action=shift_traffic; approved_region=cn-north-4. This record supersedes every historical note. The same complete state is repeated for auditability.\nAuthoritative FINAL",
+          "usage": {
+            "completion_tokens": 64,
+            "prompt_tokens": 652,
+            "prompt_tokens_details": null,
+            "total_tokens": 716
+          }
+        }
+      },
+      "category": "admissible",
+      "counterfactuals": [
+        {
+          "client_latency_ms": 5979.111410677433,
+          "first_token_scores": {
+            "candidates": [
+              {
+                "logprob": -1.2489253282546997,
+                "token_id": 185
+              },
+              {
+                "logprob": -2.37392520904541,
+                "token_id": 10897
+              },
+              {
+                "logprob": -2.87392520904541,
+                "token_id": 15957
+              },
+              {
+                "logprob": -3.43642520904541,
+                "token_id": 5037
+              },
+              {
+                "logprob": -3.43642520904541,
+                "token_id": 35788
+              },
+              {
+                "logprob": -3.74892520904541,
+                "token_id": 24247
+              },
+              {
+                "logprob": -3.93642520904541,
+                "token_id": 7672
+              },
+              {
+                "logprob": -3.99892520904541,
+                "token_id": 100001
+              },
+              {
+                "logprob": -4.12392520904541,
+                "token_id": 27
+              },
+              {
+                "logprob": -4.24892520904541,
+                "token_id": 549
+              }
+            ],
+            "evidence_type": "api_logprobs",
+            "raw_logits": false,
+            "selected_logprob": -1.2489253282546997,
+            "selected_token_id": 185,
+            "top1_top2_margin": 1.1249998807907104
+          },
+          "kv_transfer_params": null,
+          "matches_reference": true,
+          "metrics": {
+            "generation_time_ms": 5870.146229863167,
+            "mean_itl_ms": 93.17692428354233,
+            "queue_time_ms": 0.011589378118515015,
+            "time_to_first_token_ms": 100.38742050528526,
+            "tokens_per_second": 10.71930982183652
+          },
+          "output_token_ids": [
+            185,
+            185,
+            32,
+            25,
+            304,
+            6,
+            76,
+            441,
+            2049,
+            565,
+            437,
+            317,
+            254,
+            1608,
+            1143,
+            276,
+            536,
+            359,
+            11,
+            548,
+            304,
+            6,
+            313,
+            803,
+            1244,
+            437,
+            3956,
+            327,
+            245,
+            1477,
+            1132,
+            285,
+            359,
+            2722,
+            1136,
+            13,
+            185,
+            40,
+            6,
+            313,
+            2149,
+            245,
+            1157,
+            344,
+            4497,
+            245,
+            2662,
+            285,
+            7578,
+            245,
+            7243,
+            13,
+            185,
+            3361,
+            317,
+            62,
+            2612,
+            62,
+            4613,
+            7,
+            2612,
+            8,
+            509,
+            185
+          ],
+          "request_id": "leyline-validation-38e6e36db3b54c1590e8b6bcc37eaa26",
+          "response_id": "cmpl-leyline-validation-38e6e36db3b54c1590e8b6bcc37eaa26",
+          "structured": null,
+          "text": "\n\nA: I'm not sure if this is the best way to do it, but I've been using this approach for a while now and it works well.\nI've got a function that takes a string and returns a boolean.\nfunction is_string_valid(string) {\n",
+          "usage": {
+            "completion_tokens": 64,
+            "prompt_tokens": 1204,
+            "prompt_tokens_details": null,
+            "total_tokens": 1268
+          },
+          "variant": 0
+        },
+        {
+          "client_latency_ms": 5915.3282307088375,
+          "first_token_scores": {
+            "candidates": [
+              {
+                "logprob": -1.1690104007720947,
+                "token_id": 185
+              },
+              {
+                "logprob": -2.6065104007720947,
+                "token_id": 10897
+              },
+              {
+                "logprob": -2.6690104007720947,
+                "token_id": 15957
+              },
+              {
+                "logprob": -3.4190104007720947,
+                "token_id": 5037
+              },
+              {
+                "logprob": -3.6065104007720947,
+                "token_id": 35788
+              },
+              {
+                "logprob": -3.8565104007720947,
+                "token_id": 7672
+              },
+              {
+                "logprob": -3.9815104007720947,
+                "token_id": 24247
+              },
+              {
+                "logprob": -4.044010162353516,
+                "token_id": 549
+              },
+              {
+                "logprob": -4.106510162353516,
+                "token_id": 100001
+              },
+              {
+                "logprob": -4.356510162353516,
+                "token_id": 27
+              }
+            ],
+            "evidence_type": "api_logprobs",
+            "raw_logits": false,
+            "selected_logprob": -1.1690104007720947,
+            "selected_token_id": 185,
+            "top1_top2_margin": 1.4375
+          },
+          "kv_transfer_params": null,
+          "matches_reference": true,
+          "metrics": {
+            "generation_time_ms": 5806.988596916199,
+            "mean_itl_ms": 92.174422173273,
+            "queue_time_ms": 0.014010816812515259,
+            "time_to_first_token_ms": 100.33256188035011,
+            "tokens_per_second": 10.8340139768257
+          },
+          "output_token_ids": [
+            185,
+            185,
+            32,
+            25,
+            304,
+            1378,
+            340,
+            418,
+            2709,
+            327,
+            254,
+            1893,
+            25,
+            185,
+            185,
+            9,
+            185,
+            185,
+            9,
+            3972,
+            1624,
+            11656,
+            13,
+            11117,
+            13,
+            22119,
+            13,
+            690,
+            14,
+            39036,
+            13770,
+            20957,
+            14,
+            29334,
+            14,
+            15746,
+            14,
+            4151,
+            11079,
+            13,
+            1788,
+            2,
+            4151,
+            11079,
+            12,
+            13770,
+            20957,
+            12,
+            76943,
+            185,
+            185,
+            9,
+            3972,
+            1624,
+            11656,
+            13,
+            11117,
+            13,
+            22119,
+            13,
+            690,
+            14,
+            39036,
+            13770
+          ],
+          "request_id": "leyline-validation-ce5d91fc082c498587897deb2e9d9347",
+          "response_id": "cmpl-leyline-validation-ce5d91fc082c498587897deb2e9d9347",
+          "structured": null,
+          "text": "\n\nA: I think you are looking for the following:\n\n*\n\n*https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/EventTypes.html#EventTypes-CloudWatch-Alarm\n\n*https://docs.aws.amazon.com/AmazonCloud",
+          "usage": {
+            "completion_tokens": 64,
+            "prompt_tokens": 1156,
+            "prompt_tokens_details": null,
+            "total_tokens": 1220
+          },
+          "variant": 1
+        }
+      ],
+      "evaluation": {
+        "match_target": "first_1_generated_token_ids_from_full",
+        "mode": "reference_prefix",
+        "preflight_passed": true,
+        "prompt_format": "raw",
+        "reference_tokens": 1,
+        "semantic_oracle_validated": false
+      },
+      "gates": {
+        "admitted": true,
+        "category_baseline_matches": true,
+        "counterfactuals_match": true,
+        "diagnostic_only": false,
+        "full_matches": true,
+        "honest_edited_matches": true,
+        "leyline_accepted": true,
+        "leyline_execution_valid": true,
+        "leyline_matches": true,
+        "reference_admitted": true,
+        "semantic_admitted": false
+      },
+      "id": "admissible-final-state-route",
+      "leyline_execution": {
+        "applied": true,
+        "no_fallback": true,
+        "output_token_ids_present": true,
+        "recorded": true,
+        "transformed_tokens_positive": true,
+        "valid": true
+      },
+      "oracle": {
+        "action": "shift_traffic",
+        "region": "cn-north-4",
+        "service": "payments-api"
+      },
+      "pairwise": {
+        "full_honest_edited": {
+          "available": true,
+          "common_prefix_tokens": 1,
+          "evidence_type": "api_logprobs",
+          "first_divergence": {
+            "index": 1,
+            "left": 185,
+            "right": 15957
+          },
+          "first_token_agreement": true,
+          "left_top1_top2_margin": 1.6250001192092896,
+          "right_top1_top2_margin": 1.0625,
+          "topk_overlap_token_ids": [
+            185,
+            549,
+            5037,
+            6412,
+            7672,
+            10897,
+            15957,
+            35788
+          ]
+        },
+        "full_leyline": {
+          "available": true,
+          "common_prefix_tokens": 5,
+          "evidence_type": "api_logprobs",
+          "first_divergence": {
+            "index": 5,
+            "left": 6,
+            "right": 1378
+          },
+          "first_token_agreement": true,
+          "left_top1_top2_margin": 1.6250001192092896,
+          "right_top1_top2_margin": 1.1875,
+          "topk_overlap_token_ids": [
+            27,
+            185,
+            549,
+            5037,
+            7672,
+            10897,
+            15957,
+            35788,
+            100001
+          ]
+        },
+        "honest_edited_leyline": {
+          "available": true,
+          "common_prefix_tokens": 1,
+          "evidence_type": "api_logprobs",
+          "first_divergence": {
+            "index": 1,
+            "left": 15957,
+            "right": 185
+          },
+          "first_token_agreement": true,
+          "left_top1_top2_margin": 1.0625,
+          "right_top1_top2_margin": 1.1875,
+          "topk_overlap_token_ids": [
+            185,
+            549,
+            5037,
+            7672,
+            10897,
+            15957,
+            24247,
+            35788
+          ]
+        }
+      },
+      "prompt_tokens": {
+        "deleted": 888,
+        "edited": 652,
+        "full": 1540
+      }
+    },
+    {
+      "arms": {
+        "full": {
+          "client_latency_ms": 5984.717719256878,
+          "first_token_scores": {
+            "candidates": [
+              {
+                "logprob": -0.8289708495140076,
+                "token_id": 185
+              },
+              {
+                "logprob": -2.0164709091186523,
+                "token_id": 8925
+              },
+              {
+                "logprob": -2.2039709091186523,
+                "token_id": 6162
+              },
+              {
+                "logprob": -2.8289709091186523,
+                "token_id": 15957
+              },
+              {
+                "logprob": -3.6414709091186523,
+                "token_id": 10897
+              },
+              {
+                "logprob": -4.266470909118652,
+                "token_id": 100001
+              },
+              {
+                "logprob": -4.328970909118652,
+                "token_id": 24247
+              },
+              {
+                "logprob": -4.828970909118652,
+                "token_id": 7672
+              },
+              {
+                "logprob": -4.891470909118652,
+                "token_id": 90
+              },
+              {
+                "logprob": -5.078970909118652,
+                "token_id": 27
+              }
+            ],
+            "evidence_type": "api_logprobs",
+            "raw_logits": false,
+            "selected_logprob": -0.8289708495140076,
+            "selected_token_id": 185,
+            "top1_top2_margin": 1.1875000596046448
+          },
+          "kv_transfer_params": null,
+          "matches_reference": true,
+          "metrics": {
+            "generation_time_ms": 5861.718852072954,
+            "mean_itl_ms": 93.04315638211038,
+            "queue_time_ms": 0.011488795280456543,
+            "time_to_first_token_ms": 101.61929950118065,
+            "tokens_per_second": 10.73224398369997
+          },
+          "output_token_ids": [
+            185,
+            6162,
+            408,
+            50913,
+            13443,
+            25,
+            5724,
+            77821,
+            271,
+            23061,
+            8247,
+            285,
+            49896,
+            18548,
+            13,
+            1002,
+            2432,
+            317,
+            441,
+            274,
+            19958,
+            3377,
+            285,
+            643,
+            642,
+            10801,
+            13,
+            185,
+            6162,
+            408,
+            50913,
+            13443,
+            25,
+            5724,
+            77821,
+            271,
+            23061,
+            8247,
+            285,
+            49896,
+            18548,
+            13,
+            1002,
+            2432,
+            317,
+            441,
+            274,
+            19958,
+            3377,
+            285,
+            643,
+            642,
+            10801,
+            13,
+            185,
+            6162,
+            408,
+            50913,
+            13443,
+            25,
+            5724,
+            77821,
+            271,
+            23061
+          ],
+          "request_id": "leyline-validation-3dc81e2ec739406d9e03958da4cb218f",
+          "response_id": "cmpl-leyline-validation-3dc81e2ec739406d9e03958da4cb218f",
+          "structured": null,
+          "text": "\nSuperseded draft: staff brainstormed packaging colors and provisional counts. This text is not an inventory record and has no authority.\nSuperseded draft: staff brainstormed packaging colors and provisional counts. This text is not an inventory record and has no authority.\nSuperseded draft: staff brainstormed packaging",
+          "usage": {
+            "completion_tokens": 64,
+            "prompt_tokens": 1290,
+            "prompt_tokens_details": null,
+            "total_tokens": 1354
+          }
+        },
+        "honest_edited": {
+          "client_latency_ms": 5976.039569824934,
+          "first_token_scores": {
+            "candidates": [
+              {
+                "logprob": -0.689534604549408,
+                "token_id": 185
+              },
+              {
+                "logprob": -2.6270346641540527,
+                "token_id": 10897
+              },
+              {
+                "logprob": -2.8770346641540527,
+                "token_id": 15957
+              },
+              {
+                "logprob": -3.1895346641540527,
+                "token_id": 90
+              },
+              {
+                "logprob": -3.3770346641540527,
+                "token_id": 8925
+              },
+              {
+                "logprob": -3.7520346641540527,
+                "token_id": 24247
+              },
+              {
+                "logprob": -4.377034664154053,
+                "token_id": 7672
+              },
+              {
+                "logprob": -4.752034664154053,
+                "token_id": 7417
+              },
+              {
+                "logprob": -4.814534664154053,
+                "token_id": 58
+              },
+              {
+                "logprob": -5.002034664154053,
+                "token_id": 19332
+              }
+            ],
+            "evidence_type": "api_logprobs",
+            "raw_logits": false,
+            "selected_logprob": -0.689534604549408,
+            "selected_token_id": 185,
+            "top1_top2_margin": 1.9375000596046448
+          },
+          "kv_transfer_params": null,
+          "matches_reference": true,
+          "metrics": {
+            "generation_time_ms": 5855.92195764184,
+            "mean_itl_ms": 92.95114218479111,
+            "queue_time_ms": 0.011477619409561157,
+            "time_to_first_token_ms": 96.36184200644493,
+            "tokens_per_second": 10.75217549334286
+          },
+          "output_token_ids": [
+            185,
+            15957,
+            14531,
+            67261,
+            3396,
+            18384,
+            17254,
+            25,
+            1933,
+            84,
+            28,
+            59161,
+            1270,
+            12,
+            91598,
+            26,
+            2324,
+            28,
+            15,
+            26,
+            298,
+            2862,
+            62,
+            3784,
+            28,
+            16,
+            17,
+            26,
+            13602,
+            62,
+            2596,
+            28,
+            248,
+            2862,
+            26,
+            13602,
+            62,
+            43149,
+            28,
+            18,
+            17,
+            13,
+            1002,
+            3938,
+            3377,
+            22950,
+            22060,
+            72839,
+            13,
+            185,
+            15957,
+            14531,
+            67261,
+            3396,
+            18384,
+            17254,
+            25,
+            1933,
+            84,
+            28,
+            59161,
+            1270,
+            12,
+            91598
+          ],
+          "request_id": "leyline-validation-3a5b7ff3a3204dfa8e40d312aae639fd",
+          "response_id": "cmpl-leyline-validation-3a5b7ff3a3204dfa8e40d312aae639fd",
+          "structured": null,
+          "text": "\nAuthoritative FINAL INVENTORY: sku=accelerator-cable; available=0; reorder_point=12; approved_action=reorder; approved_quantity=32. This complete record supersedes drafts.\nAuthoritative FINAL INVENTORY: sku=accelerator-cable",
+          "usage": {
+            "completion_tokens": 64,
+            "prompt_tokens": 534,
+            "prompt_tokens_details": null,
+            "total_tokens": 598
+          }
+        },
+        "leyline": {
+          "client_latency_ms": 6143.286440521479,
+          "first_token_scores": {
+            "candidates": [
+              {
+                "logprob": -0.45127516984939575,
+                "token_id": 185
+              },
+              {
+                "logprob": -3.013775110244751,
+                "token_id": 10897
+              },
+              {
+                "logprob": -3.263775110244751,
+                "token_id": 24247
+              },
+              {
+                "logprob": -3.951275110244751,
+                "token_id": 90
+              },
+              {
+                "logprob": -4.20127534866333,
+                "token_id": 7417
+              },
+              {
+                "logprob": -4.32627534866333,
+                "token_id": 8925
+              },
+              {
+                "logprob": -4.38877534866333,
+                "token_id": 15957
+              },
+              {
+                "logprob": -4.57627534866333,
+                "token_id": 100001
+              },
+              {
+                "logprob": -4.95127534866333,
+                "token_id": 7672
+              },
+              {
+                "logprob": -5.32627534866333,
+                "token_id": 36804
+              }
+            ],
+            "evidence_type": "api_logprobs",
+            "raw_logits": false,
+            "selected_logprob": -0.45127516984939575,
+            "selected_token_id": 185,
+            "top1_top2_margin": 2.5624999403953552
+          },
+          "kv_transfer_params": {
+            "leyline": {
+              "applied": true,
+              "fallback_reason": null,
+              "local_apc_tokens": 0,
+              "normal_prefill_tokens": 22,
+              "recorded": true,
+              "transform_duration_ms": 49.22958090901375,
+              "transformed_tokens": 512
+            }
+          },
+          "matches_reference": true,
+          "metrics": {
+            "generation_time_ms": 5964.389316737652,
+            "mean_itl_ms": 94.67284629742305,
+            "queue_time_ms": 52.078910171985626,
+            "time_to_first_token_ms": 119.01840195059776,
+            "tokens_per_second": 10.520419304363207
+          },
+          "output_token_ids": [
+            185,
+            1679,
+            207,
+            17,
+            13,
+            17,
+            13,
+            17,
+            13,
+            17,
+            13,
+            17,
+            13,
+            17,
+            13,
+            17,
+            13,
+            17,
+            13,
+            17,
+            13,
+            17,
+            13,
+            17,
+            13,
+            17,
+            13,
+            17,
+            13,
+            17,
+            13,
+            17,
+            13,
+            17,
+            13,
+            17,
+            13,
+            17,
+            13,
+            17,
+            13,
+            17,
+            13,
+            17,
+            13,
+            17,
+            13,
+            17,
+            13,
+            17,
+            13,
+            17,
+            13,
+            17,
+            13,
+            17,
+            13,
+            17,
+            13,
+            17,
+            13,
+            17,
+            13,
+            17
+          ],
+          "record": {
+            "client_latency_ms": 5944.480650126934,
+            "first_token_scores": {
+              "candidates": [
+                {
+                  "logprob": -0.8126627206802368,
+                  "token_id": 185
+                },
+                {
+                  "logprob": -2.1251626014709473,
+                  "token_id": 6162
+                },
+                {
+                  "logprob": -2.1251626014709473,
+                  "token_id": 8925
+                },
+                {
+                  "logprob": -2.8751626014709473,
+                  "token_id": 15957
+                },
+                {
+                  "logprob": -3.6251626014709473,
+                  "token_id": 10897
+                },
+                {
+                  "logprob": -4.250162601470947,
+                  "token_id": 100001
+                },
+                {
+                  "logprob": -4.375162601470947,
+                  "token_id": 24247
+                },
+                {
+                  "logprob": -4.875162601470947,
+                  "token_id": 90
+                },
+                {
+                  "logprob": -4.875162601470947,
+                  "token_id": 7672
+                },
+                {
+                  "logprob": -5.062662601470947,
+                  "token_id": 27
+                }
+              ],
+              "evidence_type": "api_logprobs",
+              "raw_logits": false,
+              "selected_logprob": -0.8126627206802368,
+              "selected_token_id": 185,
+              "top1_top2_margin": 1.3124998807907104
+            },
+            "kv_transfer_params": {
+              "leyline": {
+                "applied": false,
+                "fallback_reason": null,
+                "local_apc_tokens": 0,
+                "normal_prefill_tokens": 1290,
+                "recorded": true,
+                "transform_duration_ms": 0.0,
+                "transformed_tokens": 0
+              }
+            },
+            "metrics": {
+              "generation_time_ms": 5839.026961475611,
+              "mean_itl_ms": 92.68296764247002,
+              "queue_time_ms": 0.011671334505081177,
+              "time_to_first_token_ms": 96.46771848201752,
+              "tokens_per_second": 10.782589059696853
+            },
+            "output_token_ids": [
+              185,
+              6162,
+              408,
+              50913,
+              13443,
+              25,
+              5724,
+              77821,
+              271,
+              23061,
+              8247,
+              285,
+              49896,
+              18548,
+              13,
+              1002,
+              2432,
+              317,
+              441,
+              274,
+              19958,
+              3377,
+              285,
+              643,
+              642,
+              10801,
+              13,
+              185,
+              6162,
+              408,
+              50913,
+              13443,
+              25,
+              5724,
+              77821,
+              271,
+              23061,
+              8247,
+              285,
+              49896,
+              18548,
+              13,
+              1002,
+              2432,
+              317,
+              441,
+              274,
+              19958,
+              3377,
+              285,
+              643,
+              642,
+              10801,
+              13,
+              185,
+              6162,
+              408,
+              50913,
+              13443,
+              25,
+              5724,
+              77821,
+              271,
+              23061
+            ],
+            "request_id": "leyline-validation-0bc4b3de3b3d41e48fa57654b6f69d9a",
+            "response_id": "cmpl-leyline-validation-0bc4b3de3b3d41e48fa57654b6f69d9a",
+            "structured": null,
+            "text": "\nSuperseded draft: staff brainstormed packaging colors and provisional counts. This text is not an inventory record and has no authority.\nSuperseded draft: staff brainstormed packaging colors and provisional counts. This text is not an inventory record and has no authority.\nSuperseded draft: staff brainstormed packaging",
+            "usage": {
+              "completion_tokens": 64,
+              "prompt_tokens": 1290,
+              "prompt_tokens_details": null,
+              "total_tokens": 1354
+            }
+          },
+          "request_id": "leyline-validation-eeaba9a7f9634f98b00dad1f6b5aec75",
+          "response_id": "cmpl-leyline-validation-eeaba9a7f9634f98b00dad1f6b5aec75",
+          "structured": null,
+          "text": "\n## 2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2",
+          "usage": {
+            "completion_tokens": 64,
+            "prompt_tokens": 534,
+            "prompt_tokens_details": null,
+            "total_tokens": 598
+          }
+        },
+        "patched_disabled": {
+          "client_latency_ms": 5951.21356844902,
+          "first_token_scores": {
+            "candidates": [
+              {
+                "logprob": -0.6582384705543518,
+                "token_id": 185
+              },
+              {
+                "logprob": -2.720738410949707,
+                "token_id": 10897
+              },
+              {
+                "logprob": -2.908238410949707,
+                "token_id": 15957
+              },
+              {
+                "logprob": -3.220738410949707,
+                "token_id": 90
+              },
+              {
+                "logprob": -3.345738410949707,
+                "token_id": 8925
+              },
+              {
+                "logprob": -3.783238410949707,
+                "token_id": 24247
+              },
+              {
+                "logprob": -4.345738410949707,
+                "token_id": 7672
+              },
+              {
+                "logprob": -4.783238410949707,
+                "token_id": 58
+              },
+              {
+                "logprob": -4.908238410949707,
+                "token_id": 7417
+              },
+              {
+                "logprob": -4.970738410949707,
+                "token_id": 19332
+              }
+            ],
+            "evidence_type": "api_logprobs",
+            "raw_logits": false,
+            "selected_logprob": -0.6582384705543518,
+            "selected_token_id": 185,
+            "top1_top2_margin": 2.0624999403953552
+          },
+          "kv_transfer_params": null,
+          "matches_reference": true,
+          "metrics": {
+            "generation_time_ms": 5846.756242215633,
+            "mean_itl_ms": 92.8056546383434,
+            "queue_time_ms": 0.01315772533416748,
+            "time_to_first_token_ms": 96.93730995059013,
+            "tokens_per_second": 10.76771529997113
+          },
+          "output_token_ids": [
+            185,
+            15957,
+            14531,
+            67261,
+            3396,
+            18384,
+            17254,
+            25,
+            1933,
+            84,
+            28,
+            59161,
+            1270,
+            12,
+            91598,
+            26,
+            2324,
+            28,
+            15,
+            26,
+            298,
+            2862,
+            62,
+            3784,
+            28,
+            16,
+            17,
+            26,
+            13602,
+            62,
+            2596,
+            28,
+            248,
+            2862,
+            26,
+            13602,
+            62,
+            43149,
+            28,
+            18,
+            17,
+            13,
+            1002,
+            3938,
+            3377,
+            22950,
+            22060,
+            72839,
+            13,
+            185,
+            15957,
+            14531,
+            67261,
+            3396,
+            18384,
+            17254,
+            25,
+            1933,
+            84,
+            28,
+            59161,
+            1270,
+            12,
+            91598
+          ],
+          "request_id": "leyline-validation-46825d295eea4f27bef3c2e7012ce3d7",
+          "response_id": "cmpl-leyline-validation-46825d295eea4f27bef3c2e7012ce3d7",
+          "structured": null,
+          "text": "\nAuthoritative FINAL INVENTORY: sku=accelerator-cable; available=0; reorder_point=12; approved_action=reorder; approved_quantity=32. This complete record supersedes drafts.\nAuthoritative FINAL INVENTORY: sku=accelerator-cable",
+          "usage": {
+            "completion_tokens": 64,
+            "prompt_tokens": 534,
+            "prompt_tokens_details": null,
+            "total_tokens": 598
+          }
+        },
+        "vanilla_apc": {
+          "client_latency_ms": 6007.07745924592,
+          "first_token_scores": {
+            "candidates": [
+              {
+                "logprob": -0.6749306917190552,
+                "token_id": 185
+              },
+              {
+                "logprob": -2.6749305725097656,
+                "token_id": 10897
+              },
+              {
+                "logprob": -2.9249305725097656,
+                "token_id": 15957
+              },
+              {
+                "logprob": -3.2374305725097656,
+                "token_id": 90
+              },
+              {
+                "logprob": -3.4249305725097656,
+                "token_id": 8925
+              },
+              {
+                "logprob": -3.7999305725097656,
+                "token_id": 24247
+              },
+              {
+                "logprob": -4.362430572509766,
+                "token_id": 7672
+              },
+              {
+                "logprob": -4.799930572509766,
+                "token_id": 58
+              },
+              {
+                "logprob": -4.799930572509766,
+                "token_id": 7417
+              },
+              {
+                "logprob": -4.987430572509766,
+                "token_id": 19332
+              }
+            ],
+            "evidence_type": "api_logprobs",
+            "raw_logits": false,
+            "selected_logprob": -0.6749306917190552,
+            "selected_token_id": 185,
+            "top1_top2_margin": 1.9999998807907104
+          },
+          "kv_transfer_params": null,
+          "matches_reference": true,
+          "metrics": {
+            "generation_time_ms": 5895.885959267616,
+            "mean_itl_ms": 93.58549141694628,
+            "queue_time_ms": 0.009879469871520996,
+            "time_to_first_token_ms": 100.18885135650635,
+            "tokens_per_second": 10.673649349171201
+          },
+          "output_token_ids": [
+            185,
+            15957,
+            14531,
+            67261,
+            3396,
+            18384,
+            17254,
+            25,
+            1933,
+            84,
+            28,
+            59161,
+            1270,
+            12,
+            91598,
+            26,
+            2324,
+            28,
+            15,
+            26,
+            298,
+            2862,
+            62,
+            3784,
+            28,
+            16,
+            17,
+            26,
+            13602,
+            62,
+            2596,
+            28,
+            248,
+            2862,
+            26,
+            13602,
+            62,
+            43149,
+            28,
+            18,
+            17,
+            13,
+            1002,
+            3938,
+            3377,
+            22950,
+            22060,
+            72839,
+            13,
+            185,
+            15957,
+            14531,
+            67261,
+            3396,
+            18384,
+            17254,
+            25,
+            1933,
+            84,
+            28,
+            59161,
+            1270,
+            12,
+            91598
+          ],
+          "request_id": "leyline-validation-55da8c8dfa6a41a5beb8dad7eb4a2191",
+          "response_id": "cmpl-leyline-validation-55da8c8dfa6a41a5beb8dad7eb4a2191",
+          "structured": null,
+          "text": "\nAuthoritative FINAL INVENTORY: sku=accelerator-cable; available=0; reorder_point=12; approved_action=reorder; approved_quantity=32. This complete record supersedes drafts.\nAuthoritative FINAL INVENTORY: sku=accelerator-cable",
+          "usage": {
+            "completion_tokens": 64,
+            "prompt_tokens": 534,
+            "prompt_tokens_details": null,
+            "total_tokens": 598
+          }
+        }
+      },
+      "category": "counterfactual_admissible",
+      "counterfactuals": [
+        {
+          "client_latency_ms": 6465.704899281263,
+          "first_token_scores": {
+            "candidates": [
+              {
+                "logprob": -0.8861101865768433,
+                "token_id": 185
+              },
+              {
+                "logprob": -1.7611101865768433,
+                "token_id": 6162
+              },
+              {
+                "logprob": -2.323610305786133,
+                "token_id": 8925
+              },
+              {
+                "logprob": -3.198610305786133,
+                "token_id": 15957
+              },
+              {
+                "logprob": -3.948610305786133,
+                "token_id": 10897
+              },
+              {
+                "logprob": -4.573610305786133,
+                "token_id": 24247
+              },
+              {
+                "logprob": -4.636110305786133,
+                "token_id": 7672
+              },
+              {
+                "logprob": -4.636110305786133,
+                "token_id": 100001
+              },
+              {
+                "logprob": -4.823610305786133,
+                "token_id": 90
+              },
+              {
+                "logprob": -5.011110305786133,
+                "token_id": 19275
+              }
+            ],
+            "evidence_type": "api_logprobs",
+            "raw_logits": false,
+            "selected_logprob": -0.8861101865768433,
+            "selected_token_id": 185,
+            "top1_top2_margin": 0.875
+          },
+          "kv_transfer_params": null,
+          "matches_reference": true,
+          "metrics": {
+            "generation_time_ms": 6343.044068664312,
+            "mean_itl_ms": 100.68323918514783,
+            "queue_time_ms": 0.013750046491622925,
+            "time_to_first_token_ms": 114.26746100187302,
+            "tokens_per_second": 9.911245524700357
+          },
+          "output_token_ids": [
+            185,
+            6162,
+            408,
+            50913,
+            13443,
+            25,
+            245,
+            2557,
+            9147,
+            24312,
+            13809,
+            11,
+            1673,
+            33364,
+            274,
+            80735,
+            6645,
+            1690,
+            13,
+            185,
+            6162,
+            408,
+            50913,
+            13443,
+            25,
+            245,
+            2557,
+            9147,
+            24312,
+            13809,
+            11,
+            1673,
+            33364,
+            274,
+            80735,
+            6645,
+            1690,
+            13,
+            185,
+            6162,
+            408,
+            50913,
+            13443,
+            25,
+            245,
+            2557,
+            9147,
+            24312,
+            13809,
+            11,
+            1673,
+            33364,
+            274,
+            80735,
+            6645,
+            1690,
+            13,
+            185,
+            6162,
+            408,
+            50913,
+            13443,
+            25,
+            245
+          ],
+          "request_id": "leyline-validation-063c148db82b438797f2465f3bc9861d",
+          "response_id": "cmpl-leyline-validation-063c148db82b438797f2465f3bc9861d",
+          "structured": null,
+          "text": "\nSuperseded draft: a team discussed shelf labels, without specifying an actionable stock count.\nSuperseded draft: a team discussed shelf labels, without specifying an actionable stock count.\nSuperseded draft: a team discussed shelf labels, without specifying an actionable stock count.\nSuperseded draft: a",
+          "usage": {
+            "completion_tokens": 64,
+            "prompt_tokens": 1066,
+            "prompt_tokens_details": null,
+            "total_tokens": 1130
+          },
+          "variant": 0
+        },
+        {
+          "client_latency_ms": 6496.996328234673,
+          "first_token_scores": {
+            "candidates": [
+              {
+                "logprob": -0.9328371286392212,
+                "token_id": 185
+              },
+              {
+                "logprob": -1.6828371286392212,
+                "token_id": 6162
+              },
+              {
+                "logprob": -1.8078371286392212,
+                "token_id": 8925
+              },
+              {
+                "logprob": -2.9953370094299316,
+                "token_id": 15957
+              },
+              {
+                "logprob": -4.745337009429932,
+                "token_id": 7672
+              },
+              {
+                "logprob": -4.870337009429932,
+                "token_id": 10897
+              },
+              {
+                "logprob": -4.932837009429932,
+                "token_id": 34357
+              },
+              {
+                "logprob": -4.995337009429932,
+                "token_id": 19275
+              },
+              {
+                "logprob": -5.182837009429932,
+                "token_id": 1567
+              },
+              {
+                "logprob": -5.182837009429932,
+                "token_id": 23715
+              }
+            ],
+            "evidence_type": "api_logprobs",
+            "raw_logits": false,
+            "selected_logprob": -0.9328371286392212,
+            "selected_token_id": 185,
+            "top1_top2_margin": 0.75
+          },
+          "kv_transfer_params": null,
+          "matches_reference": true,
+          "metrics": {
+            "generation_time_ms": 6375.230208039284,
+            "mean_itl_ms": 101.19413028633784,
+            "queue_time_ms": 0.012148171663284302,
+            "time_to_first_token_ms": 113.88049274682999,
+            "tokens_per_second": 9.862676559400784
+          },
+          "output_token_ids": [
+            185,
+            6162,
+            408,
+            50913,
+            13443,
+            25,
+            245,
+            33398,
+            11734,
+            1222,
+            56170,
+            16915,
+            26,
+            67261,
+            3396,
+            18384,
+            17254,
+            7544,
+            59825,
+            13,
+            185,
+            6162,
+            408,
+            50913,
+            13443,
+            25,
+            245,
+            33398,
+            11734,
+            1222,
+            56170,
+            16915,
+            26,
+            67261,
+            3396,
+            18384,
+            17254,
+            7544,
+            59825,
+            13,
+            185,
+            6162,
+            408,
+            50913,
+            13443,
+            25,
+            245,
+            33398,
+            11734,
+            1222,
+            56170,
+            16915,
+            26,
+            67261,
+            3396,
+            18384,
+            17254,
+            7544,
+            59825,
+            13,
+            185,
+            6162,
+            408,
+            50913
+          ],
+          "request_id": "leyline-validation-c9475f5f25a745ac85ba06856efe1c16",
+          "response_id": "cmpl-leyline-validation-c9475f5f25a745ac85ba06856efe1c16",
+          "structured": null,
+          "text": "\nSuperseded draft: a warehouse simulation used fictional quantities; FINAL INVENTORY remains authoritative.\nSuperseded draft: a warehouse simulation used fictional quantities; FINAL INVENTORY remains authoritative.\nSuperseded draft: a warehouse simulation used fictional quantities; FINAL INVENTORY remains authoritative.\nSuperseded",
+          "usage": {
+            "completion_tokens": 64,
+            "prompt_tokens": 1094,
+            "prompt_tokens_details": null,
+            "total_tokens": 1158
+          },
+          "variant": 1
+        }
+      ],
+      "evaluation": {
+        "match_target": "first_1_generated_token_ids_from_full",
+        "mode": "reference_prefix",
+        "preflight_passed": true,
+        "prompt_format": "raw",
+        "reference_tokens": 1,
+        "semantic_oracle_validated": false
+      },
+      "gates": {
+        "admitted": true,
+        "category_baseline_matches": true,
+        "counterfactuals_match": true,
+        "diagnostic_only": false,
+        "full_matches": true,
+        "honest_edited_matches": true,
+        "leyline_accepted": true,
+        "leyline_execution_valid": true,
+        "leyline_matches": true,
+        "reference_admitted": true,
+        "semantic_admitted": false
+      },
+      "id": "counterfactual-final-inventory",
+      "leyline_execution": {
+        "applied": true,
+        "no_fallback": true,
+        "output_token_ids_present": true,
+        "recorded": true,
+        "transformed_tokens_positive": true,
+        "valid": true
+      },
+      "oracle": {
+        "action": "reorder",
+        "quantity": 32,
+        "sku": "accelerator-cable"
+      },
+      "pairwise": {
+        "full_honest_edited": {
+          "available": true,
+          "common_prefix_tokens": 1,
+          "evidence_type": "api_logprobs",
+          "first_divergence": {
+            "index": 1,
+            "left": 6162,
+            "right": 15957
+          },
+          "first_token_agreement": true,
+          "left_top1_top2_margin": 1.1875000596046448,
+          "right_top1_top2_margin": 1.9375000596046448,
+          "topk_overlap_token_ids": [
+            90,
+            185,
+            7672,
+            8925,
+            10897,
+            15957,
+            24247
+          ]
+        },
+        "full_leyline": {
+          "available": true,
+          "common_prefix_tokens": 1,
+          "evidence_type": "api_logprobs",
+          "first_divergence": {
+            "index": 1,
+            "left": 6162,
+            "right": 1679
+          },
+          "first_token_agreement": true,
+          "left_top1_top2_margin": 1.1875000596046448,
+          "right_top1_top2_margin": 2.5624999403953552,
+          "topk_overlap_token_ids": [
+            90,
+            185,
+            7672,
+            8925,
+            10897,
+            15957,
+            24247,
+            100001
+          ]
+        },
+        "honest_edited_leyline": {
+          "available": true,
+          "common_prefix_tokens": 1,
+          "evidence_type": "api_logprobs",
+          "first_divergence": {
+            "index": 1,
+            "left": 15957,
+            "right": 1679
+          },
+          "first_token_agreement": true,
+          "left_top1_top2_margin": 1.9375000596046448,
+          "right_top1_top2_margin": 2.5624999403953552,
+          "topk_overlap_token_ids": [
+            90,
+            185,
+            7417,
+            7672,
+            8925,
+            10897,
+            15957,
+            24247
+          ]
+        }
+      },
+      "prompt_tokens": {
+        "deleted": 756,
+        "edited": 534,
+        "full": 1290
+      }
+    },
+    {
+      "arms": {
+        "full": {
+          "client_latency_ms": 6013.720009475946,
+          "first_token_scores": {
+            "candidates": [
+              {
+                "logprob": -1.0889145135879517,
+                "token_id": 2640
+              },
+              {
+                "logprob": -1.9014145135879517,
+                "token_id": 185
+              },
+              {
+                "logprob": -2.463914394378662,
+                "token_id": 59022
+              },
+              {
+                "logprob": -3.151414394378662,
+                "token_id": 45
+              },
+              {
+                "logprob": -3.401414394378662,
+                "token_id": 21483
+              },
+              {
+                "logprob": -3.463914394378662,
+                "token_id": 1698
+              },
+              {
+                "logprob": -3.901414394378662,
+                "token_id": 549
+              },
+              {
+                "logprob": -4.151414394378662,
+                "token_id": 9517
+              },
+              {
+                "logprob": -4.651414394378662,
+                "token_id": 3171
+              },
+              {
+                "logprob": -4.713914394378662,
+                "token_id": 4998
+              }
+            ],
+            "evidence_type": "api_logprobs",
+            "raw_logits": false,
+            "selected_logprob": -1.0889145135879517,
+            "selected_token_id": 2640,
+            "top1_top2_margin": 0.8125
+          },
+          "kv_transfer_params": null,
+          "matches_reference": true,
+          "metrics": {
+            "generation_time_ms": 5903.974439948797,
+            "mean_itl_ms": 93.71387999918726,
+            "queue_time_ms": 0.013202428817749023,
+            "time_to_first_token_ms": 101.79734975099564,
+            "tokens_per_second": 10.656415568397602
+          },
+          "output_token_ids": [
+            2640,
+            317,
+            254,
+            2462,
+            2985,
+            30,
+            185,
+            2640,
+            317,
+            254,
+            2462,
+            2985,
+            30,
+            185,
+            2640,
+            317,
+            254,
+            2462,
+            2985,
+            30,
+            185,
+            2640,
+            317,
+            254,
+            2462,
+            2985,
+            30,
+            185,
+            2640,
+            317,
+            254,
+            2462,
+            2985,
+            30,
+            185,
+            2640,
+            317,
+            254,
+            2462,
+            2985,
+            30,
+            185,
+            2640,
+            317,
+            254,
+            2462,
+            2985,
+            30,
+            185,
+            2640,
+            317,
+            254,
+            2462,
+            2985,
+            30,
+            185,
+            2640,
+            317,
+            254,
+            2462,
+            2985,
+            30,
+            185,
+            2640
+          ],
+          "request_id": "leyline-validation-fb617fc5730e49ae885b6c2953f00b93",
+          "response_id": "cmpl-leyline-validation-fb617fc5730e49ae885b6c2953f00b93",
+          "structured": null,
+          "text": "What is the access code?\nWhat is the access code?\nWhat is the access code?\nWhat is the access code?\nWhat is the access code?\nWhat is the access code?\nWhat is the access code?\nWhat is the access code?\nWhat is the access code?\nWhat",
+          "usage": {
+            "completion_tokens": 64,
+            "prompt_tokens": 912,
+            "prompt_tokens_details": null,
+            "total_tokens": 976
+          }
+        },
+        "honest_edited": {
+          "client_latency_ms": 5987.523689866066,
+          "first_token_scores": {
+            "candidates": [
+              {
+                "logprob": -1.4957787990570068,
+                "token_id": 185
+              },
+              {
+                "logprob": -2.308278799057007,
+                "token_id": 2640
+              },
+              {
+                "logprob": -2.433278799057007,
+                "token_id": 59022
+              },
+              {
+                "logprob": -2.683278799057007,
+                "token_id": 61358
+              },
+              {
+                "logprob": -3.183278799057007,
+                "token_id": 21483
+              },
+              {
+                "logprob": -3.433278799057007,
+                "token_id": 9517
+              },
+              {
+                "logprob": -3.620778799057007,
+                "token_id": 549
+              },
+              {
+                "logprob": -4.308279037475586,
+                "token_id": 16
+              },
+              {
+                "logprob": -4.433279037475586,
+                "token_id": 14609
+              },
+              {
+                "logprob": -4.620779037475586,
+                "token_id": 7
+              }
+            ],
+            "evidence_type": "api_logprobs",
+            "raw_logits": false,
+            "selected_logprob": -1.4957787990570068,
+            "selected_token_id": 185,
+            "top1_top2_margin": 0.8125
+          },
+          "kv_transfer_params": null,
+          "matches_reference": false,
+          "metrics": {
+            "generation_time_ms": 5883.627261966467,
+            "mean_itl_ms": 93.39090892010266,
+            "queue_time_ms": 0.01154094934463501,
+            "time_to_first_token_ms": 96.29811719059944,
+            "tokens_per_second": 10.702474686903447
+          },
+          "output_token_ids": [
+            185,
+            61358,
+            13789,
+            25,
+            245,
+            2985,
+            22704,
+            279,
+            274,
+            7234,
+            3896,
+            11,
+            548,
+            437,
+            13789,
+            32643,
+            1217,
+            441,
+            26754,
+            359,
+            13,
+            185,
+            61358,
+            13789,
+            25,
+            245,
+            2985,
+            22704,
+            279,
+            274,
+            7234,
+            3896,
+            11,
+            548,
+            437,
+            13789,
+            32643,
+            1217,
+            441,
+            26754,
+            359,
+            13,
+            185,
+            61358,
+            13789,
+            25,
+            245,
+            2985,
+            22704,
+            279,
+            274,
+            7234,
+            3896,
+            11,
+            548,
+            437,
+            13789,
+            32643,
+            1217,
+            441,
+            26754,
+            359,
+            13,
+            185
+          ],
+          "request_id": "leyline-validation-474477ec4f5d4c638b08a90b65de7847",
+          "response_id": "cmpl-leyline-validation-474477ec4f5d4c638b08a90b65de7847",
+          "structured": null,
+          "text": "\nAudit trail: a code existed in an earlier section, but this trail deliberately does not reproduce it.\nAudit trail: a code existed in an earlier section, but this trail deliberately does not reproduce it.\nAudit trail: a code existed in an earlier section, but this trail deliberately does not reproduce it.\n",
+          "usage": {
+            "completion_tokens": 64,
+            "prompt_tokens": 408,
+            "prompt_tokens_details": null,
+            "total_tokens": 472
+          }
+        },
+        "leyline": {
+          "client_latency_ms": 6819.799482822418,
+          "first_token_scores": {
+            "candidates": [
+              {
+                "logprob": -1.353556752204895,
+                "token_id": 185
+              },
+              {
+                "logprob": -2.1660566329956055,
+                "token_id": 2640
+              },
+              {
+                "logprob": -2.6660566329956055,
+                "token_id": 59022
+              },
+              {
+                "logprob": -2.9785566329956055,
+                "token_id": 61358
+              },
+              {
+                "logprob": -3.2910566329956055,
+                "token_id": 21483
+              },
+              {
+                "logprob": -3.4160566329956055,
+                "token_id": 549
+              },
+              {
+                "logprob": -3.5410566329956055,
+                "token_id": 9517
+              },
+              {
+                "logprob": -4.6660566329956055,
+                "token_id": 1567
+              },
+              {
+                "logprob": -4.6660566329956055,
+                "token_id": 4998
+              },
+              {
+                "logprob": -4.7285566329956055,
+                "token_id": 16
+              }
+            ],
+            "evidence_type": "api_logprobs",
+            "raw_logits": false,
+            "selected_logprob": -1.353556752204895,
+            "selected_token_id": 185,
+            "top1_top2_margin": 0.8124998807907104
+          },
+          "kv_transfer_params": {
+            "leyline": {
+              "applied": true,
+              "fallback_reason": null,
+              "local_apc_tokens": 0,
+              "normal_prefill_tokens": 24,
+              "recorded": true,
+              "transform_duration_ms": 48.453189432621,
+              "transformed_tokens": 384
+            }
+          },
+          "matches_reference": false,
+          "metrics": {
+            "generation_time_ms": 6614.412780851126,
+            "mean_itl_ms": 104.99067906112899,
+            "queue_time_ms": 51.110800355672836,
+            "time_to_first_token_ms": 134.60832834243774,
+            "tokens_per_second": 9.48285669351645
+          },
+          "output_token_ids": [
+            185,
+            185,
+            32,
+            25,
+            304,
+            6,
+            76,
+            441,
+            2049,
+            565,
+            437,
+            317,
+            254,
+            1608,
+            1143,
+            276,
+            536,
+            359,
+            11,
+            548,
+            304,
+            6,
+            313,
+            2368,
+            359,
+            437,
+            1143,
+            13,
+            185,
+            40,
+            6,
+            313,
+            4015,
+            245,
+            1157,
+            344,
+            4497,
+            245,
+            2662,
+            285,
+            7578,
+            245,
+            2662,
+            13,
+            185,
+            3361,
+            752,
+            9517,
+            4998,
+            7,
+            2612,
+            8,
+            509,
+            185,
+            300,
+            2251,
+            2462,
+            4998,
+            403,
+            2662,
+            13,
+            7807,
+            1504,
+            655
+          ],
+          "record": {
+            "client_latency_ms": 5999.449208378792,
+            "first_token_scores": {
+              "candidates": [
+                {
+                  "logprob": -1.181976079940796,
+                  "token_id": 2640
+                },
+                {
+                  "logprob": -1.806976079940796,
+                  "token_id": 185
+                },
+                {
+                  "logprob": -2.556976079940796,
+                  "token_id": 59022
+                },
+                {
+                  "logprob": -3.119476079940796,
+                  "token_id": 45
+                },
+                {
+                  "logprob": -3.369476079940796,
+                  "token_id": 1698
+                },
+                {
+                  "logprob": -3.431976079940796,
+                  "token_id": 21483
+                },
+                {
+                  "logprob": -3.931976079940796,
+                  "token_id": 549
+                },
+                {
+                  "logprob": -4.181976318359375,
+                  "token_id": 9517
+                },
+                {
+                  "logprob": -4.619476318359375,
+                  "token_id": 3171
+                },
+                {
+                  "logprob": -4.744476318359375,
+                  "token_id": 32
+                }
+              ],
+              "evidence_type": "api_logprobs",
+              "raw_logits": false,
+              "selected_logprob": -1.181976079940796,
+              "selected_token_id": 2640,
+              "top1_top2_margin": 0.625
+            },
+            "kv_transfer_params": {
+              "leyline": {
+                "applied": false,
+                "fallback_reason": null,
+                "local_apc_tokens": 0,
+                "normal_prefill_tokens": 912,
+                "recorded": true,
+                "transform_duration_ms": 0.0,
+                "transformed_tokens": 0
+              }
+            },
+            "metrics": {
+              "generation_time_ms": 5893.095027655363,
+              "mean_itl_ms": 93.54119091516449,
+              "queue_time_ms": 0.014659017324447632,
+              "time_to_first_token_ms": 98.47528114914894,
+              "tokens_per_second": 10.681673868694002
+            },
+            "output_token_ids": [
+              2640,
+              317,
+              254,
+              2462,
+              2985,
+              30,
+              185,
+              2640,
+              317,
+              254,
+              2462,
+              2985,
+              30,
+              185,
+              2640,
+              317,
+              254,
+              2462,
+              2985,
+              30,
+              185,
+              2640,
+              317,
+              254,
+              2462,
+              2985,
+              30,
+              185,
+              2640,
+              317,
+              254,
+              2462,
+              2985,
+              30,
+              185,
+              2640,
+              317,
+              254,
+              2462,
+              2985,
+              30,
+              185,
+              2640,
+              317,
+              254,
+              2462,
+              2985,
+              30,
+              185,
+              2640,
+              317,
+              254,
+              2462,
+              2985,
+              30,
+              185,
+              2640,
+              317,
+              254,
+              2462,
+              2985,
+              30,
+              185,
+              2640
+            ],
+            "request_id": "leyline-validation-12760f893643485c84523e0acc0692f2",
+            "response_id": "cmpl-leyline-validation-12760f893643485c84523e0acc0692f2",
+            "structured": null,
+            "text": "What is the access code?\nWhat is the access code?\nWhat is the access code?\nWhat is the access code?\nWhat is the access code?\nWhat is the access code?\nWhat is the access code?\nWhat is the access code?\nWhat is the access code?\nWhat",
+            "usage": {
+              "completion_tokens": 64,
+              "prompt_tokens": 912,
+              "prompt_tokens_details": null,
+              "total_tokens": 976
+            }
+          },
+          "request_id": "leyline-validation-4d6efe9929514e2b8a83faf243778c34",
+          "response_id": "cmpl-leyline-validation-4d6efe9929514e2b8a83faf243778c34",
+          "structured": null,
+          "text": "\n\nA: I'm not sure if this is the best way to do it, but I've done it this way.\nI've created a function that takes a string and returns a string.\nfunction getAccessCode(string) {\n    var accessCode = string.split(' '",
+          "usage": {
+            "completion_tokens": 64,
+            "prompt_tokens": 408,
+            "prompt_tokens_details": null,
+            "total_tokens": 472
+          }
+        },
+        "patched_disabled": {
+          "client_latency_ms": 5980.012562125921,
+          "first_token_scores": {
+            "candidates": [
+              {
+                "logprob": -1.5960698127746582,
+                "token_id": 185
+              },
+              {
+                "logprob": -2.158569812774658,
+                "token_id": 2640
+              },
+              {
+                "logprob": -2.283569812774658,
+                "token_id": 59022
+              },
+              {
+                "logprob": -2.658569812774658,
+                "token_id": 61358
+              },
+              {
+                "logprob": -3.096069812774658,
+                "token_id": 21483
+              },
+              {
+                "logprob": -3.408569812774658,
+                "token_id": 9517
+              },
+              {
+                "logprob": -3.658569812774658,
+                "token_id": 549
+              },
+              {
+                "logprob": -4.471069812774658,
+                "token_id": 16
+              },
+              {
+                "logprob": -4.471069812774658,
+                "token_id": 4998
+              },
+              {
+                "logprob": -4.471069812774658,
+                "token_id": 14609
+              }
+            ],
+            "evidence_type": "api_logprobs",
+            "raw_logits": false,
+            "selected_logprob": -1.5960698127746582,
+            "selected_token_id": 185,
+            "top1_top2_margin": 0.5625
+          },
+          "kv_transfer_params": null,
+          "matches_reference": false,
+          "metrics": {
+            "generation_time_ms": 5863.505437970161,
+            "mean_itl_ms": 93.07151488841527,
+            "queue_time_ms": 0.011019408702850342,
+            "time_to_first_token_ms": 100.5290299654007,
+            "tokens_per_second": 10.7309909666155
+          },
+          "output_token_ids": [
+            185,
+            61358,
+            13789,
+            25,
+            245,
+            2985,
+            22704,
+            279,
+            274,
+            7234,
+            3896,
+            11,
+            548,
+            437,
+            13789,
+            32643,
+            1217,
+            441,
+            26754,
+            359,
+            13,
+            185,
+            61358,
+            13789,
+            25,
+            245,
+            2985,
+            22704,
+            279,
+            274,
+            7234,
+            3896,
+            11,
+            548,
+            437,
+            13789,
+            32643,
+            1217,
+            441,
+            26754,
+            359,
+            13,
+            185,
+            61358,
+            13789,
+            25,
+            245,
+            2985,
+            22704,
+            279,
+            274,
+            7234,
+            3896,
+            11,
+            548,
+            437,
+            13789,
+            32643,
+            1217,
+            441,
+            26754,
+            359,
+            13,
+            185
+          ],
+          "request_id": "leyline-validation-59edc69ede1f4fc0ad9c1da2431075dc",
+          "response_id": "cmpl-leyline-validation-59edc69ede1f4fc0ad9c1da2431075dc",
+          "structured": null,
+          "text": "\nAudit trail: a code existed in an earlier section, but this trail deliberately does not reproduce it.\nAudit trail: a code existed in an earlier section, but this trail deliberately does not reproduce it.\nAudit trail: a code existed in an earlier section, but this trail deliberately does not reproduce it.\n",
+          "usage": {
+            "completion_tokens": 64,
+            "prompt_tokens": 408,
+            "prompt_tokens_details": null,
+            "total_tokens": 472
+          }
+        },
+        "vanilla_apc": {
+          "client_latency_ms": 6071.686208248138,
+          "first_token_scores": {
+            "candidates": [
+              {
+                "logprob": -1.5622446537017822,
+                "token_id": 185
+              },
+              {
+                "logprob": -2.3122446537017822,
+                "token_id": 2640
+              },
+              {
+                "logprob": -2.3122446537017822,
+                "token_id": 59022
+              },
+              {
+                "logprob": -2.6247446537017822,
+                "token_id": 61358
+              },
+              {
+                "logprob": -3.0622446537017822,
+                "token_id": 21483
+              },
+              {
+                "logprob": -3.3747446537017822,
+                "token_id": 9517
+              },
+              {
+                "logprob": -3.6247446537017822,
+                "token_id": 549
+              },
+              {
+                "logprob": -4.437244415283203,
+                "token_id": 16
+              },
+              {
+                "logprob": -4.437244415283203,
+                "token_id": 4998
+              },
+              {
+                "logprob": -4.437244415283203,
+                "token_id": 14609
+              }
+            ],
+            "evidence_type": "api_logprobs",
+            "raw_logits": false,
+            "selected_logprob": -1.5622446537017822,
+            "selected_token_id": 185,
+            "top1_top2_margin": 0.75
+          },
+          "kv_transfer_params": null,
+          "matches_reference": false,
+          "metrics": {
+            "generation_time_ms": 5942.8807608783245,
+            "mean_itl_ms": 94.3314406488623,
+            "queue_time_ms": 0.007908791303634644,
+            "time_to_first_token_ms": 101.50578990578651,
+            "tokens_per_second": 10.588336709156627
+          },
+          "output_token_ids": [
+            185,
+            61358,
+            13789,
+            25,
+            245,
+            2985,
+            22704,
+            279,
+            274,
+            7234,
+            3896,
+            11,
+            548,
+            437,
+            13789,
+            32643,
+            1217,
+            441,
+            26754,
+            359,
+            13,
+            185,
+            61358,
+            13789,
+            25,
+            245,
+            2985,
+            22704,
+            279,
+            274,
+            7234,
+            3896,
+            11,
+            548,
+            437,
+            13789,
+            32643,
+            1217,
+            441,
+            26754,
+            359,
+            13,
+            185,
+            61358,
+            13789,
+            25,
+            245,
+            2985,
+            22704,
+            279,
+            274,
+            7234,
+            3896,
+            11,
+            548,
+            437,
+            13789,
+            32643,
+            1217,
+            441,
+            26754,
+            359,
+            13,
+            185
+          ],
+          "request_id": "leyline-validation-490ce21c3cb44176a11c3c1b447db081",
+          "response_id": "cmpl-leyline-validation-490ce21c3cb44176a11c3c1b447db081",
+          "structured": null,
+          "text": "\nAudit trail: a code existed in an earlier section, but this trail deliberately does not reproduce it.\nAudit trail: a code existed in an earlier section, but this trail deliberately does not reproduce it.\nAudit trail: a code existed in an earlier section, but this trail deliberately does not reproduce it.\n",
+          "usage": {
+            "completion_tokens": 64,
+            "prompt_tokens": 408,
+            "prompt_tokens_details": null,
+            "total_tokens": 472
+          }
+        }
+      },
+      "category": "mechanism_diagnostic",
+      "counterfactuals": [],
+      "evaluation": {
+        "match_target": "first_1_generated_token_ids_from_full",
+        "mode": "reference_prefix",
+        "preflight_passed": true,
+        "prompt_format": "raw",
+        "reference_tokens": 1,
+        "semantic_oracle_validated": false
+      },
+      "gates": {
+        "admitted": false,
+        "category_baseline_matches": true,
+        "counterfactuals_match": true,
+        "diagnostic_only": true,
+        "full_matches": true,
+        "honest_edited_matches": false,
+        "leyline_accepted": false,
+        "leyline_execution_valid": true,
+        "leyline_matches": false,
+        "reference_admitted": false,
+        "semantic_admitted": false
+      },
+      "id": "diagnostic-deleted-secret",
+      "leyline_execution": {
+        "applied": true,
+        "no_fallback": true,
+        "output_token_ids_present": true,
+        "recorded": true,
+        "transformed_tokens_positive": true,
+        "valid": true
+      },
+      "oracle": {
+        "code": "ORCHID-7319"
+      },
+      "pairwise": {
+        "full_honest_edited": {
+          "available": true,
+          "common_prefix_tokens": 0,
+          "evidence_type": "api_logprobs",
+          "first_divergence": {
+            "index": 0,
+            "left": 2640,
+            "right": 185
+          },
+          "first_token_agreement": false,
+          "left_top1_top2_margin": 0.8125,
+          "right_top1_top2_margin": 0.8125,
+          "topk_overlap_token_ids": [
+            185,
+            549,
+            2640,
+            9517,
+            21483,
+            59022
+          ]
+        },
+        "full_leyline": {
+          "available": true,
+          "common_prefix_tokens": 0,
+          "evidence_type": "api_logprobs",
+          "first_divergence": {
+            "index": 0,
+            "left": 2640,
+            "right": 185
+          },
+          "first_token_agreement": false,
+          "left_top1_top2_margin": 0.8125,
+          "right_top1_top2_margin": 0.8124998807907104,
+          "topk_overlap_token_ids": [
+            185,
+            549,
+            2640,
+            4998,
+            9517,
+            21483,
+            59022
+          ]
+        },
+        "honest_edited_leyline": {
+          "available": true,
+          "common_prefix_tokens": 1,
+          "evidence_type": "api_logprobs",
+          "first_divergence": {
+            "index": 1,
+            "left": 61358,
+            "right": 185
+          },
+          "first_token_agreement": true,
+          "left_top1_top2_margin": 0.8125,
+          "right_top1_top2_margin": 0.8124998807907104,
+          "topk_overlap_token_ids": [
+            16,
+            185,
+            549,
+            2640,
+            9517,
+            21483,
+            59022,
+            61358
+          ]
+        }
+      },
+      "prompt_tokens": {
+        "deleted": 504,
+        "edited": 408,
+        "full": 912
+      }
+    },
+    {
+      "arms": {
+        "full": {
+          "client_latency_ms": 6697.8924088180065,
+          "first_token_scores": {
+            "candidates": [
+              {
+                "logprob": -1.0344256162643433,
+                "token_id": 8925
+              },
+              {
+                "logprob": -1.4719256162643433,
+                "token_id": 185
+              },
+              {
+                "logprob": -3.221925735473633,
+                "token_id": 10897
+              },
+              {
+                "logprob": -3.346925735473633,
+                "token_id": 50
+              },
+              {
+                "logprob": -3.784425735473633,
+                "token_id": 47582
+              },
+              {
+                "logprob": -3.971925735473633,
+                "token_id": 549
+              },
+              {
+                "logprob": -4.034425735473633,
+                "token_id": 27
+              },
+              {
+                "logprob": -4.034425735473633,
+                "token_id": 24247
+              },
+              {
+                "logprob": -4.346925735473633,
+                "token_id": 100001
+              },
+              {
+                "logprob": -5.096925735473633,
+                "token_id": 535
+              }
+            ],
+            "evidence_type": "api_logprobs",
+            "raw_logits": false,
+            "selected_logprob": -1.0344256162643433,
+            "selected_token_id": 8925,
+            "top1_top2_margin": 0.4375
+          },
+          "kv_transfer_params": null,
+          "matches_reference": true,
+          "metrics": {
+            "generation_time_ms": 6574.707578867674,
+            "mean_itl_ms": 104.36043775980434,
+            "queue_time_ms": 0.014118850231170654,
+            "time_to_first_token_ms": 115.14656990766525,
+            "tokens_per_second": 9.566725757648394
+          },
+          "output_token_ids": [
+            8925,
+            254,
+            6879,
+            3439,
+            285,
+            15006,
+            11,
+            410,
+            938,
+            97542,
+            327,
+            7085,
+            3039,
+            13,
+            185,
+            8925,
+            254,
+            6879,
+            3439,
+            285,
+            15006,
+            11,
+            410,
+            938,
+            97542,
+            327,
+            7085,
+            3039,
+            13,
+            185,
+            8925,
+            254,
+            6879,
+            3439,
+            285,
+            15006,
+            11,
+            410,
+            938,
+            97542,
+            327,
+            7085,
+            3039,
+            13,
+            185,
+            8925,
+            254,
+            6879,
+            3439,
+            285,
+            15006,
+            11,
+            410,
+            938,
+            97542,
+            327,
+            7085,
+            3039,
+            13,
+            185,
+            8925,
+            254,
+            6879,
+            3439
+          ],
+          "request_id": "leyline-validation-91823fcf18494beaa392b08b52dd6788",
+          "response_id": "cmpl-leyline-validation-91823fcf18494beaa392b08b52dd6788",
+          "structured": null,
+          "text": "Return the supported action and ticket, or use UNKNOWN for missing values.\nReturn the supported action and ticket, or use UNKNOWN for missing values.\nReturn the supported action and ticket, or use UNKNOWN for missing values.\nReturn the supported action and ticket, or use UNKNOWN for missing values.\nReturn the supported action",
+          "usage": {
+            "completion_tokens": 64,
+            "prompt_tokens": 842,
+            "prompt_tokens_details": null,
+            "total_tokens": 906
+          }
+        },
+        "honest_edited": {
+          "client_latency_ms": 6031.649619340897,
+          "first_token_scores": {
+            "candidates": [
+              {
+                "logprob": -0.6851267218589783,
+                "token_id": 185
+              },
+              {
+                "logprob": -2.060126781463623,
+                "token_id": 47582
+              },
+              {
+                "logprob": -2.747626781463623,
+                "token_id": 8925
+              },
+              {
+                "logprob": -3.560126781463623,
+                "token_id": 10897
+              },
+              {
+                "logprob": -3.810126781463623,
+                "token_id": 100001
+              },
+              {
+                "logprob": -4.310126781463623,
+                "token_id": 24247
+              },
+              {
+                "logprob": -4.435126781463623,
+                "token_id": 549
+              },
+              {
+                "logprob": -4.622626781463623,
+                "token_id": 27
+              },
+              {
+                "logprob": -4.810126781463623,
+                "token_id": 90
+              },
+              {
+                "logprob": -4.872626781463623,
+                "token_id": 535
+              }
+            ],
+            "evidence_type": "api_logprobs",
+            "raw_logits": false,
+            "selected_logprob": -0.6851267218589783,
+            "selected_token_id": 185,
+            "top1_top2_margin": 1.3750000596046448
+          },
+          "kv_transfer_params": null,
+          "matches_reference": false,
+          "metrics": {
+            "generation_time_ms": 5916.833341121674,
+            "mean_itl_ms": 93.91798954161388,
+            "queue_time_ms": 0.01329183578491211,
+            "time_to_first_token_ms": 107.09575936198235,
+            "tokens_per_second": 10.624295029445399
+          },
+          "output_token_ids": [
+            185,
+            47582,
+            1251,
+            45017,
+            25,
+            1181,
+            254,
+            80735,
+            12244,
+            565,
+            634,
+            317,
+            1828,
+            16302,
+            26,
+            437,
+            45017,
+            5410,
+            5249,
+            13,
+            185,
+            47582,
+            1251,
+            45017,
+            25,
+            1181,
+            254,
+            80735,
+            12244,
+            565,
+            634,
+            317,
+            1828,
+            16302,
+            26,
+            437,
+            45017,
+            5410,
+            5249,
+            13,
+            185,
+            47582,
+            1251,
+            45017,
+            25,
+            1181,
+            254,
+            80735,
+            12244,
+            565,
+            634,
+            317,
+            1828,
+            16302,
+            26,
+            437,
+            45017,
+            5410,
+            5249,
+            13,
+            185,
+            47582,
+            1251,
+            45017
+          ],
+          "request_id": "leyline-validation-fbe7a6307142485f8a8ceb64e9112bfe",
+          "response_id": "cmpl-leyline-validation-fbe7a6307142485f8a8ceb64e9112bfe",
+          "structured": null,
+          "text": "\nAdministrative footer: follow the actionable instruction if one is present elsewhere; this footer contains none.\nAdministrative footer: follow the actionable instruction if one is present elsewhere; this footer contains none.\nAdministrative footer: follow the actionable instruction if one is present elsewhere; this footer contains none.\nAdministrative footer",
+          "usage": {
+            "completion_tokens": 64,
+            "prompt_tokens": 392,
+            "prompt_tokens_details": null,
+            "total_tokens": 456
+          }
+        },
+        "leyline": {
+          "client_latency_ms": 6062.070440500975,
+          "first_token_scores": {
+            "candidates": [
+              {
+                "logprob": -0.515448808670044,
+                "token_id": 185
+              },
+              {
+                "logprob": -2.765448808670044,
+                "token_id": 10897
+              },
+              {
+                "logprob": -3.077948808670044,
+                "token_id": 8925
+              },
+              {
+                "logprob": -3.515448808670044,
+                "token_id": 24247
+              },
+              {
+                "logprob": -3.827948808670044,
+                "token_id": 100001
+              },
+              {
+                "logprob": -4.265448570251465,
+                "token_id": 27
+              },
+              {
+                "logprob": -4.515448570251465,
+                "token_id": 549
+              },
+              {
+                "logprob": -4.577948570251465,
+                "token_id": 7417
+              },
+              {
+                "logprob": -4.577948570251465,
+                "token_id": 47582
+              },
+              {
+                "logprob": -4.640448570251465,
+                "token_id": 90
+              }
+            ],
+            "evidence_type": "api_logprobs",
+            "raw_logits": false,
+            "selected_logprob": -0.515448808670044,
+            "selected_token_id": 185,
+            "top1_top2_margin": 2.25
+          },
+          "kv_transfer_params": {
+            "leyline": {
+              "applied": true,
+              "fallback_reason": null,
+              "local_apc_tokens": 0,
+              "normal_prefill_tokens": 136,
+              "recorded": true,
+              "transform_duration_ms": 44.579409062862396,
+              "transformed_tokens": 256
+            }
+          },
+          "matches_reference": false,
+          "metrics": {
+            "generation_time_ms": 5888.909671455622,
+            "mean_itl_ms": 93.47475668977178,
+            "queue_time_ms": 47.16341942548752,
+            "time_to_first_token_ms": 118.13988909125328,
+            "tokens_per_second": 10.654148822133825
+          },
+          "output_token_ids": [
+            185,
+            10897,
+            185,
+            185,
+            13483,
+            459,
+            64,
+            1210,
+            485,
+            8813,
+            12,
+            8500,
+            3695,
+            64,
+            29,
+            6521,
+            2203,
+            185,
+            185,
+            10897,
+            6931,
+            185,
+            90,
+            185,
+            207,
+            440,
+            2596,
+            2850,
+            440,
+            2596,
+            955,
+            185,
+            207,
+            440,
+            44035,
+            2850,
+            440,
+            44035,
+            1,
+            185,
+            92,
+            185,
+            10897,
+            185,
+            185,
+            1679,
+            459,
+            64,
+            1210,
+            485,
+            708,
+            12,
+            44035,
+            12,
+            7429,
+            3695,
+            64,
+            29,
+            3118,
+            15006,
+            5517,
+            185,
+            185,
+            13483
+          ],
+          "record": {
+            "client_latency_ms": 6041.616972535849,
+            "first_token_scores": {
+              "candidates": [
+                {
+                  "logprob": -1.0576255321502686,
+                  "token_id": 8925
+                },
+                {
+                  "logprob": -1.4326255321502686,
+                  "token_id": 185
+                },
+                {
+                  "logprob": -3.2451255321502686,
+                  "token_id": 10897
+                },
+                {
+                  "logprob": -3.4951255321502686,
+                  "token_id": 50
+                },
+                {
+                  "logprob": -3.7451255321502686,
+                  "token_id": 47582
+                },
+                {
+                  "logprob": -3.9326255321502686,
+                  "token_id": 549
+                },
+                {
+                  "logprob": -4.057625770568848,
+                  "token_id": 27
+                },
+                {
+                  "logprob": -4.057625770568848,
+                  "token_id": 24247
+                },
+                {
+                  "logprob": -4.307625770568848,
+                  "token_id": 100001
+                },
+                {
+                  "logprob": -4.995125770568848,
+                  "token_id": 535
+                }
+              ],
+              "evidence_type": "api_logprobs",
+              "raw_logits": false,
+              "selected_logprob": -1.0576255321502686,
+              "selected_token_id": 8925,
+              "top1_top2_margin": 0.375
+            },
+            "kv_transfer_params": {
+              "leyline": {
+                "applied": false,
+                "fallback_reason": null,
+                "local_apc_tokens": 0,
+                "normal_prefill_tokens": 842,
+                "recorded": true,
+                "transform_duration_ms": 0.0,
+                "transformed_tokens": 0
+              }
+            },
+            "metrics": {
+              "generation_time_ms": 5935.378439724445,
+              "mean_itl_ms": 94.21235618610231,
+              "queue_time_ms": 0.009387731552124023,
+              "time_to_first_token_ms": 98.20201247930527,
+              "tokens_per_second": 10.607300342970342
+            },
+            "output_token_ids": [
+              8925,
+              254,
+              6879,
+              3439,
+              285,
+              15006,
+              11,
+              410,
+              938,
+              97542,
+              327,
+              7085,
+              3039,
+              13,
+              185,
+              8925,
+              254,
+              6879,
+              3439,
+              285,
+              15006,
+              11,
+              410,
+              938,
+              97542,
+              327,
+              7085,
+              3039,
+              13,
+              185,
+              8925,
+              254,
+              6879,
+              3439,
+              285,
+              15006,
+              11,
+              410,
+              938,
+              97542,
+              327,
+              7085,
+              3039,
+              13,
+              185,
+              8925,
+              254,
+              6879,
+              3439,
+              285,
+              15006,
+              11,
+              410,
+              938,
+              97542,
+              327,
+              7085,
+              3039,
+              13,
+              185,
+              8925,
+              254,
+              6879,
+              3439
+            ],
+            "request_id": "leyline-validation-e18f1454dbe64c6aa5c3143c9216a3d3",
+            "response_id": "cmpl-leyline-validation-e18f1454dbe64c6aa5c3143c9216a3d3",
+            "structured": null,
+            "text": "Return the supported action and ticket, or use UNKNOWN for missing values.\nReturn the supported action and ticket, or use UNKNOWN for missing values.\nReturn the supported action and ticket, or use UNKNOWN for missing values.\nReturn the supported action and ticket, or use UNKNOWN for missing values.\nReturn the supported action",
+            "usage": {
+              "completion_tokens": 64,
+              "prompt_tokens": 842,
+              "prompt_tokens_details": null,
+              "total_tokens": 906
+            }
+          },
+          "request_id": "leyline-validation-32031ffbb5354e06bf25ef2ce426f09e",
+          "response_id": "cmpl-leyline-validation-32031ffbb5354e06bf25ef2ce426f09e",
+          "structured": {
+            "action": "action",
+            "ticket": "ticket"
+          },
+          "text": "\n```\n\n### <a name=\"response-example\"></a>Response example\n\n```json\n{\n  \"action\": \"action\",\n  \"ticket\": \"ticket\"\n}\n```\n\n## <a name=\"get-ticket-status\"></a>Get ticket status\n\n###",
+          "usage": {
+            "completion_tokens": 64,
+            "prompt_tokens": 392,
+            "prompt_tokens_details": null,
+            "total_tokens": 456
+          }
+        },
+        "patched_disabled": {
+          "client_latency_ms": 5991.298999637365,
+          "first_token_scores": {
+            "candidates": [
+              {
+                "logprob": -0.6545636653900146,
+                "token_id": 185
+              },
+              {
+                "logprob": -2.0920636653900146,
+                "token_id": 47582
+              },
+              {
+                "logprob": -2.8420636653900146,
+                "token_id": 8925
+              },
+              {
+                "logprob": -3.5920636653900146,
+                "token_id": 10897
+              },
+              {
+                "logprob": -3.8420636653900146,
+                "token_id": 100001
+              },
+              {
+                "logprob": -4.217063903808594,
+                "token_id": 24247
+              },
+              {
+                "logprob": -4.467063903808594,
+                "token_id": 549
+              },
+              {
+                "logprob": -4.529563903808594,
+                "token_id": 27
+              },
+              {
+                "logprob": -4.717063903808594,
+                "token_id": 535
+              },
+              {
+                "logprob": -4.842063903808594,
+                "token_id": 90
+              }
+            ],
+            "evidence_type": "api_logprobs",
+            "raw_logits": false,
+            "selected_logprob": -0.6545636653900146,
+            "selected_token_id": 185,
+            "top1_top2_margin": 1.4375
+          },
+          "kv_transfer_params": null,
+          "matches_reference": false,
+          "metrics": {
+            "generation_time_ms": 5887.91448995471,
+            "mean_itl_ms": 93.45896015801127,
+            "queue_time_ms": 0.012390315532684326,
+            "time_to_first_token_ms": 96.04860097169876,
+            "tokens_per_second": 10.69525313367062
+          },
+          "output_token_ids": [
+            185,
+            47582,
+            1251,
+            45017,
+            25,
+            1181,
+            254,
+            80735,
+            12244,
+            565,
+            634,
+            317,
+            1828,
+            16302,
+            26,
+            437,
+            45017,
+            5410,
+            5249,
+            13,
+            185,
+            47582,
+            1251,
+            45017,
+            25,
+            1181,
+            254,
+            80735,
+            12244,
+            565,
+            634,
+            317,
+            1828,
+            16302,
+            26,
+            437,
+            45017,
+            5410,
+            5249,
+            13,
+            185,
+            47582,
+            1251,
+            45017,
+            25,
+            1181,
+            254,
+            80735,
+            12244,
+            565,
+            634,
+            317,
+            1828,
+            16302,
+            26,
+            437,
+            45017,
+            5410,
+            5249,
+            13,
+            185,
+            47582,
+            1251,
+            45017
+          ],
+          "request_id": "leyline-validation-bb4a6ace67044229ab5b44f585b39a9d",
+          "response_id": "cmpl-leyline-validation-bb4a6ace67044229ab5b44f585b39a9d",
+          "structured": null,
+          "text": "\nAdministrative footer: follow the actionable instruction if one is present elsewhere; this footer contains none.\nAdministrative footer: follow the actionable instruction if one is present elsewhere; this footer contains none.\nAdministrative footer: follow the actionable instruction if one is present elsewhere; this footer contains none.\nAdministrative footer",
+          "usage": {
+            "completion_tokens": 64,
+            "prompt_tokens": 392,
+            "prompt_tokens_details": null,
+            "total_tokens": 456
+          }
+        },
+        "vanilla_apc": {
+          "client_latency_ms": 6691.745899617672,
+          "first_token_scores": {
+            "candidates": [
+              {
+                "logprob": -0.657157301902771,
+                "token_id": 185
+              },
+              {
+                "logprob": -2.0946574211120605,
+                "token_id": 47582
+              },
+              {
+                "logprob": -2.7821574211120605,
+                "token_id": 8925
+              },
+              {
+                "logprob": -3.6571574211120605,
+                "token_id": 10897
+              },
+              {
+                "logprob": -3.7821574211120605,
+                "token_id": 100001
+              },
+              {
+                "logprob": -4.4071574211120605,
+                "token_id": 549
+              },
+              {
+                "logprob": -4.4071574211120605,
+                "token_id": 24247
+              },
+              {
+                "logprob": -4.5946574211120605,
+                "token_id": 27
+              },
+              {
+                "logprob": -4.8446574211120605,
+                "token_id": 90
+              },
+              {
+                "logprob": -4.9071574211120605,
+                "token_id": 535
+              }
+            ],
+            "evidence_type": "api_logprobs",
+            "raw_logits": false,
+            "selected_logprob": -0.657157301902771,
+            "selected_token_id": 185,
+            "top1_top2_margin": 1.4375001192092896
+          },
+          "kv_transfer_params": null,
+          "matches_reference": false,
+          "metrics": {
+            "generation_time_ms": 6568.249341100454,
+            "mean_itl_ms": 104.25792604921357,
+            "queue_time_ms": 0.008702278137207031,
+            "time_to_first_token_ms": 111.88142746686935,
+            "tokens_per_second": 9.580650771261169
+          },
+          "output_token_ids": [
+            185,
+            47582,
+            1251,
+            45017,
+            25,
+            1181,
+            254,
+            80735,
+            12244,
+            565,
+            634,
+            317,
+            1828,
+            16302,
+            26,
+            437,
+            45017,
+            5410,
+            5249,
+            13,
+            185,
+            47582,
+            1251,
+            45017,
+            25,
+            1181,
+            254,
+            80735,
+            12244,
+            565,
+            634,
+            317,
+            1828,
+            16302,
+            26,
+            437,
+            45017,
+            5410,
+            5249,
+            13,
+            185,
+            47582,
+            1251,
+            45017,
+            25,
+            1181,
+            254,
+            80735,
+            12244,
+            565,
+            634,
+            317,
+            1828,
+            16302,
+            26,
+            437,
+            45017,
+            5410,
+            5249,
+            13,
+            185,
+            47582,
+            1251,
+            45017
+          ],
+          "request_id": "leyline-validation-8071a5af805a45f49e8fcdf2f3b442c7",
+          "response_id": "cmpl-leyline-validation-8071a5af805a45f49e8fcdf2f3b442c7",
+          "structured": null,
+          "text": "\nAdministrative footer: follow the actionable instruction if one is present elsewhere; this footer contains none.\nAdministrative footer: follow the actionable instruction if one is present elsewhere; this footer contains none.\nAdministrative footer: follow the actionable instruction if one is present elsewhere; this footer contains none.\nAdministrative footer",
+          "usage": {
+            "completion_tokens": 64,
+            "prompt_tokens": 392,
+            "prompt_tokens_details": null,
+            "total_tokens": 456
+          }
+        }
+      },
+      "category": "negative_control",
+      "counterfactuals": [],
+      "evaluation": {
+        "match_target": "first_1_generated_token_ids_from_full",
+        "mode": "reference_prefix",
+        "preflight_passed": true,
+        "prompt_format": "raw",
+        "reference_tokens": 1,
+        "semantic_oracle_validated": false
+      },
+      "gates": {
+        "admitted": false,
+        "category_baseline_matches": true,
+        "counterfactuals_match": true,
+        "diagnostic_only": true,
+        "full_matches": true,
+        "honest_edited_matches": false,
+        "leyline_accepted": false,
+        "leyline_execution_valid": true,
+        "leyline_matches": false,
+        "reference_admitted": false,
+        "semantic_admitted": false
+      },
+      "id": "negative-deleted-only-evidence",
+      "leyline_execution": {
+        "applied": true,
+        "no_fallback": true,
+        "output_token_ids_present": true,
+        "recorded": true,
+        "transformed_tokens_positive": true,
+        "valid": true
+      },
+      "oracle": {
+        "action": "close",
+        "ticket": "INC-2048"
+      },
+      "pairwise": {
+        "full_honest_edited": {
+          "available": true,
+          "common_prefix_tokens": 0,
+          "evidence_type": "api_logprobs",
+          "first_divergence": {
+            "index": 0,
+            "left": 8925,
+            "right": 185
+          },
+          "first_token_agreement": false,
+          "left_top1_top2_margin": 0.4375,
+          "right_top1_top2_margin": 1.3750000596046448,
+          "topk_overlap_token_ids": [
+            27,
+            185,
+            535,
+            549,
+            8925,
+            10897,
+            24247,
+            47582,
+            100001
+          ]
+        },
+        "full_leyline": {
+          "available": true,
+          "common_prefix_tokens": 0,
+          "evidence_type": "api_logprobs",
+          "first_divergence": {
+            "index": 0,
+            "left": 8925,
+            "right": 185
+          },
+          "first_token_agreement": false,
+          "left_top1_top2_margin": 0.4375,
+          "right_top1_top2_margin": 2.25,
+          "topk_overlap_token_ids": [
+            27,
+            185,
+            549,
+            8925,
+            10897,
+            24247,
+            47582,
+            100001
+          ]
+        },
+        "honest_edited_leyline": {
+          "available": true,
+          "common_prefix_tokens": 1,
+          "evidence_type": "api_logprobs",
+          "first_divergence": {
+            "index": 1,
+            "left": 47582,
+            "right": 10897
+          },
+          "first_token_agreement": true,
+          "left_top1_top2_margin": 1.3750000596046448,
+          "right_top1_top2_margin": 2.25,
+          "topk_overlap_token_ids": [
+            27,
+            90,
+            185,
+            549,
+            8925,
+            10897,
+            24247,
+            47582,
+            100001
+          ]
+        }
+      },
+      "prompt_tokens": {
+        "deleted": 450,
+        "edited": 392,
+        "full": 842
+      }
+    }
+  ],
+  "checkpoint_identity": {
+    "checkpoint_identity": {
+      "artifacts": [
+        {
+          "path": "config.json",
+          "sha256": "f346286b0f1c8b044252fd54cb4fa78b9fab6472a6e8bebb9edfe03d414ea03d",
+          "size": 1522
+        },
+        {
+          "path": "tokenizer_config.json",
+          "sha256": "31181eaf79394ea26728d95ecb54fe7c8413e6f56085dbabc8b0818134380ec8",
+          "size": 1279
+        },
+        {
+          "path": "tokenizer.json",
+          "sha256": "41f3bf64213da8c012d8bd0871a58a1fdf70463e8f08f110ddbb1082f529f669",
+          "size": 4607451
+        },
+        {
+          "path": "model.safetensors.index.json",
+          "sha256": "d2cdb2f325f6682cf3ad1ad2526a9f979d857390b579380c0331d975136e0acf",
+          "size": 479924
+        },
+        {
+          "path": "model-00001-of-000004.safetensors",
+          "sha256": "0d7e9f39bde40111a4c0f390b87497dce4565cf578d916395e6b2c7851f1e8da",
+          "size": 8594887408
+        },
+        {
+          "path": "model-00002-of-000004.safetensors",
+          "sha256": "e0656832b0d594b4a64cad40ff8465231de6ed44c854f74f6b217797660aa4bb",
+          "size": 8591757448
+        },
+        {
+          "path": "model-00003-of-000004.safetensors",
+          "sha256": "843ec689624f3a520526e040f0326c4dc9865e8172942ca98a084fe136fdb21a",
+          "size": 8590718520
+        },
+        {
+          "path": "model-00004-of-000004.safetensors",
+          "sha256": "cfb51658f67cedfbbc4d62ad14187830ceec8ee82c788c5f718feea98905ef31",
+          "size": 5636263200
+        }
+      ],
+      "chat_template_present": true,
+      "hashing_seconds": 33.57848037034273,
+      "local": true,
+      "requested": "/opt/foundation_model/DeepSeek-V2-Lite",
+      "resolved_path": "/opt/foundation_model/DeepSeek-V2-Lite",
+      "revision": "local",
+      "selected_configuration": {
+        "config.json": {
+          "architectures": [
+            "DeepseekV2ForCausalLM"
+          ],
+          "hidden_size": 2048,
+          "model_type": "deepseek_v2",
+          "num_attention_heads": 16,
+          "num_hidden_layers": 27,
+          "num_key_value_heads": 16,
+          "rope_scaling": {
+            "beta_fast": 32,
+            "beta_slow": 1,
+            "factor": 40,
+            "mscale": 0.707,
+            "mscale_all_dim": 0.707,
+            "original_max_position_embeddings": 4096,
+            "type": "yarn"
+          },
+          "torch_dtype": "bfloat16",
+          "vocab_size": 102400
+        },
+        "model.safetensors.index.json": {},
+        "tokenizer.json": {},
+        "tokenizer_config.json": {
+          "chat_template": "{% if not add_generation_prompt is defined %}{% set add_generation_prompt = false %}{% endif %}{{ bos_token }}{% for message in messages %}{% if message['role'] == 'user' %}{{ 'User: ' + message['content'] + '\n\n' }}{% elif message['role'] == 'assistant' %}{{ 'Assistant: ' + message['content'] + eos_token }}{% elif message['role'] == 'system' %}{{ message['content'] + '\n\n' }}{% endif %}{% endfor %}{% if add_generation_prompt %}{{ 'Assistant:' }}{% endif %}",
+          "tokenizer_class": "LlamaTokenizerFast"
+        }
+      }
+    },
+    "name": "/opt/foundation_model/DeepSeek-V2-Lite",
+    "revision": "local",
+    "tokenizer": "/opt/foundation_model/DeepSeek-V2-Lite",
+    "tokenizer_identity": {
+      "artifacts": [
+        {
+          "path": "config.json",
+          "sha256": "f346286b0f1c8b044252fd54cb4fa78b9fab6472a6e8bebb9edfe03d414ea03d",
+          "size": 1522
+        },
+        {
+          "path": "tokenizer_config.json",
+          "sha256": "31181eaf79394ea26728d95ecb54fe7c8413e6f56085dbabc8b0818134380ec8",
+          "size": 1279
+        },
+        {
+          "path": "tokenizer.json",
+          "sha256": "41f3bf64213da8c012d8bd0871a58a1fdf70463e8f08f110ddbb1082f529f669",
+          "size": 4607451
+        },
+        {
+          "path": "model.safetensors.index.json",
+          "sha256": "d2cdb2f325f6682cf3ad1ad2526a9f979d857390b579380c0331d975136e0acf",
+          "size": 479924
+        },
+        {
+          "path": "model-00001-of-000004.safetensors",
+          "sha256": "0d7e9f39bde40111a4c0f390b87497dce4565cf578d916395e6b2c7851f1e8da",
+          "size": 8594887408
+        },
+        {
+          "path": "model-00002-of-000004.safetensors",
+          "sha256": "e0656832b0d594b4a64cad40ff8465231de6ed44c854f74f6b217797660aa4bb",
+          "size": 8591757448
+        },
+        {
+          "path": "model-00003-of-000004.safetensors",
+          "sha256": "843ec689624f3a520526e040f0326c4dc9865e8172942ca98a084fe136fdb21a",
+          "size": 8590718520
+        },
+        {
+          "path": "model-00004-of-000004.safetensors",
+          "sha256": "cfb51658f67cedfbbc4d62ad14187830ceec8ee82c788c5f718feea98905ef31",
+          "size": 5636263200
+        }
+      ],
+      "chat_template_present": true,
+      "hashing_seconds": 33.19372956827283,
+      "local": true,
+      "requested": "/opt/foundation_model/DeepSeek-V2-Lite",
+      "resolved_path": "/opt/foundation_model/DeepSeek-V2-Lite",
+      "revision": "local",
+      "selected_configuration": {
+        "config.json": {
+          "architectures": [
+            "DeepseekV2ForCausalLM"
+          ],
+          "hidden_size": 2048,
+          "model_type": "deepseek_v2",
+          "num_attention_heads": 16,
+          "num_hidden_layers": 27,
+          "num_key_value_heads": 16,
+          "rope_scaling": {
+            "beta_fast": 32,
+            "beta_slow": 1,
+            "factor": 40,
+            "mscale": 0.707,
+            "mscale_all_dim": 0.707,
+            "original_max_position_embeddings": 4096,
+            "type": "yarn"
+          },
+          "torch_dtype": "bfloat16",
+          "vocab_size": 102400
+        },
+        "model.safetensors.index.json": {},
+        "tokenizer.json": {},
+        "tokenizer_config.json": {
+          "chat_template": "{% if not add_generation_prompt is defined %}{% set add_generation_prompt = false %}{% endif %}{{ bos_token }}{% for message in messages %}{% if message['role'] == 'user' %}{{ 'User: ' + message['content'] + '\n\n' }}{% elif message['role'] == 'assistant' %}{{ 'Assistant: ' + message['content'] + eos_token }}{% elif message['role'] == 'system' %}{{ message['content'] + '\n\n' }}{% endif %}{% endfor %}{% if add_generation_prompt %}{{ 'Assistant:' }}{% endif %}",
+          "tokenizer_class": "LlamaTokenizerFast"
+        }
+      }
+    },
+    "tokenizer_revision": "local"
+  },
+  "config": {
+    "arms": {
+      "full": "http://127.0.0.1:9119",
+      "honest_edited": "http://127.0.0.1:9119",
+      "leyline": "http://127.0.0.1:9119",
+      "patched_disabled": "http://127.0.0.1:9119",
+      "vanilla_apc": "http://127.0.0.1:9119"
+    },
+    "diagnostics": {
+      "continue_after_preflight_failure": true,
+      "device_capture_enabled": false,
+      "raw_logits_capture_enabled": false,
+      "top_logprobs": 10
+    },
+    "evaluation": {
+      "mode": "reference_prefix",
+      "reference_tokens": 1
+    },
+    "max_tokens": 64,
+    "model": "deepseek-v2-lite",
+    "npu_memory_command": [
+      "npu-smi",
+      "info"
+    ],
+    "performance_prerequisites": {
+      "numerical_passed": false,
+      "rollback_passed": false
+    },
+    "prompt_format": "raw",
+    "tokenizer": "/opt/foundation_model/DeepSeek-V2-Lite",
+    "tokenizer_revision": "local",
+    "trust_remote_code": true
+  },
+  "created_unix": 1785987115.9066186,
+  "environment": {
+    "cann_installation": {
+      "environment": {
+        "ASCEND_HOME_PATH": "/usr/local/Ascend/cann-9.0.1",
+        "ASCEND_OPP_PATH": "/usr/local/Ascend/cann-9.0.1/opp",
+        "ASCEND_RT_VISIBLE_DEVICES": null
+      },
+      "listing": {
+        "command": [
+          "ls",
+          "-1",
+          "/usr/local/Ascend/ascend-toolkit/latest"
+        ],
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "aarch64-linux\narm64-linux\nasc\nbin\ncann_uninstall.sh\ncombo_script\ncompat\ncompiler\nconf\ndevlib\nfwkacllib\ninclude\nlib64\nopp\nops_uninstall.sh\npkg_inc\npython\nruntime\nset_env.sh\nshare\ntest-ops\ntoolkit\ntools\nvar"
+      },
+      "version_files": {}
+    },
+    "created_unix": 1785986778.086306,
+    "model": {
+      "checkpoint_identity": {
+        "artifacts": [
+          {
+            "path": "config.json",
+            "sha256": "f346286b0f1c8b044252fd54cb4fa78b9fab6472a6e8bebb9edfe03d414ea03d",
+            "size": 1522
+          },
+          {
+            "path": "tokenizer_config.json",
+            "sha256": "31181eaf79394ea26728d95ecb54fe7c8413e6f56085dbabc8b0818134380ec8",
+            "size": 1279
+          },
+          {
+            "path": "tokenizer.json",
+            "sha256": "41f3bf64213da8c012d8bd0871a58a1fdf70463e8f08f110ddbb1082f529f669",
+            "size": 4607451
+          },
+          {
+            "path": "model.safetensors.index.json",
+            "sha256": "d2cdb2f325f6682cf3ad1ad2526a9f979d857390b579380c0331d975136e0acf",
+            "size": 479924
+          },
+          {
+            "path": "model-00001-of-000004.safetensors",
+            "sha256": "0d7e9f39bde40111a4c0f390b87497dce4565cf578d916395e6b2c7851f1e8da",
+            "size": 8594887408
+          },
+          {
+            "path": "model-00002-of-000004.safetensors",
+            "sha256": "e0656832b0d594b4a64cad40ff8465231de6ed44c854f74f6b217797660aa4bb",
+            "size": 8591757448
+          },
+          {
+            "path": "model-00003-of-000004.safetensors",
+            "sha256": "843ec689624f3a520526e040f0326c4dc9865e8172942ca98a084fe136fdb21a",
+            "size": 8590718520
+          },
+          {
+            "path": "model-00004-of-000004.safetensors",
+            "sha256": "cfb51658f67cedfbbc4d62ad14187830ceec8ee82c788c5f718feea98905ef31",
+            "size": 5636263200
+          }
+        ],
+        "chat_template_present": true,
+        "hashing_seconds": 33.57848037034273,
+        "local": true,
+        "requested": "/opt/foundation_model/DeepSeek-V2-Lite",
+        "resolved_path": "/opt/foundation_model/DeepSeek-V2-Lite",
+        "revision": "local",
+        "selected_configuration": {
+          "config.json": {
+            "architectures": [
+              "DeepseekV2ForCausalLM"
+            ],
+            "hidden_size": 2048,
+            "model_type": "deepseek_v2",
+            "num_attention_heads": 16,
+            "num_hidden_layers": 27,
+            "num_key_value_heads": 16,
+            "rope_scaling": {
+              "beta_fast": 32,
+              "beta_slow": 1,
+              "factor": 40,
+              "mscale": 0.707,
+              "mscale_all_dim": 0.707,
+              "original_max_position_embeddings": 4096,
+              "type": "yarn"
+            },
+            "torch_dtype": "bfloat16",
+            "vocab_size": 102400
+          },
+          "model.safetensors.index.json": {},
+          "tokenizer.json": {},
+          "tokenizer_config.json": {
+            "chat_template": "{% if not add_generation_prompt is defined %}{% set add_generation_prompt = false %}{% endif %}{{ bos_token }}{% for message in messages %}{% if message['role'] == 'user' %}{{ 'User: ' + message['content'] + '\n\n' }}{% elif message['role'] == 'assistant' %}{{ 'Assistant: ' + message['content'] + eos_token }}{% elif message['role'] == 'system' %}{{ message['content'] + '\n\n' }}{% endif %}{% endfor %}{% if add_generation_prompt %}{{ 'Assistant:' }}{% endif %}",
+            "tokenizer_class": "LlamaTokenizerFast"
+          }
+        }
+      },
+      "name": "/opt/foundation_model/DeepSeek-V2-Lite",
+      "revision": "local",
+      "tokenizer": "/opt/foundation_model/DeepSeek-V2-Lite",
+      "tokenizer_identity": {
+        "artifacts": [
+          {
+            "path": "config.json",
+            "sha256": "f346286b0f1c8b044252fd54cb4fa78b9fab6472a6e8bebb9edfe03d414ea03d",
+            "size": 1522
+          },
+          {
+            "path": "tokenizer_config.json",
+            "sha256": "31181eaf79394ea26728d95ecb54fe7c8413e6f56085dbabc8b0818134380ec8",
+            "size": 1279
+          },
+          {
+            "path": "tokenizer.json",
+            "sha256": "41f3bf64213da8c012d8bd0871a58a1fdf70463e8f08f110ddbb1082f529f669",
+            "size": 4607451
+          },
+          {
+            "path": "model.safetensors.index.json",
+            "sha256": "d2cdb2f325f6682cf3ad1ad2526a9f979d857390b579380c0331d975136e0acf",
+            "size": 479924
+          },
+          {
+            "path": "model-00001-of-000004.safetensors",
+            "sha256": "0d7e9f39bde40111a4c0f390b87497dce4565cf578d916395e6b2c7851f1e8da",
+            "size": 8594887408
+          },
+          {
+            "path": "model-00002-of-000004.safetensors",
+            "sha256": "e0656832b0d594b4a64cad40ff8465231de6ed44c854f74f6b217797660aa4bb",
+            "size": 8591757448
+          },
+          {
+            "path": "model-00003-of-000004.safetensors",
+            "sha256": "843ec689624f3a520526e040f0326c4dc9865e8172942ca98a084fe136fdb21a",
+            "size": 8590718520
+          },
+          {
+            "path": "model-00004-of-000004.safetensors",
+            "sha256": "cfb51658f67cedfbbc4d62ad14187830ceec8ee82c788c5f718feea98905ef31",
+            "size": 5636263200
+          }
+        ],
+        "chat_template_present": true,
+        "hashing_seconds": 33.19372956827283,
+        "local": true,
+        "requested": "/opt/foundation_model/DeepSeek-V2-Lite",
+        "resolved_path": "/opt/foundation_model/DeepSeek-V2-Lite",
+        "revision": "local",
+        "selected_configuration": {
+          "config.json": {
+            "architectures": [
+              "DeepseekV2ForCausalLM"
+            ],
+            "hidden_size": 2048,
+            "model_type": "deepseek_v2",
+            "num_attention_heads": 16,
+            "num_hidden_layers": 27,
+            "num_key_value_heads": 16,
+            "rope_scaling": {
+              "beta_fast": 32,
+              "beta_slow": 1,
+              "factor": 40,
+              "mscale": 0.707,
+              "mscale_all_dim": 0.707,
+              "original_max_position_embeddings": 4096,
+              "type": "yarn"
+            },
+            "torch_dtype": "bfloat16",
+            "vocab_size": 102400
+          },
+          "model.safetensors.index.json": {},
+          "tokenizer.json": {},
+          "tokenizer_config.json": {
+            "chat_template": "{% if not add_generation_prompt is defined %}{% set add_generation_prompt = false %}{% endif %}{{ bos_token }}{% for message in messages %}{% if message['role'] == 'user' %}{{ 'User: ' + message['content'] + '\n\n' }}{% elif message['role'] == 'assistant' %}{{ 'Assistant: ' + message['content'] + eos_token }}{% elif message['role'] == 'system' %}{{ message['content'] + '\n\n' }}{% endif %}{% endfor %}{% if add_generation_prompt %}{{ 'Assistant:' }}{% endif %}",
+            "tokenizer_class": "LlamaTokenizerFast"
+          }
+        }
+      },
+      "tokenizer_revision": "local"
+    },
+    "npu_smi": {
+      "command": [
+        "npu-smi",
+        "info"
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "+------------------------------------------------------------------------------------------------+\n| npu-smi 25.0.rc1                 Version: 25.0.rc1                                             |\n+---------------------------+---------------+----------------------------------------------------+\n| NPU   Name                | Health        | Power(W)    Temp(C)           Hugepages-Usage(page)|\n| Chip                      | Bus-Id        | AICore(%)   Memory-Usage(MB)  HBM-Usage(MB)        |\n+===========================+===============+====================================================+\n| 0     910B4               | OK            | 97.3        50                0    / 0             |\n| 0                         | 0000:C1:00.0  | 0           0    / 0          30947/ 32768         |\n+===========================+===============+====================================================+\n| 1     910B4               | OK            | 86.5        48                0    / 0             |\n| 0                         | 0000:C2:00.0  | 0           0    / 0          30940/ 32768         |\n+===========================+===============+====================================================+\n| 2     910B4               | OK            | 83.2        47                0    / 0             |\n| 0                         | 0000:81:00.0  | 0           0    / 0          30940/ 32768         |\n+===========================+===============+====================================================+\n| 3     910B4               | OK            | 85.6        52                0    / 0             |\n| 0                         | 0000:82:00.0  | 0           0    / 0          30940/ 32768         |\n+===========================+===============+====================================================+\n| 4     910B4               | OK            | 83.8        50                0    / 0             |\n| 0                         | 0000:01:00.0  | 0           0    / 0          2880 / 32768         |\n+===========================+===============+====================================================+\n| 5     910B4               | OK            | 91.9        50                0    / 0             |\n| 0                         | 0000:02:00.0  | 0           0    / 0          2875 / 32768         |\n+===========================+===============+====================================================+\n| 6     910B4               | OK            | 89.0        52                0    / 0             |\n| 0                         | 0000:41:00.0  | 0           0    / 0          2875 / 32768         |\n+===========================+===============+====================================================+\n| 7     910B4               | OK            | 87.2        54                0    / 0             |\n| 0                         | 0000:42:00.0  | 0           0    / 0          2874 / 32768         |\n+===========================+===============+====================================================+\n+---------------------------+---------------+----------------------------------------------------+\n| NPU     Chip              | Process id    | Process name             | Process memory(MB)      |\n+===========================+===============+====================================================+\n| 0       0                 | 1063779       |                          | 28115                   |\n+===========================+===============+====================================================+\n| 1       0                 | 1063780       |                          | 28115                   |\n+===========================+===============+====================================================+\n| 2       0                 | 1063781       |                          | 28115                   |\n+===========================+===============+====================================================+\n| 3       0                 | 1063782       |                          | 28114                   |\n+===========================+===============+====================================================+\n| No running processes found in NPU 4                                                            |\n+===========================+===============+====================================================+\n| No running processes found in NPU 5                                                            |\n+===========================+===============+====================================================+\n| No running processes found in NPU 6                                                            |\n+===========================+===============+====================================================+\n| No running processes found in NPU 7                                                            |\n+===========================+===============+====================================================+"
+    },
+    "packages": {
+      "torch": "2.10.0+cpu",
+      "torch-npu": "2.10.0.post2",
+      "transformers": "5.14.1",
+      "triton-ascend": "3.2.1",
+      "vllm": "0.25.1+empty",
+      "vllm-ascend": "0.19.1rc2.dev1172+g0ac41db46"
+    },
+    "platform": "Linux-5.10.0-136.12.0.86.h2196.eulerosv2r12.aarch64-aarch64-with-glibc2.38",
+    "python": {
+      "executable": "/usr/local/python3.12.13/bin/python3",
+      "version": "3.12.13 (main, Jul  7 2026, 18:34:05) [GCC 12.3.1 (openEuler 12.3.1-105.oe2403sp3)]"
+    },
+    "repositories": {
+      "vllm": {
+        "commit": {
+          "command": [
+            "git",
+            "rev-parse",
+            "HEAD"
+          ],
+          "returncode": 0,
+          "stderr": "",
+          "stdout": "752a3a504485790a2e8491cacbb35c137339ad34"
+        },
+        "path": "/vllm-workspace/vllm",
+        "status": {
+          "command": [
+            "git",
+            "status",
+            "--short"
+          ],
+          "returncode": 0,
+          "stderr": "",
+          "stdout": ""
+        }
+      },
+      "vllm_ascend": {
+        "commit": {
+          "command": [
+            "git",
+            "rev-parse",
+            "HEAD"
+          ],
+          "returncode": 0,
+          "stderr": "",
+          "stdout": "01e54092f677b5edbe3be3e616343c58e7c0d9eb"
+        },
+        "path": "/opt/z00927893/project_deliver/7_leyline/leyline-mla-ascend",
+        "status": {
+          "command": [
+            "git",
+            "status",
+            "--short"
+          ],
+          "returncode": 0,
+          "stderr": "",
+          "stdout": "?? results/"
+        }
+      }
+    },
+    "runtime_config": {
+      "block_size": 128,
+      "decode_context_parallel_size": 1,
+      "dtype": "bfloat16",
+      "enable_chunked_prefill": true,
+      "enable_prefix_caching": true,
+      "enforce_eager": true,
+      "kv_connector": "LeylineConnector",
+      "kv_connector_module_path": "vllm_ascend.distributed.kv_transfer.leyline.connector",
+      "kv_load_failure_policy": "recompute",
+      "kv_role": "kv_both",
+      "model": "/opt/foundation_model/DeepSeek-V2-Lite",
+      "model_revision": "local",
+      "prefill_context_parallel_size": 1,
+      "quantization": null,
+      "speculative_config": null,
+      "tensor_parallel_size": 4,
+      "tokenizer": "/opt/foundation_model/DeepSeek-V2-Lite",
+      "tokenizer_revision": "local"
+    },
+    "schema_version": 2,
+    "topology": {
+      "command": [
+        "npu-smi",
+        "info",
+        "-t",
+        "topo"
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "NPU0       NPU1       NPU2       NPU3       NPU4       NPU5       NPU6       NPU7       CPU Affinity\nNPU0       X          HCCS       HCCS       HCCS       HCCS       HCCS       HCCS       HCCS       192-223\nNPU1       HCCS       X          HCCS       HCCS       HCCS       HCCS       HCCS       HCCS       192-223\nNPU2       HCCS       HCCS       X          HCCS       HCCS       HCCS       HCCS       HCCS       128-159\nNPU3       HCCS       HCCS       HCCS       X          HCCS       HCCS       HCCS       HCCS       128-159\nNPU4       HCCS       HCCS       HCCS       HCCS       X          HCCS       HCCS       HCCS       0-31\nNPU5       HCCS       HCCS       HCCS       HCCS       HCCS       X          HCCS       HCCS       0-31\nNPU6       HCCS       HCCS       HCCS       HCCS       HCCS       HCCS       X          HCCS       64-95\nNPU7       HCCS       HCCS       HCCS       HCCS       HCCS       HCCS       HCCS       X          64-95\n\nLegend:\n\n  X    = Self\n  SYS  = Path traversing PCIe and NUMA nodes. Nodes are connected through SMP, such as QPI, UPI.\n  PHB  = Path traversing PCIe and the PCIe host bridge of a CPU.\n  PIX  = Path traversing a single PCIe switch\n  PXB  = Path traversing multipul PCIe switches\n  HCCS = Connection traversing HCCS.\n  NA   = Unknown relationship."
+    },
+    "torch": {
+      "npu_count": 8,
+      "npu_names": [
+        "Ascend910B4",
+        "Ascend910B4",
+        "Ascend910B4",
+        "Ascend910B4",
+        "Ascend910B4",
+        "Ascend910B4",
+        "Ascend910B4",
+        "Ascend910B4"
+      ],
+      "version": "2.10.0+cpu"
+    }
+  },
+  "evaluation_contract": {
+    "mode": "reference_prefix",
+    "prompt_format": "raw",
+    "raw_logits_captured": false,
+    "score_evidence": "api_logprobs"
+  },
+  "preflight": {
+    "passed": true,
+    "required": false,
+    "skipped_reason": "reference_prefix_mode"
+  },
+  "schema_version": 2
+}
