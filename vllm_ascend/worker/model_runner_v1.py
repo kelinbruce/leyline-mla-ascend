@@ -2481,6 +2481,11 @@ class NPUModelRunner(GPUModelRunner):
                 logits,
                 self.input_batch._req_ids[: self.input_batch.num_reqs],
                 self.input_batch.req_output_token_ids[: self.input_batch.num_reqs],
+                model=str(self.model_config.model),
+                sampling_provenance={
+                    "stage": "before_grammar_and_sampler",
+                    "speculative": False,
+                },
             )
         if grammar_output is not None:
             # here we are different from gpu_model_runner,

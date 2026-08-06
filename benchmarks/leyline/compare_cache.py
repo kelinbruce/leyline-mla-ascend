@@ -34,7 +34,9 @@ def _capture_paths(inputs: list[Path]) -> tuple[list[Path], list[dict[str, Any]]
     return list(dict.fromkeys(path.resolve() for path in paths)), manifests
 
 
-def compare_capture(path: Path, *, atol: float, rtol: float) -> dict[str, Any]:
+def compare_capture(
+    path: Path, *, atol: float, rtol: float, frequency_atol: float = 1e-6
+) -> dict[str, Any]:
     with np.load(path) as capture:
         source_ckv = capture["source_ckv"]
         actual_ckv = capture["actual_ckv"]
@@ -42,13 +44,30 @@ def compare_capture(path: Path, *, atol: float, rtol: float) -> dict[str, Any]:
         actual_kpe = capture["actual_kpe"].astype(np.float32)
         old_positions = capture["old_positions"].astype(np.int64)
         new_positions = capture["new_positions"].astype(np.int64)
-        inv_freq = capture["inv_freq"].astype(np.float32)
+        connector_inv_freq = capture["inv_freq"].astype(np.float32)
+        native_inv_freq = (
+            capture["native_inv_freq"].astype(np.float32)
+            if "native_inv_freq" in capture
+            else np.asarray([], dtype=np.float32)
+        )
         source_slots = capture["source_slots"] if "source_slots" in capture else np.arange(len(source_ckv))
         destination_slots = (
             capture["destination_slots"] if "destination_slots" in capture else np.arange(len(source_ckv))
         )
         metadata = json.loads(str(capture["metadata_json"])) if "metadata_json" in capture else {}
-    cos, sin = unit_delta_cos_sin(old_positions, new_positions, inv_freq)
+    frequency_shape_matches = native_inv_freq.shape == connector_inv_freq.shape
+    frequency_max_abs_error = (
+        float(np.max(np.abs(native_inv_freq - connector_inv_freq), initial=0))
+        if frequency_shape_matches
+        else None
+    )
+    frequency_matches = bool(
+        frequency_shape_matches
+        and native_inv_freq.size
+        and np.allclose(native_inv_freq, connector_inv_freq, atol=frequency_atol, rtol=0)
+    )
+    reference_inv_freq = native_inv_freq if native_inv_freq.size else connector_inv_freq
+    cos, sin = unit_delta_cos_sin(old_positions, new_positions, reference_inv_freq)
     expected_kpe = rotate_kpe_half_split(source_kpe, cos, sin)
     absolute = np.abs(actual_kpe - expected_kpe)
     denominator = np.maximum(np.abs(expected_kpe), np.finfo(np.float32).tiny)
@@ -77,6 +96,9 @@ def compare_capture(path: Path, *, atol: float, rtol: float) -> dict[str, Any]:
         "rank": metadata.get("rank"),
         "rows": int(old_positions.size),
         "observed_deltas": sorted({int(value) for value in deltas}),
+        "native_frequency_present": bool(native_inv_freq.size),
+        "native_frequency_matches_connector": frequency_matches,
+        "native_frequency_max_abs_error": frequency_max_abs_error,
         "ckv_bitwise_equal": bool(np.array_equal(source_ckv, actual_ckv)),
         "ckv_mismatched_values": int(np.count_nonzero(source_ckv != actual_ckv)),
         "ckv_mismatch_rows": row_evidence(ckv_mismatch_mask),
@@ -99,9 +121,13 @@ def compare_captures(
     required_deltas: set[int],
     expected_layers: set[str] | None = None,
     expected_ranks: set[int] | None = None,
+    frequency_atol: float = 1e-6,
 ) -> dict[str, Any]:
     paths, manifests = _capture_paths(inputs)
-    captures = [compare_capture(path, atol=atol, rtol=rtol) for path in paths]
+    captures = [
+        compare_capture(path, atol=atol, rtol=rtol, frequency_atol=frequency_atol)
+        for path in paths
+    ]
     all_absolute = (
         np.concatenate([capture.pop("_absolute_errors").reshape(-1) for capture in captures])
         if captures
@@ -136,6 +162,9 @@ def compare_captures(
             "rows": sum(capture["rows"] for capture in captures),
             "ckv_failed_captures": sum(not capture["ckv_bitwise_equal"] for capture in captures),
             "kpe_failed_captures": sum(not capture["kpe_allclose"] for capture in captures),
+            "frequency_failed_captures": sum(
+                not capture["native_frequency_matches_connector"] for capture in captures
+            ),
             "kpe_max_abs_error": float(all_absolute.max(initial=0)),
             "kpe_mean_abs_error": float(all_absolute.mean()) if all_absolute.size else 0.0,
             "kpe_p95_abs_error": float(np.percentile(all_absolute, 95)) if all_absolute.size else 0.0,
@@ -143,6 +172,7 @@ def compare_captures(
         },
         "atol": atol,
         "rtol": rtol,
+        "frequency_atol": frequency_atol,
     }
     report["passed"] = bool(
         captures
@@ -150,6 +180,7 @@ def compare_captures(
         and not report["missing_layer_ranks"]
         and not report["aggregate"]["ckv_failed_captures"]
         and not report["aggregate"]["kpe_failed_captures"]
+        and not report["aggregate"]["frequency_failed_captures"]
     )
     return report
 
@@ -160,6 +191,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--atol", type=float, default=2e-2)
     parser.add_argument("--rtol", type=float, default=2e-2)
+    parser.add_argument("--frequency-atol", type=float, default=1e-6)
     parser.add_argument("--required-deltas", default="0,1,127,128,129,1024")
     parser.add_argument("--expected-layers", default="")
     parser.add_argument("--expected-ranks", default="0,1,2,3")
@@ -175,6 +207,7 @@ def main() -> None:
         required_deltas={int(value) for value in args.required_deltas.split(",") if value},
         expected_layers={value for value in args.expected_layers.split(",") if value} or None,
         expected_ranks={int(value) for value in args.expected_ranks.split(",") if value},
+        frequency_atol=args.frequency_atol,
     )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")

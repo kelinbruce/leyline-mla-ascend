@@ -39,6 +39,7 @@ from vllm_ascend.distributed.kv_transfer.leyline.protocol import (
 )
 from vllm_ascend.distributed.kv_transfer.leyline.reference import deepseek_yarn_inv_freq
 from vllm_ascend.ops.leyline_mla import transform_mla_cache
+from vllm_ascend.ops.rotary_embedding import get_native_mla_inv_freq
 
 if TYPE_CHECKING:
     from vllm.config import VllmConfig
@@ -88,6 +89,38 @@ class LeylineWorkerResult:
     duration_ms: float
     transformed_tokens: int
     transformed_layers: int
+    expected_layers: int = 0
+    rank: int = 0
+    expected_ranks: int = 1
+    successful_ranks: tuple[int, ...] = ()
+    missing_layers: tuple[str, ...] = ()
+
+    @property
+    def observed_successful_ranks(self) -> tuple[int, ...]:
+        return tuple(
+            sorted(
+                set(
+                    self.successful_ranks
+                    or ((self.rank,) if self.success else ())
+                )
+            )
+        )
+
+    @property
+    def missing_ranks(self) -> tuple[int, ...]:
+        return tuple(
+            sorted(set(range(self.expected_ranks)) - set(self.observed_successful_ranks))
+        )
+
+    @property
+    def transform_complete(self) -> bool:
+        return bool(
+            self.success
+            and self.expected_layers > 0
+            and self.transformed_layers == self.expected_layers
+            and not self.missing_layers
+            and not self.missing_ranks
+        )
 
 
 @dataclass
@@ -108,6 +141,16 @@ class LeylineWorkerMetadata(KVConnectorWorkerMetadata):
                     duration_ms=max(current.duration_ms, incoming.duration_ms),
                     transformed_tokens=min(current.transformed_tokens, incoming.transformed_tokens),
                     transformed_layers=min(current.transformed_layers, incoming.transformed_layers),
+                    expected_layers=max(current.expected_layers, incoming.expected_layers),
+                    rank=min(current.rank, incoming.rank),
+                    expected_ranks=max(current.expected_ranks, incoming.expected_ranks),
+                    successful_ranks=tuple(
+                        sorted(
+                            set(current.successful_ranks or ((current.rank,) if current.success else ()))
+                            | set(incoming.successful_ranks or ((incoming.rank,) if incoming.success else ()))
+                        )
+                    ),
+                    missing_layers=tuple(sorted(set(current.missing_layers) | set(incoming.missing_layers))),
                 )
         return LeylineWorkerMetadata(merged)
 
@@ -147,6 +190,13 @@ class _Outcome:
     normal_prefill_tokens: int = 0
     duration_ms: float = 0.0
     fallback_reason: LeylineFallbackReason | None = None
+    expected_layers: int = 0
+    transformed_layers: int = 0
+    expected_ranks: int = 0
+    successful_ranks: int = 0
+    missing_layers: tuple[str, ...] = ()
+    missing_ranks: tuple[int, ...] = ()
+    transform_complete: bool = False
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -156,6 +206,13 @@ class _Outcome:
             "normal_prefill_tokens": self.normal_prefill_tokens,
             "transform_duration_ms": self.duration_ms,
             "fallback_reason": self.fallback_reason.value if self.fallback_reason else None,
+            "expected_layers": self.expected_layers,
+            "transformed_layers": self.transformed_layers,
+            "expected_ranks": self.expected_ranks,
+            "successful_ranks": self.successful_ranks,
+            "missing_layers": list(self.missing_layers),
+            "missing_ranks": list(self.missing_ranks),
+            "transform_complete": self.transform_complete,
         }
 
 
@@ -173,6 +230,8 @@ class LeylineConnector(KVConnectorBase_V1, SupportsHMA):
         self._engine_identity = self._make_engine_identity(vllm_config)
         self._runtime_supported = self._is_supported_runtime(vllm_config, kv_cache_config)
         self._inv_freq = self._make_inv_freq(vllm_config)
+        self._expected_mla_layers = int(vllm_config.model_config.hf_text_config.num_hidden_layers)
+        self._expected_tp_ranks = int(vllm_config.parallel_config.tensor_parallel_size)
 
         self._block_pool: BlockPool | None = None
         self._sessions: dict[str, _SourceSession] = {}
@@ -227,6 +286,8 @@ class LeylineConnector(KVConnectorBase_V1, SupportsHMA):
             and getattr(model, "quantization", None) is None
             and str(cache.cache_dtype) in {"auto", "bfloat16", "torch.bfloat16"}
             and parallel.tensor_parallel_size == 4
+            and parallel.pipeline_parallel_size == 1
+            and parallel.data_parallel_size == 1
             and parallel.decode_context_parallel_size == 1
             and parallel.prefill_context_parallel_size == 1
             and cache.block_size == 128
@@ -419,10 +480,19 @@ class LeylineConnector(KVConnectorBase_V1, SupportsHMA):
             outcome = self._outcomes.setdefault(request_id, _Outcome())
             if result is not None:
                 outcome.duration_ms = result.duration_ms
+                outcome.expected_layers = result.expected_layers
+                outcome.transformed_layers = result.transformed_layers
+                outcome.expected_ranks = result.expected_ranks
+                outcome.successful_ranks = len(result.observed_successful_ranks)
+                outcome.missing_layers = result.missing_layers
+                outcome.missing_ranks = result.missing_ranks
+                outcome.transform_complete = result.transform_complete
+            failed = failed or result is None or not result.transform_complete
             if failed:
                 outcome.applied = False
                 outcome.fallback_reason = LeylineFallbackReason.TRANSFORM_FAILED
                 outcome.normal_prefill_tokens += outcome.transformed_tokens
+                invalid.update(plan.transformed_destination_blocks)
             else:
                 outcome.applied = True
                 outcome.fallback_reason = None
@@ -483,13 +553,20 @@ class LeylineConnector(KVConnectorBase_V1, SupportsHMA):
             "FINISHED_LENGTH_CAPPED",
             "FINISHED_REPETITION",
         }
-        recorded = normal_finish and self._record_source(request, block_ids, directive.session_id)
+        recorded = bool(
+            directive.action is LeylineAction.RECORD
+            and normal_finish
+            and self._record_source(request, block_ids, directive.session_id)
+        )
         outcome = self._outcomes.pop(request.request_id, _Outcome())
         self._matches.pop(request.request_id, None)
+        self._metadata_pending.pop(request.request_id, None)
         plan = self._inflight.pop(request.request_id, None)
         if plan is not None:
             self._release_plan_pin(plan)
             self._release_session(plan.session_id)
+        elif directive.action is LeylineAction.AMORTIZE:
+            self._release_session(directive.session_id)
         return False, {"leyline": {**outcome.as_dict(), "recorded": recorded}}
 
     def request_finished(self, request: "Request", block_ids: list[int]) -> tuple[bool, dict[str, Any] | None]:
@@ -502,12 +579,15 @@ class LeylineConnector(KVConnectorBase_V1, SupportsHMA):
     ) -> tuple[bool, dict[str, Any] | None]:
         if len(block_ids) != 1:
             self._set_fallback(request.request_id, LeylineFallbackReason.UNSUPPORTED_RUNTIME)
-            self._directives.pop(request.request_id, None)
+            directive = self._directives.pop(request.request_id, None)
             self._matches.pop(request.request_id, None)
+            self._metadata_pending.pop(request.request_id, None)
             plan = self._inflight.pop(request.request_id, None)
             if plan is not None:
                 self._release_plan_pin(plan)
                 self._release_session(plan.session_id)
+            elif directive is not None and directive.action is LeylineAction.AMORTIZE:
+                self._release_session(directive.session_id)
             outcome = self._outcomes.pop(request.request_id, _Outcome())
             return False, {"leyline": {**outcome.as_dict(), "recorded": False}}
         return self._finish_request(request, block_ids[0])
@@ -526,6 +606,7 @@ class LeylineConnector(KVConnectorBase_V1, SupportsHMA):
         for request in metadata.requests:
             started = time.perf_counter()
             transformed_layers = 0
+            missing_layers: tuple[str, ...] = ()
             success = True
             try:
                 deletion = DeletionMapping(
@@ -541,7 +622,7 @@ class LeylineConnector(KVConnectorBase_V1, SupportsHMA):
                     request.destination_block_ids,
                     request.block_size,
                 )
-                expected_layers = [
+                compatible_layers = [
                     layer_name
                     for layer_name, cache in self._kv_caches.items()
                     if isinstance(cache, (tuple, list))
@@ -551,6 +632,23 @@ class LeylineConnector(KVConnectorBase_V1, SupportsHMA):
                     and cache[0].shape[-1] == 512
                     and cache[1].shape[-1] == 64
                 ]
+                expected_layer_count = self._expected_mla_layers
+                missing_layers = tuple(
+                    sorted(
+                        layer_name
+                        for layer_name, cache in self._kv_caches.items()
+                        if layer_name not in compatible_layers
+                    )
+                )
+                if len(compatible_layers) != expected_layer_count:
+                    missing_layers = (
+                        *missing_layers,
+                        f"expected={expected_layer_count}:compatible={len(compatible_layers)}",
+                    )
+                    raise RuntimeError(
+                        "incomplete MLA cache registration: "
+                        f"expected {expected_layer_count}, found {len(compatible_layers)}"
+                    )
                 for layer_name, cache in self._kv_caches.items():
                     if not isinstance(cache, (tuple, list)) or len(cache) < 2:
                         continue
@@ -571,8 +669,9 @@ class LeylineConnector(KVConnectorBase_V1, SupportsHMA):
                         old_positions=slots.old_positions,
                         new_positions=slots.new_positions,
                         inv_freq=inv_freq,
+                        native_inv_freq=get_native_mla_inv_freq(),
                         block_size=request.block_size,
-                        expected_layers=expected_layers,
+                        expected_layers=compatible_layers,
                     )
                     transform_mla_cache(
                         ckv_cache,
@@ -588,8 +687,11 @@ class LeylineConnector(KVConnectorBase_V1, SupportsHMA):
                         finish_capture(pending_capture, ckv_cache, kpe_cache)
                     transformed_layers += 1
                     logger.debug("Leyline transformed layer=%s request=%s", layer_name, request.request_id)
-                if transformed_layers == 0:
-                    raise RuntimeError("no compatible MLA cache layers were registered")
+                if transformed_layers != expected_layer_count:
+                    raise RuntimeError(
+                        f"incomplete MLA transformation: expected {expected_layer_count}, "
+                        f"transformed {transformed_layers}"
+                    )
                 if not capture_enabled():
                     torch.npu.synchronize()
             except Exception:
@@ -597,11 +699,22 @@ class LeylineConnector(KVConnectorBase_V1, SupportsHMA):
                 success = False
                 self._invalid_block_ids.update(request.transformed_destination_blocks)
 
+            rank = (
+                torch.distributed.get_rank()
+                if torch.distributed.is_available() and torch.distributed.is_initialized()
+                else 0
+            )
+            expected_ranks = self._expected_tp_ranks
             self._worker_results[request.request_id] = LeylineWorkerResult(
                 success=success,
                 duration_ms=(time.perf_counter() - started) * 1000,
                 transformed_tokens=request.transformed_tokens,
                 transformed_layers=transformed_layers,
+                expected_layers=self._expected_mla_layers,
+                rank=rank,
+                expected_ranks=expected_ranks,
+                successful_ranks=(rank,) if success else (),
+                missing_layers=missing_layers,
             )
             self._finished_recving.add(request.request_id)
 

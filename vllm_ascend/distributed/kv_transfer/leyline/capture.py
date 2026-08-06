@@ -60,6 +60,7 @@ def bounded_indices(
     new_positions: torch.Tensor,
     max_rows: int,
     required_deltas: tuple[int, ...] = (),
+    block_size: int = 128,
 ) -> torch.Tensor:
     rows = int(old_positions.numel())
     if max_rows <= 0 or rows <= max_rows:
@@ -69,6 +70,20 @@ def bounded_indices(
     for required in required_deltas:
         if required in deltas:
             selected.append(deltas.index(required))
+    selected.extend([0, rows - 1])
+    old_values = old_positions.detach().cpu().tolist()
+    new_values = new_positions.detach().cpu().tolist()
+    for index in range(1, rows):
+        old_crosses = (
+            old_values[index - 1] // block_size
+            != old_values[index] // block_size
+        )
+        new_crosses = (
+            new_values[index - 1] // block_size
+            != new_values[index] // block_size
+        )
+        if old_crosses or new_crosses:
+            selected.extend([index - 1, index])
     evenly_spaced = torch.linspace(0, rows - 1, steps=max_rows).round().to(torch.long).tolist()
     selected.extend(evenly_spaced)
     selected = list(dict.fromkeys(selected))[:max_rows]
@@ -87,6 +102,7 @@ def prepare_capture(
     old_positions: Sequence[int] | torch.Tensor,
     new_positions: Sequence[int] | torch.Tensor,
     inv_freq: torch.Tensor,
+    native_inv_freq: torch.Tensor | None,
     block_size: int,
     expected_layers: list[str],
 ) -> PendingCapture | None:
@@ -108,6 +124,7 @@ def prepare_capture(
         new_positions_tensor,
         envs.VLLM_ASCEND_LEYLINE_CAPTURE_MAX_ROWS,
         envs.VLLM_ASCEND_LEYLINE_CAPTURE_REQUIRED_DELTAS,
+        block_size,
     )
     selected_source = source_slots_tensor.index_select(0, selected)
     selected_destination = destination_slots_tensor.index_select(0, selected)
@@ -132,6 +149,11 @@ def prepare_capture(
         "old_positions": old_positions_tensor.index_select(0, selected).detach().cpu().numpy(),
         "new_positions": new_positions_tensor.index_select(0, selected).detach().cpu().numpy(),
         "inv_freq": inv_freq.detach().cpu().numpy(),
+        "native_inv_freq": (
+            native_inv_freq.detach().float().cpu().numpy()
+            if native_inv_freq is not None
+            else np.asarray([], dtype=np.float32)
+        ),
     }
     return PendingCapture(
         path=root / filename,

@@ -58,6 +58,17 @@ _cos: torch.Tensor = None
 _sin: torch.Tensor = None
 _cos_slice: torch.Tensor = None
 _sin_slice: torch.Tensor = None
+_native_mla_inv_freq: torch.Tensor = None
+
+
+def get_native_mla_inv_freq() -> torch.Tensor | None:
+    return _native_mla_inv_freq
+
+
+def _record_native_mla_inv_freq(inv_freq: torch.Tensor) -> None:
+    global _native_mla_inv_freq
+    if _native_mla_inv_freq is None:
+        _native_mla_inv_freq = inv_freq.detach()
 
 
 def set_cos_and_sin(vllm_config, max_num_reqs, decode_token_per_req, dtype, device):
@@ -435,6 +446,7 @@ class AscendDeepseekScalingRotaryEmbedding(DeepseekScalingRotaryEmbedding):
         inv_freq_mask = 1.0 - self._yarn_linear_ramp_mask(low, high, dim // 2).to(device=device, dtype=torch.float32)
         inv_freq = freq_inter * (1 - inv_freq_mask) + freq_extra * inv_freq_mask
         self.register_buffer("inv_freq", inv_freq, persistent=False)
+        _record_native_mla_inv_freq(inv_freq)
 
         t = torch.arange(max_seq_len, device=device, dtype=torch.float32)
 

@@ -20,11 +20,7 @@
     "rollback_passed": false
   },
   "arms": {
-    "full": "http://127.0.0.1:8000",
-    "honest_edited": "http://127.0.0.1:8000",
-    "patched_disabled": "http://127.0.0.1:8000",
-    "vanilla_apc": "http://127.0.0.1:8000",
-    "leyline": "http://127.0.0.1:8000"
+    "cache_off": "http://127.0.0.1:8000"
   },
   "npu_memory_command": ["npu-smi", "info"]
 }

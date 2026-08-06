@@ -28,10 +28,12 @@ class PromptPlan:
     edited: list[int]
     delete_start: int
     delete_end: int
+    target_token_ids: tuple[int, ...] = ()
 
 
 REFERENCE_PREFIX = "reference_prefix"
 STRUCTURED_JSON = "structured_json"
+COMPLETION_TARGET = "completion_target"
 RAW = "raw"
 CHAT_TEMPLATE = "chat_template"
 
@@ -61,6 +63,45 @@ def _exact_deletion(full: list[int], edited: list[int]) -> tuple[int, int]:
     return start, end
 
 
+def _fit_removed_repeat(tokenizer: Any, case: dict[str, Any], requested_tokens: int) -> int:
+    if requested_tokens < 1:
+        raise ValueError("position_coverage.delete_tokens must be positive")
+    if not case.get("filler_unit"):
+        return int(case.get("removed_repeat", 1))
+
+    def achieved(repeat: int) -> int:
+        candidate = {**case, "removed": case["filler_unit"], "removed_repeat": repeat}
+        full_text, edited_text = _case_text(candidate)
+        full = _encode(tokenizer, full_text, special=True)
+        edited = _encode(tokenizer, edited_text, special=True)
+        start, end = _exact_deletion(full, edited)
+        return end - start
+
+    low, high = 1, max(2, requested_tokens)
+    while achieved(high) < requested_tokens and high < requested_tokens * 4 + 64:
+        high *= 2
+    while low <= high:
+        middle = (low + high) // 2
+        value = achieved(middle)
+        if value == requested_tokens:
+            return middle
+        if value < requested_tokens:
+            low = middle + 1
+        else:
+            high = middle - 1
+    nearest = sorted(
+        (
+            (abs(achieved(repeat) - requested_tokens), repeat, achieved(repeat))
+            for repeat in range(max(1, high - 4), low + 5)
+        ),
+        key=lambda item: item[0],
+    )[0]
+    raise ValueError(
+        f"cannot construct exactly {requested_tokens} deleted tokens from filler_unit; "
+        f"nearest repeat={nearest[1]} produces {nearest[2]}"
+    )
+
+
 def build_prompt_plan(
     tokenizer: Any,
     case: dict[str, Any],
@@ -68,7 +109,12 @@ def build_prompt_plan(
     *,
     prompt_format: str = RAW,
 ) -> PromptPlan:
-    full_text, edited_text = _case_text(case, removed)
+    working_case = case
+    requested_delete = case.get("position_coverage", {}).get("delete_tokens")
+    if removed is None and requested_delete is not None and case.get("filler_unit"):
+        repeat = _fit_removed_repeat(tokenizer, case, int(requested_delete))
+        working_case = {**case, "removed": case["filler_unit"], "removed_repeat": repeat}
+    full_text, edited_text = _case_text(working_case, removed)
     if prompt_format == RAW:
         # Encode the canonical complete strings. This detects token-boundary
         # replacement instead of silently treating it as a deletion.
@@ -97,7 +143,27 @@ def build_prompt_plan(
     else:
         raise ValueError(f"unsupported prompt format: {prompt_format!r}")
     delete_start, delete_end = _exact_deletion(full, edited)
-    return PromptPlan(full, edited, delete_start, delete_end)
+    target_token_ids: tuple[int, ...] = ()
+    expected_completion = case.get("expected_completion")
+    if expected_completion is not None:
+        if not isinstance(expected_completion, str) or not expected_completion.strip():
+            raise ValueError("expected_completion must contain non-whitespace text")
+        if prompt_format != RAW:
+            raise ValueError("expected_completion is supported only for raw completion prompts")
+        full_with_target = _encode(tokenizer, full_text + expected_completion, special=True)
+        edited_with_target = _encode(tokenizer, edited_text + expected_completion, special=True)
+        if full_with_target[: len(full)] != full or edited_with_target[: len(edited)] != edited:
+            raise ValueError("expected_completion replaces tokens at the prompt boundary")
+        full_suffix = tuple(full_with_target[len(full) :])
+        edited_suffix = tuple(edited_with_target[len(edited) :])
+        if not full_suffix or full_suffix != edited_suffix:
+            raise ValueError("expected_completion has unstable full/edited tokenization")
+        target_token_ids = full_suffix
+    if requested_delete is not None and delete_end - delete_start != int(requested_delete):
+        raise ValueError(
+            f"requested {requested_delete} deleted tokens, achieved {delete_end - delete_start}"
+        )
+    return PromptPlan(full, edited, delete_start, delete_end, target_token_ids)
 
 
 def extract_json(text: str) -> dict[str, Any] | None:
@@ -237,14 +303,14 @@ def evaluation_config(config: dict[str, Any]) -> tuple[str, str, int]:
     mode = evaluation.get("mode", REFERENCE_PREFIX)
     prompt_format = config.get("prompt_format", RAW)
     reference_tokens = int(evaluation.get("reference_tokens", 1))
-    if mode not in {REFERENCE_PREFIX, STRUCTURED_JSON}:
+    if mode not in {REFERENCE_PREFIX, STRUCTURED_JSON, COMPLETION_TARGET}:
         raise ValueError(f"unsupported evaluation mode: {mode!r}")
     if prompt_format not in {RAW, CHAT_TEMPLATE}:
         raise ValueError(f"unsupported prompt format: {prompt_format!r}")
     if mode == STRUCTURED_JSON and prompt_format != CHAT_TEMPLATE:
         raise ValueError("structured_json evaluation requires prompt_format=chat_template")
-    if mode == REFERENCE_PREFIX and prompt_format != RAW:
-        raise ValueError("reference_prefix evaluation requires prompt_format=raw")
+    if mode in {REFERENCE_PREFIX, COMPLETION_TARGET} and prompt_format != RAW:
+        raise ValueError(f"{mode} evaluation requires prompt_format=raw")
     if reference_tokens < 1:
         raise ValueError("evaluation.reference_tokens must be at least 1")
     return mode, prompt_format, reference_tokens
@@ -257,12 +323,22 @@ def _annotate_match(
     oracle: dict[str, Any],
     reference: list[int] | None,
     reference_tokens: int,
+    target_token_ids: tuple[int, ...] = (),
 ) -> bool:
     if mode == STRUCTURED_JSON:
         matched = result.get("structured") == oracle
         result["matches_oracle"] = matched
         return matched
     output = result.get("output_token_ids")
+    if mode == COMPLETION_TARGET:
+        matched = bool(
+            target_token_ids
+            and isinstance(output, list)
+            and len(output) >= len(target_token_ids)
+            and tuple(output[: len(target_token_ids)]) == target_token_ids
+        )
+        result["matches_completion_target"] = matched
+        return matched
     matched = bool(
         isinstance(reference, list)
         and len(reference) >= reference_tokens
@@ -276,13 +352,15 @@ def _annotate_match(
 
 def leyline_execution_evidence(result: dict[str, Any] | None) -> dict[str, bool]:
     metadata = ((result or {}).get("kv_transfer_params") or {}).get("leyline") or {}
+    record_metadata = ((((result or {}).get("record") or {}).get("kv_transfer_params") or {}).get("leyline") or {})
     evidence = {
         "output_token_ids_present": bool((result or {}).get("output_token_ids")),
-        "recorded": metadata.get("recorded") is True,
+        "recorded": record_metadata.get("recorded") is True,
         "applied": metadata.get("applied") is True,
         "transformed_tokens_positive": isinstance(metadata.get("transformed_tokens"), int)
         and metadata["transformed_tokens"] > 0,
         "no_fallback": "fallback_reason" in metadata and metadata["fallback_reason"] is None,
+        "transform_complete": metadata.get("transform_complete") is True,
     }
     evidence["valid"] = all(evidence.values())
     return evidence
@@ -333,15 +411,17 @@ def evaluate_case_results(
     mode: str,
     reference_tokens: int,
     preflight_passed: bool = True,
+    target_token_ids: tuple[int, ...] = (),
 ) -> dict[str, Any]:
     reference = arms.get("full", {}).get("output_token_ids")
     matches = {
         arm: _annotate_match(
             result,
             mode=mode,
-            oracle=case["oracle"],
+            oracle=case.get("oracle", {}),
             reference=reference,
             reference_tokens=reference_tokens,
+            target_token_ids=target_token_ids,
         )
         for arm, result in arms.items()
     }
@@ -349,14 +429,17 @@ def evaluate_case_results(
         _annotate_match(
             result,
             mode=mode,
-            oracle=case["oracle"],
+            oracle=case.get("oracle", {}),
             reference=reference,
             reference_tokens=reference_tokens,
+            target_token_ids=target_token_ids,
         )
         for result in counterfactuals
     ]
-    full_ok = matches.get("full", False) if mode == STRUCTURED_JSON else bool(
-        isinstance(reference, list) and len(reference) >= reference_tokens
+    full_ok = (
+        matches.get("full", False)
+        if mode in {STRUCTURED_JSON, COMPLETION_TARGET}
+        else bool(isinstance(reference, list) and len(reference) >= reference_tokens)
     )
     honest_ok = matches.get("honest_edited", False)
     counterfactual_ok = all(counterfactual_matches)
@@ -365,7 +448,12 @@ def evaluate_case_results(
     category_baseline_ok = (
         full_ok and honest_ok and counterfactual_ok if declared else full_ok
     )
-    admitted = bool(declared and category_baseline_ok and (preflight_passed or mode == REFERENCE_PREFIX))
+    admitted = bool(
+        declared
+        and category_baseline_ok
+        and mode != REFERENCE_PREFIX
+        and (preflight_passed or mode == COMPLETION_TARGET)
+    )
     execution = leyline_execution_evidence(arms.get("leyline"))
     leyline_matches = matches.get("leyline", False)
     return {
@@ -373,7 +461,11 @@ def evaluate_case_results(
         "match_target": (
             "declared_structured_oracle"
             if mode == STRUCTURED_JSON
-            else f"first_{reference_tokens}_generated_token_ids_from_full"
+            else (
+                "declared_completion_target"
+                if mode == COMPLETION_TARGET
+                else f"first_{reference_tokens}_generated_token_ids_from_full"
+            )
         ),
         "reference_tokens": reference_tokens if mode == REFERENCE_PREFIX else None,
         "semantic_oracle_validated": mode == STRUCTURED_JSON and preflight_passed,
@@ -384,11 +476,15 @@ def evaluate_case_results(
             "category_baseline_matches": category_baseline_ok,
             "admitted": admitted,
             "semantic_admitted": admitted if mode == STRUCTURED_JSON else False,
-            "reference_admitted": admitted if mode == REFERENCE_PREFIX else False,
+            "completion_admitted": admitted if mode == COMPLETION_TARGET else False,
+            "reference_admitted": False,
+            "reference_diagnostic_matches": category_baseline_ok if mode == REFERENCE_PREFIX else False,
             "diagnostic_only": not declared or not admitted,
             "leyline_matches": leyline_matches,
             "leyline_execution_valid": execution["valid"],
-            "leyline_accepted": bool(admitted and leyline_matches and execution["valid"]),
+            "leyline_accepted": bool(
+                mode != REFERENCE_PREFIX and admitted and leyline_matches and execution["valid"]
+            ),
         },
         "leyline_execution": execution,
         "pairwise": {
@@ -477,16 +573,41 @@ def run_case(
         mode=mode,
         reference_tokens=reference_tokens,
         preflight_passed=preflight_passed,
+        target_token_ids=plan.target_token_ids,
     )
+    transform_metadata = ((arms.get("leyline", {}).get("kv_transfer_params") or {}).get("leyline") or {})
+    target_start = int(transform_metadata.get("local_apc_tokens", 0) or 0)
+    transformed_tokens = int(transform_metadata.get("transformed_tokens", 0) or 0)
+    block_size = int(config.get("block_size", 128))
     return {
         "id": case["id"],
         "category": case["category"],
+        "family": case.get("family"),
+        "claim_type": case.get("claim_type"),
         "prompt_tokens": {
             "full": len(plan.full),
             "edited": len(plan.edited),
             "deleted": plan.delete_end - plan.delete_start,
+            "delete_start": plan.delete_start,
+            "delete_end": plan.delete_end,
         },
-        "oracle": case["oracle"],
+        "oracle": case.get("oracle"),
+        "expected_completion": case.get("expected_completion"),
+        "target_token_ids": list(plan.target_token_ids),
+        "position_coverage": case.get("position_coverage"),
+        "leyline_transform": {
+            "target_start": target_start,
+            "target_end": target_start + transformed_tokens,
+            "transformed_tokens": transformed_tokens,
+            "destination_block_start": target_start // block_size,
+            "destination_block_end": (
+                (target_start + transformed_tokens + block_size - 1) // block_size
+                if transformed_tokens
+                else target_start // block_size
+            ),
+            "normal_prefill_tokens": transform_metadata.get("normal_prefill_tokens"),
+            "delete_delta": plan.delete_end - plan.delete_start,
+        },
         "evaluation": {
             "mode": evaluation["mode"],
             "match_target": evaluation["match_target"],
@@ -651,14 +772,20 @@ def run_performance(
 
 def run_preflight(tokenizer: Any, config: dict[str, Any]) -> dict[str, Any]:
     mode, prompt_format, _ = evaluation_config(config)
-    if mode == REFERENCE_PREFIX:
-        return {"required": False, "passed": True, "skipped_reason": "reference_prefix_mode"}
+    if mode in {REFERENCE_PREFIX, COMPLETION_TARGET}:
+        return {"required": False, "passed": True, "skipped_reason": f"{mode}_mode"}
     settings = config.get("preflight", {})
     prompt = settings.get("prompt", 'Return only this JSON: {"ok":true}')
     oracle = settings.get("oracle", {"ok": True})
-    endpoint = settings.get("endpoint") or config.get("arms", {}).get("full")
+    endpoint = config.get("arms", {}).get("full")
     if not endpoint:
         return {"required": True, "passed": False, "error": "full/preflight endpoint is missing"}
+    if settings.get("endpoint") not in {None, endpoint}:
+        return {
+            "required": True,
+            "passed": False,
+            "error": "preflight endpoint must be the configured full endpoint",
+        }
     try:
         rendered = tokenizer.apply_chat_template(
             [{"role": "user", "content": prompt}], tokenize=False, add_generation_prompt=True
@@ -722,19 +849,210 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     here = Path(__file__).resolve().parent
     parser.add_argument("--config", type=Path, required=True)
-    parser.add_argument("--workloads", type=Path, default=here / "workloads.json")
+    parser.add_argument("--workloads", type=Path, default=here / "workloads.base.json")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--environment", type=Path)
+    parser.add_argument("--numerical-report", type=Path)
+    parser.add_argument("--logit-report", type=Path)
     parser.add_argument("--performance", action="store_true")
     parser.add_argument("--concurrency", default="1,4,8,16")
     parser.add_argument("--repetitions", type=int, default=3)
     return parser.parse_args()
 
 
+def validate_workload_corpus(workloads: dict[str, Any], config: dict[str, Any]) -> None:
+    mode, _, _ = evaluation_config(config)
+    version = workloads.get("version")
+    cases = workloads.get("cases")
+    if not isinstance(cases, list) or not cases:
+        raise ValueError("workload corpus must contain cases")
+    identifiers = [case.get("id") for case in cases]
+    if any(not isinstance(identifier, str) or not identifier for identifier in identifiers):
+        raise ValueError("every workload case requires a non-empty id")
+    if len(set(identifiers)) != len(identifiers):
+        raise ValueError("workload case ids must be unique")
+    if version == 1:
+        if not config.get("legacy_diagnostic", False) or mode != REFERENCE_PREFIX:
+            raise ValueError(
+                "version-1 workloads require legacy_diagnostic=true with reference_prefix mode"
+            )
+        return
+    if version != 2 or not isinstance(workloads.get("corpus_id"), str):
+        raise ValueError("qualification workloads require version=2 and corpus_id")
+    for case in cases:
+        if not case.get("family") or not case.get("claim_type"):
+            raise ValueError(f"case {case['id']} requires family and claim_type")
+        if case.get("evaluation_mode") != mode:
+            raise ValueError(
+                f"case {case['id']} evaluation_mode must match configured mode {mode}"
+            )
+        if mode == COMPLETION_TARGET:
+            target = case.get("expected_completion")
+            if not isinstance(target, str) or not target.strip():
+                raise ValueError(f"case {case['id']} requires expected_completion")
+        if mode == STRUCTURED_JSON:
+            oracle = case.get("oracle")
+            if not isinstance(oracle, dict) or not oracle:
+                raise ValueError(f"case {case['id']} requires a non-empty structured oracle")
+        if case["family"] in {"counterfactual", "structured_counterfactual"} and len(
+            case.get("counterfactual_removed", [])
+        ) < 3:
+            raise ValueError(
+                f"counterfactual case {case['id']} requires at least three variants"
+            )
+    family_counts: dict[str, int] = {}
+    for case in cases:
+        family = case["family"]
+        family_counts[family] = family_counts.get(family, 0) + 1
+    if mode == COMPLETION_TARGET:
+        minimums = {
+            "admissible": 6,
+            "position_stress": 4,
+            "counterfactual": 2,
+            "mechanism_diagnostic": 2,
+            "negative_control": 2,
+        }
+        missing = {
+            family: required - family_counts.get(family, 0)
+            for family, required in minimums.items()
+            if family_counts.get(family, 0) < required
+        }
+        if len(cases) < 16 or missing:
+            raise ValueError(f"base corpus family minimums are not met: {missing}")
+    elif mode == STRUCTURED_JSON and len(cases) < 6:
+        raise ValueError("Chat corpus requires at least six cases")
+
+
+def _stability_summary(runs: list[dict[str, Any]]) -> dict[str, Any]:
+    decisions = [
+        (
+            run["gates"].get("full_matches"),
+            run["gates"].get("honest_edited_matches"),
+            run["gates"].get("leyline_matches"),
+            run["gates"].get("leyline_execution_valid"),
+        )
+        for run in runs
+    ]
+    execution = [
+        ((run.get("arms", {}).get("leyline", {}).get("kv_transfer_params") or {}).get("leyline") or {})
+        for run in runs
+    ]
+    transformed = [item.get("transformed_tokens") for item in execution]
+    complete = [item.get("transform_complete") for item in execution]
+    stable = len(set(decisions)) == 1 and len(set(transformed)) == 1 and len(set(complete)) == 1
+    return {
+        "repetitions": len(runs),
+        "stable": stable,
+        "gate_decisions": [list(item) for item in decisions],
+        "transformed_tokens": transformed,
+        "transform_complete": complete,
+    }
+
+
+def run_case_repetitions(
+    case: dict[str, Any],
+    tokenizer: Any,
+    config: dict[str, Any],
+    *,
+    preflight_passed: bool,
+) -> dict[str, Any]:
+    repetitions = int(config.get("correctness_repetitions", 1))
+    if repetitions < 1:
+        raise ValueError("correctness_repetitions must be at least 1")
+    runs = [
+        run_case(case, tokenizer, config, preflight_passed=preflight_passed)
+        for _ in range(repetitions)
+    ]
+    result = dict(runs[0])
+    result["repetitions"] = runs
+    result["stability"] = _stability_summary(runs)
+    durations = [
+        float(
+            (((run.get("arms", {}).get("leyline", {}).get("kv_transfer_params") or {}).get("leyline") or {}).get(
+                "transform_duration_ms", 0.0
+            ))
+        )
+        for run in runs
+    ]
+    result["transform_timing"] = {
+        "cold_first_ms": durations[0] if durations else None,
+        "warm_ms": durations[1:],
+        "warm_mean_ms": statistics.fmean(durations[1:]) if len(durations) > 1 else None,
+    }
+    if not result["stability"]["stable"]:
+        result["gates"] = {**result["gates"], "admitted": False, "leyline_accepted": False}
+    return result
+
+
+def expand_workload_cases(cases: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    expanded: list[dict[str, Any]] = []
+    for case in cases:
+        expanded.append(case)
+        coverage = case.get("position_coverage") or {}
+        for delete_tokens in coverage.get("delete_variants", []):
+            expanded.append(
+                {
+                    **case,
+                    "id": f"{case['id']}-delta-{delete_tokens}",
+                    "position_coverage": {**coverage, "delete_tokens": delete_tokens, "delete_variants": []},
+                    "notes": f"{case.get('notes', '')} Expanded deletion variant {delete_tokens}.",
+                }
+            )
+    return expanded
+
+
+def environment_blockers(environment: dict[str, Any] | None) -> list[str]:
+    if not environment:
+        return ["environment_manifest_missing"]
+    blockers: list[str] = []
+    repositories = environment.get("repositories") or {}
+    modules = environment.get("imported_modules") or {}
+    for module_name, repository_name in (("vllm", "vllm"), ("vllm_ascend", "vllm_ascend")):
+        module_path = (modules.get(module_name) or {}).get("module_file")
+        repository_path = (repositories.get(repository_name) or {}).get("path")
+        if not module_path or not repository_path:
+            blockers.append(f"{module_name}_import_provenance_missing")
+            continue
+        try:
+            Path(module_path).resolve().relative_to(Path(repository_path).resolve())
+        except ValueError:
+            blockers.append(f"{module_name}_import_outside_recorded_repository")
+    if not ((environment.get("cann_installation") or {}).get("version_files")):
+        blockers.append("cann_version_unresolved")
+    return blockers
+
+
+def classify_case_result(
+    case: dict[str, Any],
+    *,
+    environment_errors: list[str],
+    numerical_passed: bool,
+    rollback_passed: bool,
+) -> str:
+    if environment_errors:
+        return "invalid_environment"
+    if not case.get("gates", {}).get("leyline_execution_valid"):
+        return "connector_failure"
+    if not numerical_passed:
+        return "numerical_unqualified"
+    if not rollback_passed:
+        return "rollback_unqualified"
+    if not case.get("gates", {}).get("admitted"):
+        return "invalid_workload_baseline"
+    if not case.get("gates", {}).get("leyline_accepted"):
+        return "leyline_target_limitation"
+    pairwise = case.get("pairwise", {}).get("full_leyline", {})
+    leyline_ids = case.get("arms", {}).get("leyline", {}).get("output_token_ids") or []
+    if pairwise.get("common_prefix_tokens", 0) < len(leyline_ids):
+        return "accepted_target_with_autoregressive_divergence"
+    return "accepted_target_and_generation"
+
+
 def main() -> None:
     args = parse_args()
     config = json.loads(args.config.read_text())
     workloads = json.loads(args.workloads.read_text())
+    validate_workload_corpus(workloads, config)
     from transformers import AutoTokenizer
 
     tokenizer = AutoTokenizer.from_pretrained(
@@ -748,12 +1066,19 @@ def main() -> None:
         cases: list[dict[str, Any]] = []
     else:
         cases = [
-            run_case(case, tokenizer, config, preflight_passed=bool(preflight["passed"]))
-            for case in workloads["cases"]
+            run_case_repetitions(
+                case,
+                tokenizer,
+                config,
+                preflight_passed=bool(preflight["passed"]),
+            )
+            for case in expand_workload_cases(workloads["cases"])
         ]
     report: dict[str, Any] = {
         "schema_version": 2,
         "created_unix": time.time(),
+        "corpus_id": workloads.get("corpus_id", "legacy-v1"),
+        "workload_version": workloads.get("version"),
         "config": {key: value for key, value in config.items() if key != "api_key"},
         "evaluation_contract": {
             "mode": evaluation_config(config)[0],
@@ -766,11 +1091,47 @@ def main() -> None:
         "preflight": preflight,
         "cases": cases,
     }
-    if args.environment:
-        report["environment"] = json.loads(args.environment.read_text())
+    numerical_report = (
+        json.loads(args.numerical_report.read_text()) if args.numerical_report else None
+    )
+    if numerical_report is not None:
+        report["numerical_validation"] = numerical_report
+    if args.logit_report:
+        report["raw_logit_validation"] = json.loads(args.logit_report.read_text())
+    environment = json.loads(args.environment.read_text()) if args.environment else None
+    if environment:
+        report["environment"] = environment
         report["checkpoint_identity"] = report["environment"].get("model")
+    blockers = environment_blockers(environment)
+    prerequisites = config.get("performance_prerequisites", {})
+    numerical_passed = (
+        numerical_report.get("passed") is True
+        if numerical_report is not None
+        else prerequisites.get("numerical_passed") is True
+    )
+    effective_config = {
+        **config,
+        "performance_prerequisites": {
+            **prerequisites,
+            "numerical_passed": numerical_passed,
+        },
+    }
+    report["qualification"] = {
+        "environment_blockers": blockers,
+        "numerical_passed": numerical_passed,
+        "rollback_passed": prerequisites.get("rollback_passed") is True,
+        "case_classifications": {
+            case["id"]: classify_case_result(
+                case,
+                environment_errors=blockers,
+                numerical_passed=numerical_passed,
+                rollback_passed=prerequisites.get("rollback_passed") is True,
+            )
+            for case in cases
+        },
+    }
     if args.performance:
-        gate = performance_gate(cases, config, preflight)
+        gate = performance_gate(cases, effective_config, preflight)
         report["performance_gate"] = gate
         if gate["passed"]:
             admissible = next(case for case in workloads["cases"] if case["category"] == "admissible")

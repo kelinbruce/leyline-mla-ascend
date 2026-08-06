@@ -8,6 +8,7 @@ import json
 import os
 import re
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import torch
@@ -25,6 +26,9 @@ def capture_raw_first_token_logits(
     logits: torch.Tensor | None,
     request_ids: list[str | None],
     output_token_ids: list[list[int] | None],
+    *,
+    model: str | None = None,
+    sampling_provenance: dict[str, Any] | None = None,
 ) -> None:
     root_value = envs.VLLM_ASCEND_LEYLINE_RAW_LOGITS_DIR
     if not root_value or logits is None:
@@ -48,6 +52,8 @@ def capture_raw_first_token_logits(
             "provenance": "NPUModelRunner.sample_tokens.before_grammar_and_sampler",
             "dtype": str(logits.dtype),
             "shape": list(logits[index].shape),
+            "model": model,
+            "sampling_provenance": sampling_provenance or {"stage": "before_sampler"},
         }
         np.savez_compressed(
             path,

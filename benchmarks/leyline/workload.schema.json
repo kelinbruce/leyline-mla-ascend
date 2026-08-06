@@ -1,12 +1,13 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://vllm-ascend.example/schemas/leyline-workloads-v1.json",
+  "$id": "https://vllm-ascend.example/schemas/leyline-workloads-v2.json",
   "title": "Leyline AMORTIZE validation workloads",
   "type": "object",
   "additionalProperties": false,
   "required": ["version", "cases"],
   "properties": {
-    "version": {"const": 1},
+    "version": {"enum": [1, 2]},
+    "corpus_id": {"type": "string", "minLength": 1},
     "cases": {
       "type": "array",
       "minItems": 1,
@@ -17,17 +18,33 @@
     "case": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "id",
-        "category",
-        "prefix",
-        "removed",
-        "surviving",
-        "query",
-        "oracle"
-      ],
+      "required": ["id", "category", "prefix", "removed", "surviving", "query"],
       "properties": {
         "id": {"type": "string", "minLength": 1},
+        "evaluation_mode": {
+          "enum": ["completion_target", "structured_json", "reference_prefix"]
+        },
+        "family": {
+          "enum": [
+            "admissible",
+            "position_stress",
+            "counterfactual",
+            "mechanism_diagnostic",
+            "negative_control",
+            "structured_admissible",
+            "structured_counterfactual"
+          ]
+        },
+        "claim_type": {
+          "enum": [
+            "admissible_target",
+            "counterfactual_invariance",
+            "numerical_coverage",
+            "retained_context_diagnostic",
+            "negative_control",
+            "structured_semantic"
+          ]
+        },
         "category": {
           "enum": [
             "admissible",
@@ -38,11 +55,31 @@
         },
         "prefix": {"type": "string"},
         "removed": {"type": "string", "minLength": 1},
+        "filler_unit": {"type": "string", "minLength": 1},
         "removed_repeat": {"type": "integer", "minimum": 1, "default": 1},
         "surviving": {"type": "string", "minLength": 1},
         "surviving_repeat": {"type": "integer", "minimum": 1, "default": 1},
         "query": {"type": "string", "minLength": 1},
         "oracle": {"type": "object"},
+        "expected_completion": {"type": "string", "pattern": "\\S"},
+        "position_coverage": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "delete_tokens": {"type": "integer", "minimum": 1},
+            "delete_variants": {
+              "type": "array",
+              "items": {"type": "integer", "minimum": 1},
+              "uniqueItems": true
+            },
+            "required_deltas": {
+              "type": "array",
+              "items": {"type": "integer", "minimum": 0},
+              "uniqueItems": true
+            },
+            "boundary_class": {"type": "string", "minLength": 1}
+          }
+        },
         "counterfactual_removed": {
           "type": "array",
           "items": {"type": "string", "minLength": 1}

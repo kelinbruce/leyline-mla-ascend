@@ -46,6 +46,8 @@ def _connector() -> tuple[LeylineConnector, _BlockPool]:
     connector._engine_identity = ("test-engine",)
     connector._runtime_supported = True
     connector._inv_freq = tuple(float(index + 1) for index in range(32))
+    connector._expected_mla_layers = 27
+    connector._expected_tp_ranks = 1
     connector._block_pool = pool = _BlockPool()
     connector._sessions = {}
     connector._directives = {}
@@ -58,6 +60,28 @@ def _connector() -> tuple[LeylineConnector, _BlockPool]:
     connector._invalid_block_ids = set()
     connector._worker_results = {}
     return connector, pool
+
+
+def _worker_result(
+    success: bool,
+    duration_ms: float,
+    transformed_tokens: int,
+    transformed_layers: int,
+    *,
+    rank: int = 0,
+    expected_ranks: int = 1,
+) -> LeylineWorkerResult:
+    return LeylineWorkerResult(
+        success,
+        duration_ms,
+        transformed_tokens,
+        transformed_layers,
+        expected_layers=27,
+        rank=rank,
+        expected_ranks=expected_ranks,
+        successful_ranks=(rank,) if success else (),
+        missing_layers=() if transformed_layers == 27 else ("missing-layer",),
+    )
 
 
 def _request(
@@ -106,6 +130,13 @@ def _record_source(connector: LeylineConnector, pool: _BlockPool) -> list[int]:
             "normal_prefill_tokens": 0,
             "transform_duration_ms": 0.0,
             "fallback_reason": None,
+            "expected_layers": 0,
+            "transformed_layers": 0,
+            "expected_ranks": 0,
+            "successful_ranks": 0,
+            "missing_layers": [],
+            "missing_ranks": [],
+            "transform_complete": False,
             "recorded": True,
         }
     }
@@ -138,7 +169,7 @@ def test_scheduler_success_pins_until_tp_wide_completion() -> None:
     assert len(metadata.requests) == 1
     assert metadata.requests[0].destination_block_ids == (10, 11, 12)
 
-    result = LeylineWorkerResult(True, 1.25, 8, 27)
+    result = _worker_result(True, 1.25, 8, 27)
     connector.update_connector_output(
         SimpleNamespace(
             kv_connector_worker_meta=LeylineWorkerMetadata({request.request_id: result}),
@@ -148,6 +179,7 @@ def test_scheduler_success_pins_until_tp_wide_completion() -> None:
     )
     assert connector._outcomes[request.request_id].applied
     assert connector._outcomes[request.request_id].duration_ms == 1.25
+    assert connector._outcomes[request.request_id].transform_complete
     assert "session-1" not in connector._sessions
     assert [block.ref_cnt for block in pool.blocks[:4]] == [0, 0, 0, 0]
 
@@ -187,15 +219,51 @@ def test_unsupported_runtime_uses_honest_prefill() -> None:
     )
     assert connector._outcomes[request.request_id].normal_prefill_tokens == 9
 
+    delay, params = connector.request_finished(request, [10, 11, 12])
+    assert not delay
+    assert params is not None
+    assert not params["leyline"]["recorded"]
+    assert "session-1" not in connector._sessions
+    assert [block.ref_cnt for block in pool.blocks[:4]] == [0, 0, 0, 0]
+
+
+def test_unsupported_cache_groups_release_pending_transaction() -> None:
+    connector, pool = _connector()
+    source_tokens = _record_source(connector, pool)
+    request = _prepare_amortize(connector, source_tokens)
+
+    delay, params = connector.request_finished_all_groups(
+        request, ([10, 11], [12, 13])
+    )
+
+    assert not delay
+    assert params is not None
+    assert params["leyline"]["fallback_reason"] == "unsupported_runtime"
+    assert request.request_id not in connector._metadata_pending
+    assert request.request_id not in connector._inflight
+    assert "session-1" not in connector._sessions
+    assert [block.ref_cnt for block in pool.blocks[:4]] == [0, 0, 0, 0]
+
 
 def test_tp_aggregation_requires_every_rank_to_succeed() -> None:
-    good = LeylineWorkerMetadata({"r": LeylineWorkerResult(True, 1.0, 8, 27)})
-    bad = LeylineWorkerMetadata({"r": LeylineWorkerResult(False, 2.0, 8, 11)})
+    good = LeylineWorkerMetadata({"r": _worker_result(True, 1.0, 8, 27, rank=0, expected_ranks=2)})
+    bad = LeylineWorkerMetadata({"r": _worker_result(False, 2.0, 8, 11, rank=1, expected_ranks=2)})
     result = good.aggregate(bad).results["r"]
     assert not result.success
     assert result.duration_ms == 2.0
     assert result.transformed_tokens == 8
     assert result.transformed_layers == 11
+    assert result.missing_ranks == (1,)
+    assert not result.transform_complete
+
+
+def test_tp_aggregation_reports_complete_rank_set() -> None:
+    rank0 = LeylineWorkerMetadata({"r": _worker_result(True, 1.0, 8, 27, rank=0, expected_ranks=2)})
+    rank1 = LeylineWorkerMetadata({"r": _worker_result(True, 1.5, 8, 27, rank=1, expected_ranks=2)})
+    result = rank0.aggregate(rank1).results["r"]
+    assert result.successful_ranks == (0, 1)
+    assert result.missing_ranks == ()
+    assert result.transform_complete
 
 
 def test_failed_transform_rolls_back_and_counts_reprefill() -> None:
@@ -203,12 +271,13 @@ def test_failed_transform_rolls_back_and_counts_reprefill() -> None:
     source_tokens = _record_source(connector, pool)
     request = _prepare_amortize(connector, source_tokens)
     plan: LeylineTransformRequest = connector._inflight[request.request_id]
+    invalid_blocks: set[int] = set()
     connector.update_connector_output(
         SimpleNamespace(
             kv_connector_worker_meta=LeylineWorkerMetadata(
-                {request.request_id: LeylineWorkerResult(False, 3.0, 8, 0)}
+                {request.request_id: _worker_result(False, 3.0, 8, 0)}
             ),
-            invalid_block_ids=set(plan.transformed_destination_blocks),
+            invalid_block_ids=invalid_blocks,
             finished_recving={request.request_id},
         )
     )
@@ -218,6 +287,49 @@ def test_failed_transform_rolls_back_and_counts_reprefill() -> None:
     assert outcome.local_apc_tokens == 4
     assert outcome.transformed_tokens == 8
     assert outcome.normal_prefill_tokens == 9
+    assert invalid_blocks == set(plan.transformed_destination_blocks)
+    assert [block.ref_cnt for block in pool.blocks[:4]] == [0, 0, 0, 0]
+
+
+def test_amortize_finish_does_not_rerecord_or_leak_session() -> None:
+    connector, pool = _connector()
+    source_tokens = _record_source(connector, pool)
+    request = _prepare_amortize(connector, source_tokens)
+    connector.build_connector_meta(None)
+    connector.update_connector_output(
+        SimpleNamespace(
+            kv_connector_worker_meta=LeylineWorkerMetadata(
+                {request.request_id: _worker_result(True, 1.0, 8, 27)}
+            ),
+            invalid_block_ids=set(),
+            finished_recving={request.request_id},
+        )
+    )
+    delay, params = connector.request_finished(request, [10, 11, 12])
+    assert not delay
+    assert params is not None
+    assert not params["leyline"]["recorded"]
+    assert params["leyline"]["applied"]
+    assert params["leyline"]["transform_complete"]
+    assert "session-1" not in connector._sessions
+    assert request.request_id not in connector._inflight
+    assert request.request_id not in connector._metadata_pending
+    assert [block.ref_cnt for block in pool.blocks[:4]] == [0, 0, 0, 0]
+
+
+def test_cancelled_amortize_releases_pending_plan_and_session() -> None:
+    connector, pool = _connector()
+    source_tokens = _record_source(connector, pool)
+    request = _prepare_amortize(connector, source_tokens)
+    request.status = SimpleNamespace(name="FINISHED_ABORTED")
+    delay, params = connector.request_finished(request, [10, 11, 12])
+    assert not delay
+    assert params is not None
+    assert not params["leyline"]["recorded"]
+    assert not params["leyline"]["applied"]
+    assert "session-1" not in connector._sessions
+    assert request.request_id not in connector._inflight
+    assert request.request_id not in connector._metadata_pending
     assert [block.ref_cnt for block in pool.blocks[:4]] == [0, 0, 0, 0]
 
 

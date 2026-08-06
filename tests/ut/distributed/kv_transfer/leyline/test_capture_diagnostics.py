@@ -11,6 +11,7 @@ import torch
 
 import vllm_ascend.envs as envs
 from benchmarks.leyline.compare_cache import compare_captures
+from benchmarks.leyline.compare_logits import compare_logit_vectors
 from vllm_ascend.distributed.kv_transfer.leyline.capture import (
     bounded_indices,
     finish_capture,
@@ -41,6 +42,7 @@ def test_capture_disabled(monkeypatch, tmp_path: Path) -> None:
         old_positions=torch.tensor([1]),
         new_positions=torch.tensor([0]),
         inv_freq=torch.ones(32),
+        native_inv_freq=torch.ones(32),
         block_size=128,
         expected_layers=["layer"],
     ) is None
@@ -52,6 +54,15 @@ def test_bounded_selection_prioritizes_required_deltas() -> None:
     new = torch.tensor([0, 1, 2, 3, 4])
     selected = bounded_indices(old, new, 3, (0, 127, 1024))
     assert (old - new).index_select(0, selected).tolist() == [0, 127, 1024]
+
+
+def test_bounded_selection_includes_both_sides_of_block_transition() -> None:
+    old = torch.arange(120, 137)
+    new = torch.arange(17)
+    selected = bounded_indices(old, new, 6, block_size=128)
+    selected_old = old.index_select(0, selected).tolist()
+    assert 127 in selected_old
+    assert 128 in selected_old
 
 
 def test_capture_clones_aliasing_source_and_writes_manifest(monkeypatch, tmp_path: Path) -> None:
@@ -71,6 +82,7 @@ def test_capture_clones_aliasing_source_and_writes_manifest(monkeypatch, tmp_pat
         old_positions=torch.tensor([1, 2]),
         new_positions=torch.tensor([0, 1]),
         inv_freq=torch.ones(32),
+        native_inv_freq=torch.ones(32),
         block_size=128,
         expected_layers=["layer.0"],
     )
@@ -106,6 +118,7 @@ def _write_comparison_capture(
         old_positions=old_positions,
         new_positions=new_positions,
         inv_freq=inv_freq,
+        native_inv_freq=inv_freq,
         metadata_json=np.asarray(json.dumps({"layer": "layer.0", "rank": rank})),
     )
 
@@ -147,6 +160,101 @@ def test_compare_merges_rank_manifests(tmp_path: Path) -> None:
     assert report["aggregate"]["captures"] == 2
 
 
+def test_compare_rejects_connector_native_frequency_mismatch(tmp_path: Path) -> None:
+    capture = tmp_path / "capture.npz"
+    _write_comparison_capture(capture, ckv_mismatch=False, kpe_error=0.0)
+    with np.load(capture) as original:
+        arrays = {key: original[key] for key in original.files}
+    arrays["native_inv_freq"] = arrays["inv_freq"] + 0.1
+    np.savez_compressed(capture, **arrays)
+    report = compare_captures(
+        [capture],
+        atol=1e-4,
+        rtol=1e-4,
+        required_deltas={1, 128},
+        expected_layers={"layer.0"},
+        expected_ranks={0},
+    )
+    assert not report["passed"]
+    assert report["aggregate"]["frequency_failed_captures"] == 1
+
+
+def test_compare_rejects_missing_layer_and_required_delta(tmp_path: Path) -> None:
+    capture = tmp_path / "capture.npz"
+    _write_comparison_capture(capture, ckv_mismatch=False, kpe_error=0.0)
+    report = compare_captures(
+        [capture],
+        atol=1e-4,
+        rtol=1e-4,
+        required_deltas={1, 128, 129},
+        expected_layers={"layer.0", "layer.1"},
+        expected_ranks={0},
+    )
+    assert not report["passed"]
+    assert report["missing_deltas"] == [129]
+    assert report["missing_layer_ranks"] == [{"layer": "layer.1", "rank": 0}]
+
+
+def test_compare_rejects_rotation_layout_error(tmp_path: Path) -> None:
+    capture = tmp_path / "capture.npz"
+    _write_comparison_capture(capture, ckv_mismatch=False, kpe_error=0.0)
+    with np.load(capture) as original:
+        arrays = {key: original[key] for key in original.files}
+    arrays["actual_kpe"] = arrays["actual_kpe"][..., ::-1]
+    np.savez_compressed(capture, **arrays)
+    report = compare_captures(
+        [capture],
+        atol=1e-4,
+        rtol=1e-4,
+        required_deltas={1, 128},
+        expected_layers={"layer.0"},
+        expected_ranks={0},
+    )
+    assert not report["passed"]
+    assert report["aggregate"]["kpe_failed_captures"] == 1
+
+
+def test_compare_rejects_rotation_sign_error(tmp_path: Path) -> None:
+    capture = tmp_path / "capture.npz"
+    _write_comparison_capture(capture, ckv_mismatch=False, kpe_error=0.0)
+    with np.load(capture) as original:
+        arrays = {key: original[key] for key in original.files}
+    cos, sin = unit_delta_cos_sin(
+        arrays["new_positions"], arrays["old_positions"], arrays["inv_freq"]
+    )
+    arrays["actual_kpe"] = rotate_kpe_half_split(arrays["source_kpe"], cos, sin)
+    np.savez_compressed(capture, **arrays)
+    report = compare_captures(
+        [capture],
+        atol=1e-4,
+        rtol=1e-4,
+        required_deltas={1, 128},
+        expected_layers={"layer.0"},
+        expected_ranks={0},
+    )
+    assert not report["passed"]
+    assert report["aggregate"]["kpe_failed_captures"] == 1
+
+
+def test_compare_rejects_slot_mapping_error(tmp_path: Path) -> None:
+    capture = tmp_path / "capture.npz"
+    _write_comparison_capture(capture, ckv_mismatch=False, kpe_error=0.0)
+    with np.load(capture) as original:
+        arrays = {key: original[key] for key in original.files}
+    arrays["actual_ckv"] = arrays["actual_ckv"][::-1]
+    np.savez_compressed(capture, **arrays)
+    report = compare_captures(
+        [capture],
+        atol=1e-4,
+        rtol=1e-4,
+        required_deltas={1, 128},
+        expected_layers={"layer.0"},
+        expected_ranks={0},
+    )
+    assert not report["passed"]
+    assert report["aggregate"]["ckv_failed_captures"] == 1
+
+
 def test_raw_logits_are_rank_scoped_and_provenanced(monkeypatch, tmp_path: Path) -> None:
     monkeypatch.setattr(envs, "VLLM_ASCEND_LEYLINE_RAW_LOGITS_DIR", str(tmp_path))
     with patch("vllm_ascend.worker.leyline_logits_capture._rank", return_value=3):
@@ -157,3 +265,15 @@ def test_raw_logits_are_rank_scoped_and_provenanced(monkeypatch, tmp_path: Path)
         np.testing.assert_array_equal(capture["logits"], np.asarray([1.0, 2.0]))
     assert metadata["evidence_type"] == "internal_raw_logits"
     assert "before_grammar_and_sampler" in metadata["provenance"]
+
+
+def test_raw_logit_comparison_reports_distribution_metrics() -> None:
+    report = compare_logit_vectors(
+        np.asarray([0.0, 2.0, 1.0]),
+        np.asarray([0.0, 1.5, 1.25]),
+        top_k=2,
+    )
+    assert report["left_selected_token_id"] == 1
+    assert report["right_selected_token_id"] == 1
+    assert report["topk_overlap_token_ids"] == [1, 2]
+    assert report["max_abs_difference"] == 0.5

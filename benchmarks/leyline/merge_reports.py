@@ -70,8 +70,12 @@ def merge_documents(documents: list[dict[str, Any]], sources: list[str]) -> dict
                 {
                     "id": case["id"],
                     "category": case["category"],
+                    "family": case.get("family"),
+                    "claim_type": case.get("claim_type"),
                     "prompt_tokens": case["prompt_tokens"],
-                    "oracle": case["oracle"],
+                    "oracle": case.get("oracle"),
+                    "expected_completion": case.get("expected_completion"),
+                    "target_token_ids": case.get("target_token_ids", []),
                     "evaluation": case["evaluation"],
                     "arms": {},
                     "counterfactuals": [],
@@ -90,6 +94,7 @@ def merge_documents(documents: list[dict[str, Any]], sources: list[str]) -> dict
             mode=contract["mode"],
             reference_tokens=int(case["evaluation"].get("reference_tokens") or 1),
             preflight_passed=bool(preflights[0] and preflights[0].get("passed")),
+            target_token_ids=tuple(case.get("target_token_ids", [])),
         )
         case["gates"] = evaluation["gates"]
         case["leyline_execution"] = evaluation["leyline_execution"]

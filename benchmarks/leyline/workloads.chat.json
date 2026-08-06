@@ -1,0 +1,90 @@
+{
+  "$schema": "./workload.schema.json",
+  "version": 2,
+  "corpus_id": "deepseek-v2-lite-chat-structured-v2",
+  "cases": [
+    {
+      "id": "chat-route",
+      "evaluation_mode": "structured_json",
+      "family": "structured_admissible",
+      "claim_type": "structured_semantic",
+      "category": "admissible",
+      "prefix": "Return only JSON with keys action and region.\n<removed>\n",
+      "removed": "Historical note: a staging dashboard used the color blue.\n",
+      "surviving": "</removed>\nFinal route: action=shift_traffic; region=cn-north-4.\n",
+      "query": "Return the final route.\n",
+      "oracle": {"action": "shift_traffic", "region": "cn-north-4"},
+      "notes": "Concise admissible routing record."
+    },
+    {
+      "id": "chat-inventory",
+      "evaluation_mode": "structured_json",
+      "family": "structured_admissible",
+      "claim_type": "structured_semantic",
+      "category": "admissible",
+      "prefix": "Return only JSON with keys action, sku, and quantity.\n<removed>\n",
+      "removed": "Draft packaging count: 5, explicitly non-authoritative.\n",
+      "surviving": "</removed>\nFinal inventory: sku=cable; available=0; reorder=32.\n",
+      "query": "Return the final inventory action.\n",
+      "oracle": {"action": "reorder", "sku": "cable", "quantity": 32},
+      "notes": "Concise admissible inventory record."
+    },
+    {
+      "id": "chat-access-policy",
+      "evaluation_mode": "structured_json",
+      "family": "structured_admissible",
+      "claim_type": "structured_semantic",
+      "category": "admissible",
+      "prefix": "Return only JSON with keys decision and role.\n<removed>\n",
+      "removed": "An obsolete UI mockup displayed an admin badge.\n",
+      "surviving": "</removed>\nFinal policy: role=viewer; decision=deny.\n",
+      "query": "Return the final access decision.\n",
+      "oracle": {"decision": "deny", "role": "viewer"},
+      "notes": "Access-policy semantic case."
+    },
+    {
+      "id": "chat-incident-counterfactual",
+      "evaluation_mode": "structured_json",
+      "family": "structured_counterfactual",
+      "claim_type": "counterfactual_invariance",
+      "category": "counterfactual_admissible",
+      "prefix": "Return only JSON with keys severity and action.\n<removed>\n",
+      "removed": "Non-authoritative note: the meeting started at noon.\n",
+      "surviving": "</removed>\nFinal incident: severity=high; action=page_oncall.\n",
+      "query": "Return the final incident response.\n",
+      "oracle": {"severity": "high", "action": "page_oncall"},
+      "counterfactual_removed": [
+        "Non-authoritative note: the dashboard theme was dark.\n",
+        "Non-authoritative note: the report font was changed.\n",
+        "Non-authoritative note: the review occurred Tuesday.\n"
+      ],
+      "notes": "Counterfactual structured invariance."
+    },
+    {
+      "id": "chat-deleted-secret",
+      "evaluation_mode": "structured_json",
+      "family": "mechanism_diagnostic",
+      "claim_type": "retained_context_diagnostic",
+      "category": "mechanism_diagnostic",
+      "prefix": "Return only JSON with key code.\n<removed>\n",
+      "removed": "The sole code is ORCHID-7319.\n",
+      "surviving": "</removed>\nThe remaining audit trail does not contain the code.\n",
+      "query": "Return the code if available, otherwise UNKNOWN.\n",
+      "oracle": {"code": "ORCHID-7319"},
+      "notes": "Retained deleted information is diagnostic only."
+    },
+    {
+      "id": "chat-missing-evidence",
+      "evaluation_mode": "structured_json",
+      "family": "negative_control",
+      "claim_type": "negative_control",
+      "category": "negative_control",
+      "prefix": "Return only JSON with keys action and ticket.\n<removed>\n",
+      "removed": "Sole instruction: close ticket INC-2048.\n",
+      "surviving": "</removed>\nNo remaining action or ticket is supplied.\n",
+      "query": "Use UNKNOWN for missing values.\n",
+      "oracle": {"action": "close", "ticket": "INC-2048"},
+      "notes": "Deleted-only negative control, excluded from admissible success."
+    }
+  ]
+}

@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib
 import importlib.metadata
 import json
 import os
@@ -76,15 +77,37 @@ def torch_manifest() -> dict[str, Any]:
     return result
 
 
-def cann_version_files() -> dict[str, str]:
-    root = Path("/usr/local/Ascend/ascend-toolkit/latest")
-    result = {}
-    for name in ("version.info", "version.cfg", "x86_64-linux/ascend_toolkit_install.info"):
-        path = root / name
+def module_provenance(names: list[str]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for name in names:
         try:
-            result[str(path)] = path.read_text(errors="replace").strip()
-        except OSError:
-            continue
+            module = importlib.import_module(name)
+            path = Path(module.__file__).resolve() if getattr(module, "__file__", None) else None
+            result[name] = {"module_file": str(path) if path else None}
+        except Exception as exc:
+            result[name] = {"error": f"{type(exc).__name__}: {exc}"}
+    return result
+
+
+def cann_version_files() -> dict[str, str]:
+    configured = os.environ.get("ASCEND_HOME_PATH")
+    roots = [Path(configured)] if configured else []
+    roots.append(Path("/usr/local/Ascend/ascend-toolkit/latest"))
+    result = {}
+    names = (
+        "version.info",
+        "version.cfg",
+        "ascend_toolkit_install.info",
+        "x86_64-linux/ascend_toolkit_install.info",
+        "aarch64-linux/ascend_toolkit_install.info",
+    )
+    for root in dict.fromkeys(path.resolve() for path in roots if path.exists()):
+        for name in names:
+            path = root / name
+            try:
+                result[str(path)] = path.read_text(errors="replace").strip()
+            except OSError:
+                continue
     return result
 
 
@@ -189,6 +212,7 @@ def main() -> None:
         "packages": distribution_versions(
             ["vllm", "vllm-ascend", "torch", "torch-npu", "transformers", "triton-ascend"]
         ),
+        "imported_modules": module_provenance(["vllm", "vllm_ascend"]),
         "torch": torch_manifest(),
         "model": {
             "name": args.model,
