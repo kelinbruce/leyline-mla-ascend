@@ -59,9 +59,70 @@ The harness tokenizes the prefix, removed span, and suffix separately, so the de
 
 ## Ascend 310P status
 
-The requested 310P source baseline is vLLM-Ascend commit `05e095a20` (paired by its container files with vLLM v0.23.0 and the 310P CANN 9.1 beta image). This branch explicitly selects a 310P MLA backend, delegates MLA cache allocation to the logical cKV/Kpe path, and allowlists only the local Leyline connector. The attention implementation remains fail-closed until its FP16 operators are qualified on the target device; source integration is not hardware support.
+The requested 310P source baseline is vLLM-Ascend commit `05e095a20` (paired by its container files with vLLM v0.23.0 and the 310P CANN 9.1 beta image). This branch explicitly selects a validation-only 310P MLA backend, delegates MLA cache allocation to the logical cKV/Kpe path, and allowlists only the local Leyline connector. Cache write, RoPE, prefill, cached-tail attention, and decode use transparent Torch operations because the fused MLA operators reject this SoC. The implementation is deliberately limited to DeepSeek-V2-Lite, FP16, TP4, eager mode, and one request at a time; source integration is not hardware qualification or a performance claim.
 
-Run the operator probe before model startup:
+Pin the model and tokenizer revisions, then first launch a no-connector smoke-test service:
+
+```bash
+vllm serve deepseek-ai/DeepSeek-V2-Lite \
+  --revision PIN_MODEL_COMMIT \
+  --tokenizer-revision PIN_TOKENIZER_COMMIT \
+  --trust-remote-code \
+  --dtype float16 \
+  --tensor-parallel-size 4 \
+  --decode-context-parallel-size 1 \
+  --prefill-context-parallel-size 1 \
+  --pipeline-parallel-size 1 \
+  --block-size 128 \
+  --max-model-len 1024 \
+  --max-num-seqs 1 \
+  --max-num-batched-tokens 1024 \
+  --enable-prefix-caching \
+  --enable-chunked-prefill \
+  --enforce-eager \
+  --enable-per-request-metrics
+```
+
+After the no-connector service generates tokens, restart it with the same arguments plus the local connector:
+
+```bash
+vllm serve deepseek-ai/DeepSeek-V2-Lite \
+  --revision PIN_MODEL_COMMIT \
+  --tokenizer-revision PIN_TOKENIZER_COMMIT \
+  --trust-remote-code \
+  --dtype float16 \
+  --tensor-parallel-size 4 \
+  --decode-context-parallel-size 1 \
+  --prefill-context-parallel-size 1 \
+  --pipeline-parallel-size 1 \
+  --block-size 128 \
+  --max-model-len 1024 \
+  --max-num-seqs 1 \
+  --max-num-batched-tokens 1024 \
+  --enable-prefix-caching \
+  --enable-chunked-prefill \
+  --enforce-eager \
+  --enable-per-request-metrics \
+  --kv-transfer-config '{"kv_connector":"LeylineConnector","kv_role":"kv_both","kv_connector_module_path":"vllm_ascend.distributed.kv_transfer.leyline.connector","kv_load_failure_policy":"recompute"}'
+```
+
+Copy `runner_config.example.json`, pin its tokenizer revision, and point all five listed arms at this service. Keep `max_tokens` small for the first run. The report accepts a Leyline result only when generated token IDs are present and the response reports `applied=true`, `transformed_tokens>0`, and `fallback_reason=null`; matching output after silent recomputation is a failure. With the base checkpoint this is reference-prefix agreement, not a structured semantic-oracle claim.
+
+On a clean committed checkout, the complete sequence can instead be run with one command. `--devices` uses the physical device IDs visible in `npu-smi`; local model directories use `local` as the recorded revision:
+
+```bash
+python3 benchmarks/leyline/run_310p_service_validation.py \
+  --model /home/foundation_model/DeepSeek-V2-Lite \
+  --model-revision local \
+  --tokenizer-revision local \
+  --devices 4,5,6,7 \
+  --vllm-repo /path/to/vllm \
+  --output-dir /tmp/leyline-310p-validation
+```
+
+The command runs the required unfused probe on each rank, captures the environment, starts and stops a no-connector service for the cold `cache_off` arm, restarts with Leyline for the other arms, and writes `correctness.310p.json` plus `summary.json`. It exits nonzero if startup fails, a required probe fails, the cold arm omits token IDs, or the Leyline arm lacks positive transformation evidence.
+
+Run the device probe on every TP rank before model startup. Its required gates now exercise the unfused cache-write, prefill, cached-tail, and decode math used by this backend. The old fused MLA calls remain in the report as non-gating diagnostics and are expected to fail on 310P:
 
 ```bash
 for rank in 0 1 2 3; do
@@ -88,7 +149,7 @@ python3 benchmarks/leyline/check_310p_capability.py \
   --require-supported
 ```
 
-The preflight remains false while `AscendMLAImpl310` is the unqualified placeholder or the baseline-matched hardware record is absent/failed. A passing primitive probe is used to select and implement the FP16 prefill, decode, and chunked-cache operations; it does not by itself qualify end-to-end model inference.
+The preflight remains false until the baseline-matched end-to-end hardware record is present and passed. Local tests and primitive probes do not by themselves qualify end-to-end model inference.
 
 ## Numerical gate
 

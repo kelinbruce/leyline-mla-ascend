@@ -41,7 +41,7 @@ def _vllm_config(**overrides):
             prefill_context_parallel_size=1,
             pipeline_parallel_size=1,
         ),
-        "scheduler_config": SimpleNamespace(enable_chunked_prefill=True),
+        "scheduler_config": SimpleNamespace(enable_chunked_prefill=True, max_num_seqs=1),
         "speculative_config": None,
         "kv_transfer_config": _kv_transfer(),
     }
@@ -79,7 +79,7 @@ def test_unsupported_310p_mla_runtime_reports_every_reason() -> None:
             prefill_context_parallel_size=2,
             pipeline_parallel_size=2,
         ),
-        scheduler_config=SimpleNamespace(enable_chunked_prefill=False),
+        scheduler_config=SimpleNamespace(enable_chunked_prefill=False, max_num_seqs=2),
         speculative_config=object(),
         kv_transfer_config=_kv_transfer(kv_connector="OtherConnector"),
     )
@@ -100,5 +100,6 @@ def test_unsupported_310p_mla_runtime_reports_every_reason() -> None:
         "prefill context parallel size must be 1",
         "pipeline parallel size must be 1",
         "chunked prefill is required",
+        "max_num_seqs must be 1",
         "only the local Leyline connector with recompute fallback is supported",
     ]

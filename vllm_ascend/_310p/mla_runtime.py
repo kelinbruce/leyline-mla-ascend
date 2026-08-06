@@ -13,6 +13,7 @@ LEYLINE_CONNECTOR_NAME = "LeylineConnector"
 LEYLINE_CONNECTOR_MODULE = "vllm_ascend.distributed.kv_transfer.leyline.connector"
 LEYLINE_KV_ROLE = "kv_both"
 MLA_BLOCK_SIZE_310P = 128
+MLA_MAX_NUM_SEQS_310P = 1
 
 
 def is_local_leyline_connector(kv_transfer_config: Any | None) -> bool:
@@ -72,6 +73,8 @@ def get_310p_mla_runtime_errors(vllm_config: Any) -> list[str]:
         errors.append("pipeline parallel size must be 1")
     if not getattr(vllm_config.scheduler_config, "enable_chunked_prefill", False):
         errors.append("chunked prefill is required")
+    if getattr(vllm_config.scheduler_config, "max_num_seqs", None) != MLA_MAX_NUM_SEQS_310P:
+        errors.append(f"max_num_seqs must be {MLA_MAX_NUM_SEQS_310P}")
 
     kv_transfer_config = getattr(vllm_config, "kv_transfer_config", None)
     if kv_transfer_config is not None and not is_local_leyline_connector(kv_transfer_config):

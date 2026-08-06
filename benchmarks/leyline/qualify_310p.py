@@ -12,6 +12,7 @@ from typing import Any
 
 TARGET_BASELINE = "05e095a202bdcfef4da61168eae34bfd3b99da13"
 EXPECTED_RANKS = {0, 1, 2, 3}
+EXPECTED_PROBE_PROFILE = "unfused_validation_mla_v1"
 
 
 def _load(path: Path) -> dict[str, Any]:
@@ -28,6 +29,8 @@ def _e2e_passed(report: dict[str, Any]) -> bool:
         and all(
             case.get("gates", {}).get("admitted")
             and case.get("gates", {}).get("leyline_matches")
+            and case.get("gates", {}).get("leyline_execution_valid")
+            and case.get("gates", {}).get("leyline_accepted")
             for case in admissible
         )
     )
@@ -53,8 +56,10 @@ def build_qualification(
     }
     if ranks != EXPECTED_RANKS:
         blockers.append("operator_probes_incomplete_tp4")
+    if any(probe.get("probe_profile") != EXPECTED_PROBE_PROFILE for probe in probes):
+        blockers.append("unfused_validation_probe_profile_missing")
     if any(probe.get("status") != "passed" for probe in probes):
-        blockers.append("operator_probe_failed")
+        blockers.append("unfused_validation_probe_failed")
 
     identity_fields = [
         "vllm_ascend_baseline",
@@ -104,8 +109,12 @@ def build_qualification(
         blockers.append("rollback_gate_failed")
 
     gates = {
-        "operator_probes_tp4": bool(probes) and ranks == EXPECTED_RANKS and all(
-            probe.get("status") == "passed" for probe in probes
+        "unfused_validation_probes_tp4": bool(probes)
+        and ranks == EXPECTED_RANKS
+        and all(
+            probe.get("probe_profile") == EXPECTED_PROBE_PROFILE
+            and probe.get("status") == "passed"
+            for probe in probes
         ),
         "fp16_numerical": numerical.get("passed") is True,
         "e2e_correctness": _e2e_passed(e2e),

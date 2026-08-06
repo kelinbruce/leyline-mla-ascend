@@ -212,6 +212,31 @@ def _annotate_match(
     return matched
 
 
+def leyline_execution_evidence(result: dict[str, Any] | None) -> dict[str, bool]:
+    """Return strict evidence that Leyline transformed cache instead of recomputing."""
+
+    if result is None:
+        return {
+            "output_token_ids_present": False,
+            "applied": False,
+            "transformed_tokens_positive": False,
+            "no_fallback": False,
+            "valid": False,
+        }
+    token_ids = result.get("output_token_ids")
+    metadata = (result.get("kv_transfer_params") or {}).get("leyline")
+    metadata = metadata if isinstance(metadata, dict) else {}
+    evidence = {
+        "output_token_ids_present": isinstance(token_ids, list) and bool(token_ids),
+        "applied": metadata.get("applied") is True,
+        "transformed_tokens_positive": isinstance(metadata.get("transformed_tokens"), int)
+        and metadata["transformed_tokens"] > 0,
+        "no_fallback": "fallback_reason" in metadata and metadata["fallback_reason"] is None,
+    }
+    evidence["valid"] = all(evidence.values())
+    return evidence
+
+
 def evaluate_case_results(
     case: dict[str, Any],
     arms: dict[str, Any],
@@ -256,6 +281,8 @@ def evaluate_case_results(
     admitted = bool(declared_admissible and full_ok and honest_ok and counterfactual_ok)
     semantic_admitted = admitted if mode == STRUCTURED_JSON else False
     reference_admitted = admitted if mode == REFERENCE_PREFIX else False
+    leyline_evidence = leyline_execution_evidence(arms.get("leyline"))
+    leyline_matches = matches.get("leyline", False)
     return {
         "mode": mode,
         "match_target": target,
@@ -268,8 +295,11 @@ def evaluate_case_results(
             "admitted": admitted,
             "semantic_admitted": semantic_admitted,
             "reference_admitted": reference_admitted,
-            "leyline_matches": matches.get("leyline", False),
+            "leyline_matches": leyline_matches,
+            "leyline_execution_valid": leyline_evidence["valid"],
+            "leyline_accepted": bool(leyline_matches and leyline_evidence["valid"]),
         },
+        "leyline_evidence": leyline_evidence,
     }
 
 
@@ -351,10 +381,13 @@ def run_case(case: dict[str, Any], tokenizer: Any, config: dict[str, Any]) -> di
             "deleted": plan.delete_end - plan.delete_start,
         },
         "oracle": oracle,
-        "evaluation": {key: value for key, value in evaluation.items() if key != "gates"},
+        "evaluation": {
+            key: value for key, value in evaluation.items() if key not in {"gates", "leyline_evidence"}
+        },
         "arms": arms,
         "counterfactuals": counterfactuals,
         "gates": evaluation["gates"],
+        "leyline_evidence": evaluation["leyline_evidence"],
     }
 
 

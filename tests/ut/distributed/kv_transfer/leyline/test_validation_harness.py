@@ -9,11 +9,17 @@ from unittest.mock import patch
 
 from benchmarks.leyline.check_310p_capability import inspect_310p_capability
 from benchmarks.leyline.qualify_310p import build_qualification
+from benchmarks.leyline.run_310p_service_validation import (
+    build_server_command,
+    merged_report_passed,
+    runner_config,
+)
 from benchmarks.leyline.run_validation import (
     REFERENCE_PREFIX,
     STRUCTURED_JSON,
     build_prompt_plan,
     evaluate_case_results,
+    leyline_execution_evidence,
     request_completion,
 )
 
@@ -47,8 +53,25 @@ def _case() -> dict:
     }
 
 
-def _result(token_ids: list[int], structured: dict | None = None) -> dict:
-    return {"output_token_ids": token_ids, "structured": structured}
+def _result(
+    token_ids: list[int] | None,
+    structured: dict | None = None,
+    *,
+    leyline: dict | None = None,
+) -> dict:
+    return {
+        "output_token_ids": token_ids,
+        "structured": structured,
+        "kv_transfer_params": {"leyline": leyline} if leyline is not None else None,
+    }
+
+
+def _applied_leyline() -> dict:
+    return {
+        "applied": True,
+        "transformed_tokens": 128,
+        "fallback_reason": None,
+    }
 
 
 def test_raw_prompt_plan_is_exactly_one_token_deletion() -> None:
@@ -105,7 +128,7 @@ def test_reference_prefix_uses_full_output_as_mechanism_reference() -> None:
     arms = {
         "full": _result([10, 11]),
         "honest_edited": _result([10, 99]),
-        "leyline": _result([10, 12]),
+        "leyline": _result([10, 12], leyline=_applied_leyline()),
     }
     counterfactuals = [_result([10, 13])]
 
@@ -121,6 +144,8 @@ def test_reference_prefix_uses_full_output_as_mechanism_reference() -> None:
         "semantic_admitted": False,
         "reference_admitted": True,
         "leyline_matches": True,
+        "leyline_execution_valid": True,
+        "leyline_accepted": True,
     }
     assert not evaluation["semantic_oracle_validated"]
     assert arms["leyline"]["matches_reference"]
@@ -131,7 +156,7 @@ def test_structured_json_requires_the_declared_oracle() -> None:
     arms = {
         "full": _result([10], oracle),
         "honest_edited": _result([10], oracle),
-        "leyline": _result([10], {"answer": "no"}),
+        "leyline": _result([10], {"answer": "no"}, leyline=_applied_leyline()),
     }
 
     evaluation = evaluate_case_results(
@@ -142,7 +167,46 @@ def test_structured_json_requires_the_declared_oracle() -> None:
     assert evaluation["gates"]["semantic_admitted"]
     assert not evaluation["gates"]["reference_admitted"]
     assert not evaluation["gates"]["leyline_matches"]
+    assert evaluation["gates"]["leyline_execution_valid"]
+    assert not evaluation["gates"]["leyline_accepted"]
     assert evaluation["semantic_oracle_validated"]
+
+
+def test_leyline_execution_requires_transform_and_generated_ids() -> None:
+    assert leyline_execution_evidence(
+        _result([10], leyline=_applied_leyline())
+    )["valid"]
+
+    for result in (
+        _result(None, leyline=_applied_leyline()),
+        _result([10], leyline={**_applied_leyline(), "applied": False}),
+        _result([10], leyline={**_applied_leyline(), "transformed_tokens": 0}),
+        _result([10], leyline={**_applied_leyline(), "fallback_reason": "transform_failed"}),
+    ):
+        assert not leyline_execution_evidence(result)["valid"]
+
+
+def test_leyline_fallback_cannot_pass_merged_arm_gate() -> None:
+    arms = {
+        "full": _result([10]),
+        "honest_edited": _result([10]),
+        "leyline": _result(
+            [10],
+            leyline={
+                "applied": False,
+                "transformed_tokens": 0,
+                "fallback_reason": "transform_failed",
+            },
+        ),
+    }
+
+    evaluation = evaluate_case_results(
+        _case(), arms, [], mode=REFERENCE_PREFIX, reference_tokens=1
+    )
+
+    assert evaluation["gates"]["leyline_matches"]
+    assert not evaluation["gates"]["leyline_execution_valid"]
+    assert not evaluation["gates"]["leyline_accepted"]
 
 
 def test_310p_preflight_reports_upstream_guards(tmp_path: Path) -> None:
@@ -175,6 +239,7 @@ def test_310p_preflight_reports_upstream_guards(tmp_path: Path) -> None:
 def _probe(rank: int) -> dict:
     return {
         "status": "passed",
+        "probe_profile": "unfused_validation_mla_v1",
         "vllm_ascend_baseline": "05e095a202bdcfef4da61168eae34bfd3b99da13",
         "checkout_head": "implementation-head",
         "checkout_status": "",
@@ -203,7 +268,12 @@ def test_310p_qualification_requires_all_gates_and_tp_ranks() -> None:
         "cases": [
             {
                 "category": "admissible",
-                "gates": {"admitted": True, "leyline_matches": True},
+                "gates": {
+                    "admitted": True,
+                    "leyline_matches": True,
+                    "leyline_execution_valid": True,
+                    "leyline_accepted": True,
+                },
             }
         ]
     }
@@ -226,3 +296,71 @@ def test_310p_qualification_requires_all_gates_and_tp_ranks() -> None:
     )
     assert incomplete["status"] == "failed"
     assert "operator_probes_incomplete_tp4" in incomplete["blockers"]
+
+    legacy = [_probe(rank) for rank in range(4)]
+    for probe in legacy:
+        probe.pop("probe_profile")
+    legacy_report = build_qualification(
+        legacy,
+        {"passed": True},
+        e2e,
+        {"passed": True},
+    )
+    assert legacy_report["status"] == "failed"
+    assert "unfused_validation_probe_profile_missing" in legacy_report["blockers"]
+
+
+def _service_args(**overrides):
+    values = {
+        "vllm_executable": "vllm",
+        "model": "/models/DeepSeek-V2-Lite",
+        "served_model_name": "deepseek-v2-lite",
+        "port": 8000,
+        "max_model_len": 1024,
+        "max_tokens": 4,
+        "model_revision": "local",
+        "tokenizer": "/models/DeepSeek-V2-Lite",
+        "tokenizer_revision": "local",
+    }
+    values.update(overrides)
+    return type("Args", (), values)()
+
+
+def test_310p_service_command_has_restricted_runtime_and_optional_connector() -> None:
+    args = _service_args()
+    base = build_server_command(args, connector=False)
+    connected = build_server_command(args, connector=True)
+
+    assert base[:3] == ["vllm", "serve", "/models/DeepSeek-V2-Lite"]
+    assert base[base.index("--tensor-parallel-size") + 1] == "4"
+    assert base[base.index("--dtype") + 1] == "float16"
+    assert base[base.index("--max-num-seqs") + 1] == "1"
+    assert "--enforce-eager" in base
+    assert "--revision" not in base
+    assert "--kv-transfer-config" not in base
+    assert "--kv-transfer-config" in connected
+
+
+def test_310p_service_configs_split_cold_and_leyline_arms() -> None:
+    args = _service_args()
+    assert runner_config(args, connector=False)["arms"] == {
+        "cache_off": "http://127.0.0.1:8000"
+    }
+    assert set(runner_config(args, connector=True)["arms"]) == {
+        "full",
+        "honest_edited",
+        "patched_disabled",
+        "vanilla_apc",
+        "leyline",
+    }
+
+
+def test_310p_merged_report_requires_cold_output_and_leyline_acceptance() -> None:
+    case = {
+        "category": "admissible",
+        "gates": {"admitted": True, "leyline_accepted": True},
+        "arms": {"cache_off": {"output_token_ids": [10]}},
+    }
+    assert merged_report_passed({"cases": [case]})
+    case["gates"]["leyline_accepted"] = False
+    assert not merged_report_passed({"cases": [case]})

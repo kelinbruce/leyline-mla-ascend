@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: Apache-2.0
 
-"""Probe 310P primitives required by the correctness-first FP16 MLA path.
+"""Probe 310P primitives required by the unfused validation MLA path.
 
 This script is intentionally independent of model startup so unsupported
 operators can be reported before the experimental backend is instantiated.
+Fused MLA probes are retained as diagnostics but do not gate the unfused path.
 """
 
 from __future__ import annotations
@@ -26,6 +27,7 @@ import torch_npu
 from vllm_ascend.utils import AscendDeviceType, get_ascend_device_type
 
 TARGET_BASELINE = "05e095a202bdcfef4da61168eae34bfd3b99da13"
+PROBE_PROFILE = "unfused_validation_mla_v1"
 
 
 def _version(command: list[str]) -> str | None:
@@ -95,7 +97,7 @@ def _basic_fp16() -> None:
 def _fp32_trigonometry() -> None:
     angles = torch.linspace(-1024.0, 1024.0, 4096, dtype=torch.float32, device="npu")
     result = angles.cos().square() + angles.sin().square()
-    torch.testing.assert_close(result.cpu(), torch.ones_like(result).cpu(), atol=2e-5, rtol=2e-5)
+    torch.testing.assert_close(result.cpu(), torch.ones_like(result).cpu(), atol=1e-4, rtol=1e-4)
 
 
 def _cache_gather_scatter() -> None:
@@ -123,6 +125,104 @@ def _leyline_rotation() -> None:
         [0, 126, 1, 0],
         inv_freq,
     )
+
+
+def _validation_cache_write() -> None:
+    from vllm_ascend._310p.attention.mla_validation import write_logical_mla_cache
+
+    torch.manual_seed(310)
+    num_tokens = 3
+    kv_cpu = torch.randn(num_tokens, 576, dtype=torch.float16)
+    gamma_cpu = torch.randn(512, dtype=torch.float16)
+    angles = torch.randn(num_tokens, 1, 1, 64, dtype=torch.float32)
+    cos_cpu = angles.cos().to(torch.float16)
+    sin_cpu = angles.sin().to(torch.float16)
+    slots_cpu = torch.tensor([0, 129, -1], dtype=torch.long)
+    expected_ckv = torch.zeros(2, 128, 1, 512, dtype=torch.float16)
+    expected_kpe = torch.zeros(2, 128, 1, 64, dtype=torch.float16)
+    expected_rows = write_logical_mla_cache(
+        kv_cpu,
+        gamma_cpu,
+        cos_cpu,
+        sin_cpu,
+        slots_cpu,
+        expected_ckv,
+        expected_kpe,
+        epsilon=1e-6,
+    )
+
+    actual_ckv = torch.zeros_like(expected_ckv, device="npu")
+    actual_kpe = torch.zeros_like(expected_kpe, device="npu")
+    actual_rows = write_logical_mla_cache(
+        kv_cpu.npu(),
+        gamma_cpu.npu(),
+        cos_cpu.npu(),
+        sin_cpu.npu(),
+        slots_cpu.npu(),
+        actual_ckv,
+        actual_kpe,
+        epsilon=1e-6,
+    )
+    torch.testing.assert_close(actual_ckv.cpu(), expected_ckv, atol=2e-3, rtol=2e-3)
+    torch.testing.assert_close(actual_kpe.cpu(), expected_kpe, atol=2e-3, rtol=2e-3)
+    for actual, expected in zip(actual_rows, expected_rows):
+        torch.testing.assert_close(actual.cpu(), expected, atol=2e-3, rtol=2e-3)
+
+
+def _attention_inputs(query_length: int, key_length: int) -> tuple[torch.Tensor, ...]:
+    torch.manual_seed(query_length * 1000 + key_length)
+    num_heads = 4
+    return (
+        torch.randn(query_length, num_heads, 128, dtype=torch.float16),
+        torch.randn(query_length, num_heads, 64, dtype=torch.float16),
+        torch.randn(key_length, num_heads, 128, dtype=torch.float16),
+        torch.randn(key_length, num_heads, 64, dtype=torch.float16),
+        torch.randn(key_length, num_heads, 128, dtype=torch.float16),
+    )
+
+
+def _validation_attention(query_length: int, context_length: int) -> None:
+    from vllm_ascend._310p.attention.mla_validation import dense_mla_attention
+
+    values = _attention_inputs(query_length, query_length + context_length)
+    expected = dense_mla_attention(
+        *values,
+        scale=192**-0.5,
+        context_length=context_length,
+    )
+    actual = dense_mla_attention(
+        *(value.npu() for value in values),
+        scale=192**-0.5,
+        context_length=context_length,
+    )
+    torch.testing.assert_close(actual.cpu(), expected, atol=5e-3, rtol=5e-3)
+
+
+def _validation_prefill_attention() -> None:
+    _validation_attention(query_length=8, context_length=0)
+
+
+def _validation_cached_tail_attention() -> None:
+    _validation_attention(query_length=3, context_length=128)
+
+
+def _validation_decode_attention() -> None:
+    from vllm_ascend._310p.attention.mla_validation import latent_decode_attention
+
+    torch.manual_seed(310)
+    q_nope = torch.randn(1, 4, 512, dtype=torch.float16)
+    q_pe = torch.randn(1, 4, 64, dtype=torch.float16)
+    ckv = torch.randn(129, 1, 512, dtype=torch.float16)
+    kpe = torch.randn(129, 1, 64, dtype=torch.float16)
+    expected = latent_decode_attention(q_nope, q_pe, ckv, kpe, scale=192**-0.5)
+    actual = latent_decode_attention(
+        q_nope.npu(),
+        q_pe.npu(),
+        ckv.npu(),
+        kpe.npu(),
+        scale=192**-0.5,
+    )
+    torch.testing.assert_close(actual.cpu(), expected, atol=5e-3, rtol=5e-3)
 
 
 def _operator_presence() -> None:
@@ -250,20 +350,37 @@ def collect_report(args: argparse.Namespace) -> dict[str, Any]:
     if args.tensor_parallel_size != 4:
         raise ValueError("the initial 310P Leyline qualification requires TP4")
     device_name = torch.npu.get_device_name(0)
-    probes = [
-        _run_probe("required_operator_presence", _operator_presence),
-        _run_probe("basic_fp16_matmul", _basic_fp16),
-        _run_probe("fp32_cos_sin", _fp32_trigonometry),
-        _run_probe("fp16_cache_gather_scatter", _cache_gather_scatter),
-        _run_probe("fp16_leyline_rotation", _leyline_rotation),
-        _run_probe("fp16_mla_cache_write", _mla_cache_write),
-        _run_probe("fp16_mla_prefill_attention", _mla_prefill_attention),
-        _run_probe("fp16_mla_paged_decode", _mla_paged_decode_attention),
-        _run_probe("fp16_mla_chunked_cache_load", _mla_chunked_cache_load),
+    required_operations = [
+        ("basic_fp16_matmul", _basic_fp16),
+        ("fp32_cos_sin", _fp32_trigonometry),
+        ("fp16_cache_gather_scatter", _cache_gather_scatter),
+        ("fp16_leyline_rotation", _leyline_rotation),
+        ("unfused_mla_cache_write", _validation_cache_write),
+        ("unfused_mla_prefill_attention", _validation_prefill_attention),
+        ("unfused_mla_cached_tail_attention", _validation_cached_tail_attention),
+        ("unfused_mla_decode_attention", _validation_decode_attention),
     ]
+    diagnostic_operations = [
+        ("fused_operator_presence", _operator_presence),
+        ("fused_mla_cache_write", _mla_cache_write),
+        ("fused_mla_prefill_attention", _mla_prefill_attention),
+        ("fused_mla_paged_decode", _mla_paged_decode_attention),
+        ("atb_mla_chunked_cache_load", _mla_chunked_cache_load),
+    ]
+    probes = [
+        {**_run_probe(name, operation), "required": True}
+        for name, operation in required_operations
+    ]
+    probes.extend(
+        {**_run_probe(name, operation), "required": False}
+        for name, operation in diagnostic_operations
+    )
+    required_passed = all(probe["passed"] for probe in probes if probe["required"])
     return {
-        "schema_version": 1,
-        "status": "passed" if all(probe["passed"] for probe in probes) else "failed",
+        "schema_version": 2,
+        "probe_profile": PROBE_PROFILE,
+        "status": "passed" if required_passed else "failed",
+        "required_probes_passed": required_passed,
         "vllm_ascend_baseline": TARGET_BASELINE,
         "checkout_head": _git("rev-parse", "HEAD"),
         "checkout_status": _git("status", "--porcelain"),

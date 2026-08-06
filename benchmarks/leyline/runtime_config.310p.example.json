@@ -10,11 +10,14 @@
   "block_size": 128,
   "enable_prefix_caching": true,
   "enable_chunked_prefill": true,
+  "max_num_seqs": 1,
+  "max_model_len": 1024,
   "enforce_eager": true,
   "quantization": null,
   "speculative_config": null,
   "kv_connector": "LeylineConnector",
   "kv_role": "kv_both",
   "kv_connector_module_path": "vllm_ascend.distributed.kv_transfer.leyline.connector",
-  "kv_load_failure_policy": "recompute"
+  "kv_load_failure_policy": "recompute",
+  "validation_only": true
 }

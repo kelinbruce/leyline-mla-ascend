@@ -58,8 +58,13 @@ def main() -> None:
             mode=evaluation["mode"],
             reference_tokens=int(evaluation.get("reference_tokens") or 1),
         )
-        case["evaluation"] = {key: value for key, value in evaluated.items() if key != "gates"}
+        case["evaluation"] = {
+            key: value
+            for key, value in evaluated.items()
+            if key not in {"gates", "leyline_evidence"}
+        }
         case["gates"] = evaluated["gates"]
+        case["leyline_evidence"] = evaluated["leyline_evidence"]
 
     merged = {
         "schema_version": 2,
