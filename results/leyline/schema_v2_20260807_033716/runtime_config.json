@@ -1,0 +1,20 @@
+{
+  "model": "/opt/foundation_model/DeepSeek-V2-Lite",
+  "model_revision": "local",
+  "tokenizer": "/opt/foundation_model/DeepSeek-V2-Lite",
+  "tokenizer_revision": "local",
+  "dtype": "bfloat16",
+  "tensor_parallel_size": 4,
+  "decode_context_parallel_size": 1,
+  "prefill_context_parallel_size": 1,
+  "block_size": 128,
+  "enable_prefix_caching": true,
+  "enable_chunked_prefill": true,
+  "enforce_eager": true,
+  "quantization": null,
+  "speculative_config": null,
+  "kv_connector": "LeylineConnector",
+  "kv_role": "kv_both",
+  "kv_connector_module_path": "vllm_ascend.distributed.kv_transfer.leyline.connector",
+  "kv_load_failure_policy": "recompute"
+}

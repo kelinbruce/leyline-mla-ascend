@@ -1,0 +1,251 @@
+
+====================================================================================================
+[HTTP START #1]
+method: POST
+url: http://127.0.0.1:9119/v1/completions
+summary: {
+  "model": "deepseek-v2-lite",
+  "request_id": "leyline-validation-4ae4c048cab7471a9c19eab20bb354f9",
+  "prompt": {
+    "type": "token_ids/list",
+    "length": 256
+  },
+  "max_tokens": 64,
+  "temperature": 0,
+  "request_keys": [
+    "add_special_tokens",
+    "cache_salt",
+    "logprobs",
+    "max_tokens",
+    "model",
+    "prompt",
+    "request_id",
+    "return_token_ids",
+    "return_tokens_as_token_ids",
+    "seed",
+    "temperature"
+  ]
+}
+leyline_fields: []
+[HTTP CONNECTED #1] status=200 elapsed=8.823s
+
+====================================================================================================
+[HTTP START #2]
+method: POST
+url: http://127.0.0.1:9119/v1/completions
+summary: {
+  "model": "deepseek-v2-lite",
+  "request_id": "leyline-validation-6f7ce907c7ad46e09918f9faff83c74d",
+  "prompt": {
+    "type": "token_ids/list",
+    "length": 244
+  },
+  "max_tokens": 64,
+  "temperature": 0,
+  "request_keys": [
+    "add_special_tokens",
+    "cache_salt",
+    "logprobs",
+    "max_tokens",
+    "model",
+    "prompt",
+    "request_id",
+    "return_token_ids",
+    "return_tokens_as_token_ids",
+    "seed",
+    "temperature"
+  ]
+}
+leyline_fields: []
+[HTTP CONNECTED #2] status=200 elapsed=8.095s
+
+====================================================================================================
+[HTTP START #3]
+method: POST
+url: http://127.0.0.1:9119/v1/completions
+summary: {
+  "model": "deepseek-v2-lite",
+  "request_id": "leyline-validation-6a140fb751d646f7b35bfd63c013c4c0",
+  "prompt": {
+    "type": "token_ids/list",
+    "length": 244
+  },
+  "max_tokens": 64,
+  "temperature": 0,
+  "request_keys": [
+    "add_special_tokens",
+    "cache_salt",
+    "logprobs",
+    "max_tokens",
+    "model",
+    "prompt",
+    "request_id",
+    "return_token_ids",
+    "return_tokens_as_token_ids",
+    "seed",
+    "temperature"
+  ]
+}
+leyline_fields: []
+[HTTP CONNECTED #3] status=200 elapsed=7.728s
+
+====================================================================================================
+[HTTP START #4]
+method: POST
+url: http://127.0.0.1:9119/v1/completions
+summary: {
+  "model": "deepseek-v2-lite",
+  "request_id": "leyline-validation-88a7b9825c364e99a795841a77adc063",
+  "prompt": {
+    "type": "token_ids/list",
+    "length": 244
+  },
+  "max_tokens": 64,
+  "temperature": 0,
+  "request_keys": [
+    "add_special_tokens",
+    "cache_salt",
+    "logprobs",
+    "max_tokens",
+    "model",
+    "prompt",
+    "request_id",
+    "return_token_ids",
+    "return_tokens_as_token_ids",
+    "seed",
+    "temperature"
+  ]
+}
+leyline_fields: []
+[HTTP CONNECTED #4] status=200 elapsed=7.645s
+
+====================================================================================================
+[HTTP START #5]
+method: POST
+url: http://127.0.0.1:9119/v1/completions
+summary: {
+  "model": "deepseek-v2-lite",
+  "request_id": "leyline-validation-7b62b24ecc8d4d82b12511bc85d33d2c",
+  "prompt": {
+    "type": "token_ids/list",
+    "length": 256
+  },
+  "max_tokens": 64,
+  "temperature": 0,
+  "request_keys": [
+    "add_special_tokens",
+    "cache_salt",
+    "kv_transfer_params",
+    "logprobs",
+    "max_tokens",
+    "model",
+    "prompt",
+    "request_id",
+    "return_token_ids",
+    "return_tokens_as_token_ids",
+    "seed",
+    "temperature"
+  ]
+}
+leyline_fields: [
+  [
+    "$.kv_transfer_params",
+    {
+      "leyline": {
+        "version": 1,
+        "action": "record",
+        "session_id": "inventory-reorder-label-5b07a911ce71482d8a027c1afcd9b6a0"
+      }
+    }
+  ],
+  [
+    "$.kv_transfer_params.leyline",
+    {
+      "version": 1,
+      "action": "record",
+      "session_id": "inventory-reorder-label-5b07a911ce71482d8a027c1afcd9b6a0"
+    }
+  ],
+  [
+    "$.kv_transfer_params.leyline.action",
+    "record"
+  ],
+  [
+    "$.kv_transfer_params.leyline.session_id",
+    "inventory-reorder-label-5b07a911ce71482d8a027c1afcd9b6a0"
+  ]
+]
+[HTTP CONNECTED #5] status=200 elapsed=7.670s
+
+====================================================================================================
+[HTTP START #6]
+method: POST
+url: http://127.0.0.1:9119/v1/completions
+summary: {
+  "model": "deepseek-v2-lite",
+  "request_id": "leyline-validation-ab93b808e5544a2b85e01b4690c53fe4",
+  "prompt": {
+    "type": "token_ids/list",
+    "length": 244
+  },
+  "max_tokens": 64,
+  "temperature": 0,
+  "request_keys": [
+    "add_special_tokens",
+    "cache_salt",
+    "kv_transfer_params",
+    "logprobs",
+    "max_tokens",
+    "model",
+    "prompt",
+    "request_id",
+    "return_token_ids",
+    "return_tokens_as_token_ids",
+    "seed",
+    "temperature"
+  ]
+}
+leyline_fields: [
+  [
+    "$.kv_transfer_params",
+    {
+      "leyline": {
+        "version": 1,
+        "action": "amortize",
+        "session_id": "inventory-reorder-label-5b07a911ce71482d8a027c1afcd9b6a0",
+        "delete": {
+          "start": 29,
+          "end": 41
+        }
+      }
+    }
+  ],
+  [
+    "$.kv_transfer_params.leyline",
+    {
+      "version": 1,
+      "action": "amortize",
+      "session_id": "inventory-reorder-label-5b07a911ce71482d8a027c1afcd9b6a0",
+      "delete": {
+        "start": 29,
+        "end": 41
+      }
+    }
+  ],
+  [
+    "$.kv_transfer_params.leyline.action",
+    "amortize"
+  ],
+  [
+    "$.kv_transfer_params.leyline.session_id",
+    "inventory-reorder-label-5b07a911ce71482d8a027c1afcd9b6a0"
+  ],
+  [
+    "$.kv_transfer_params.leyline.delete",
+    {
+      "start": 29,
+      "end": 41
+    }
+  ]
+]
+[HTTP CONNECTED #6] status=200 elapsed=8.745s
