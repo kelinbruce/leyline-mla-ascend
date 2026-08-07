@@ -843,7 +843,19 @@ def _smoke_capture_evidence(
             matching = [
                 item
                 for item in manifest.get("captures", [])
-                if item.get("request_id") == request_id
+                if (
+                    item.get("request_id") == request_id
+                    or (
+                        request_id
+                        and isinstance(item.get("request_id"), str)
+                        and (
+                            item["request_id"] == f"cmpl-{request_id}"
+                            or item["request_id"].startswith(
+                                f"cmpl-{request_id}-"
+                            )
+                        )
+                    )
+                )
             ]
             if matching:
                 manifests.append(
