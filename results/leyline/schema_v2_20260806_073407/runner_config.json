@@ -1,0 +1,33 @@
+{
+  "arms": {
+    "full": "http://127.0.0.1:9119",
+    "honest_edited": "http://127.0.0.1:9119",
+    "leyline": "http://127.0.0.1:9119",
+    "patched_disabled": "http://127.0.0.1:9119",
+    "vanilla_apc": "http://127.0.0.1:9119"
+  },
+  "correctness_repetitions": 3,
+  "diagnostics": {
+    "continue_after_preflight_failure": true,
+    "device_capture_enabled": true,
+    "raw_logits_capture_enabled": false,
+    "top_logprobs": 10
+  },
+  "evaluation": {
+    "mode": "completion_target"
+  },
+  "max_tokens": 64,
+  "model": "deepseek-v2-lite",
+  "npu_memory_command": [
+    "npu-smi",
+    "info"
+  ],
+  "performance_prerequisites": {
+    "numerical_passed": false,
+    "rollback_passed": false
+  },
+  "prompt_format": "raw",
+  "tokenizer": "/opt/foundation_model/DeepSeek-V2-Lite",
+  "tokenizer_revision": "local",
+  "trust_remote_code": true
+}

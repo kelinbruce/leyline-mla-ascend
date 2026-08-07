@@ -1,0 +1,20 @@
+{
+  "block_size": 128,
+  "decode_context_parallel_size": 1,
+  "dtype": "bfloat16",
+  "enable_chunked_prefill": true,
+  "enable_prefix_caching": true,
+  "enforce_eager": true,
+  "kv_connector": "LeylineConnector",
+  "kv_connector_module_path": "vllm_ascend.distributed.kv_transfer.leyline.connector",
+  "kv_load_failure_policy": "recompute",
+  "kv_role": "kv_both",
+  "model": "/opt/foundation_model/DeepSeek-V2-Lite",
+  "model_revision": "local",
+  "prefill_context_parallel_size": 1,
+  "quantization": null,
+  "speculative_config": null,
+  "tensor_parallel_size": 4,
+  "tokenizer": "/opt/foundation_model/DeepSeek-V2-Lite",
+  "tokenizer_revision": "local"
+}
