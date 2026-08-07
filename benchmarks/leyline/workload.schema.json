@@ -57,8 +57,16 @@
         "removed": {"type": "string", "minLength": 1},
         "filler_unit": {"type": "string", "minLength": 1},
         "removed_repeat": {"type": "integer", "minimum": 1, "default": 1},
+        "execution_expectation": {"enum": ["required", "diagnostic"]},
+        "minimum_transform_tokens": {"type": "integer", "minimum": 0},
         "surviving": {"type": "string", "minLength": 1},
         "surviving_repeat": {"type": "integer", "minimum": 1, "default": 1},
+        "surviving_filler_unit": {"type": "string", "minLength": 1},
+        "surviving_filler_max_repeat": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 512
+        },
         "query": {"type": "string", "minLength": 1},
         "oracle": {"type": "object"},
         "expected_completion": {"type": "string", "pattern": "\\S"},

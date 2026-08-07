@@ -3,6 +3,7 @@
   "tokenizer": "deepseek-ai/DeepSeek-V2-Lite-Chat",
   "tokenizer_revision": "PIN_TOKENIZER_COMMIT",
   "trust_remote_code": true,
+  "block_size": 128,
   "max_tokens": 64,
   "correctness_repetitions": 3,
   "prompt_format": "chat_template",
@@ -19,6 +20,11 @@
     "continue_after_preflight_failure": true,
     "device_capture_enabled": false,
     "raw_logits_capture_enabled": false
+  },
+  "smoke_gate": {
+    "enabled": true,
+    "case_id": "chat-inventory",
+    "require_device_capture": false
   },
   "performance_prerequisites": {
     "numerical_passed": false,

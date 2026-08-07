@@ -13,15 +13,21 @@ from benchmarks.leyline.collect_environment import artifact_manifest
 from benchmarks.leyline.merge_reports import merge_documents
 from benchmarks.leyline.run_validation import (
     COMPLETION_TARGET,
+    PromptPlan,
     REFERENCE_PREFIX,
     STRUCTURED_JSON,
+    _stability_summary,
     build_prompt_plan,
     evaluate_case_results,
+    evaluate_transform_smoke,
     evaluation_config,
+    plan_transform_feasibility,
     performance_gate,
     request_completion,
     run_preflight,
     validate_workload_corpus,
+    validate_workload_feasibility,
+    workload_feasibility_report,
 )
 
 
@@ -72,6 +78,10 @@ def result(token_ids: list[int] | None, structured: dict | None = None, *, appli
                 "transformed_tokens": 128,
                 "fallback_reason": None,
                 "transform_complete": True,
+                "expected_layers": 27,
+                "transformed_layers": 27,
+                "expected_ranks": 4,
+                "successful_ranks": 4,
             }
         }
     value = {"output_token_ids": token_ids, "structured": structured, "kv_transfer_params": metadata}
@@ -81,6 +91,94 @@ def result(token_ids: list[int] | None, structured: dict | None = None, *, appli
 
 
 class ValidationHarnessTest(unittest.TestCase):
+    def test_transform_feasibility_boundary_conditions(self) -> None:
+        short_source = PromptPlan(list(range(100)), list(range(90)), 10, 20)
+        self.assertEqual(
+            plan_transform_feasibility(short_source, block_size=128).reason,
+            "missing_source_blocks",
+        )
+
+        short_edited = PromptPlan(list(range(256)), list(range(100)), 0, 156)
+        self.assertEqual(
+            plan_transform_feasibility(short_edited, block_size=128).reason,
+            "no_reusable_target_blocks",
+        )
+
+        partial_source = PromptPlan(list(range(200)), list(range(150)), 0, 50)
+        partial = plan_transform_feasibility(partial_source, block_size=128)
+        self.assertEqual(partial.reason, "mapped_source_block_not_resident")
+        self.assertEqual(partial.blocking_source_block, 1)
+
+        pre_delete_only = PromptPlan(list(range(400)), list(range(300)), 256, 356)
+        pre_delete = plan_transform_feasibility(pre_delete_only, block_size=128)
+        self.assertEqual(pre_delete.predicted_transformed_tokens, 256)
+        self.assertEqual(pre_delete.predicted_shifted_tokens, 0)
+
+    def test_transform_feasibility_long_deletion_and_local_apc(self) -> None:
+        long_delete = PromptPlan(list(range(1200)), list(range(176)), 32, 1056)
+        long_result = plan_transform_feasibility(long_delete, block_size=128)
+        self.assertEqual(long_result.predicted_transformed_tokens, 128)
+        self.assertIsNone(long_result.reason)
+
+        local_apc = PromptPlan(list(range(400)), list(range(350)), 250, 300)
+        local_result = plan_transform_feasibility(
+            local_apc,
+            block_size=128,
+            local_computed_tokens=128,
+        )
+        self.assertEqual(local_result.reusable_target_start, 128)
+        self.assertEqual(local_result.predicted_transformed_tokens, 128)
+
+    def test_surviving_filler_expands_to_transformable_plan(self) -> None:
+        tokenizer = CharacterTokenizer()
+        filler_case = {
+            **case(),
+            "expected_completion": " Y",
+            "surviving_filler_unit": "neutral\n",
+            "surviving_filler_max_repeat": 64,
+            "minimum_transform_tokens": 128,
+        }
+        plan = build_prompt_plan(tokenizer, filler_case, block_size=128)
+        feasibility = plan_transform_feasibility(plan, block_size=128)
+        self.assertGreater(plan.surviving_filler_repeat, 0)
+        self.assertGreaterEqual(feasibility.predicted_transformed_tokens, 128)
+        self.assertEqual(
+            plan.full[: plan.delete_start] + plan.full[plan.delete_end :],
+            plan.edited,
+        )
+
+    def test_required_and_diagnostic_feasibility_admission(self) -> None:
+        tokenizer = CharacterTokenizer()
+        required = {
+            **case(),
+            "execution_expectation": "required",
+            "minimum_transform_tokens": 128,
+        }
+        report = workload_feasibility_report(
+            [required],
+            tokenizer,
+            {"prompt_format": "raw", "evaluation": {"mode": REFERENCE_PREFIX}},
+        )
+        self.assertFalse(report["passed"])
+        with self.assertRaisesRegex(ValueError, "missing_source_blocks"):
+            validate_workload_feasibility(
+                [required],
+                tokenizer,
+                {"prompt_format": "raw", "evaluation": {"mode": REFERENCE_PREFIX}},
+            )
+        diagnostic = {
+            **required,
+            "execution_expectation": "diagnostic",
+            "minimum_transform_tokens": 0,
+        }
+        self.assertTrue(
+            workload_feasibility_report(
+                [diagnostic],
+                tokenizer,
+                {"prompt_format": "raw", "evaluation": {"mode": REFERENCE_PREFIX}},
+            )["passed"]
+        )
+
     def test_raw_and_chat_plans_are_exact_deletions(self) -> None:
         tokenizer = CharacterTokenizer()
         for prompt_format in ("raw", "chat_template"):
@@ -385,6 +483,88 @@ class ValidationHarnessTest(unittest.TestCase):
             {"passed": True},
         )
         self.assertTrue(gate["passed"])
+
+    def test_transform_smoke_and_split_stability(self) -> None:
+        leyline = result([10], applied=True)
+        execution = {
+            "recorded": True,
+            "applied": True,
+            "transformed_tokens_positive": True,
+            "no_fallback": True,
+            "transform_complete": True,
+            "output_token_ids_present": True,
+            "valid": True,
+        }
+        smoke = evaluate_transform_smoke(
+            {"arms": {"leyline": leyline}, "leyline_execution": execution},
+            {"block_size": 128, "diagnostics": {"device_capture_enabled": False}},
+        )
+        self.assertTrue(smoke["passed"])
+        capture_required = evaluate_transform_smoke(
+            {"arms": {"leyline": leyline}, "leyline_execution": execution},
+            {
+                "block_size": 128,
+                "diagnostics": {"device_capture_enabled": True},
+            },
+        )
+        self.assertFalse(capture_required["passed"])
+        self.assertEqual(
+            capture_required["capture"]["reason"],
+            "device_capture_dir_missing",
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            leyline["request_id"] = "smoke-request"
+            metadata = leyline["kv_transfer_params"]["leyline"]
+            metadata["expected_ranks"] = 1
+            metadata["successful_ranks"] = 1
+            Path(directory, "smoke.rank0.manifest.json").write_text(
+                json.dumps(
+                    {
+                        "rank": 0,
+                        "complete_for_rank": True,
+                        "captures": [{"request_id": "smoke-request"}],
+                    }
+                )
+            )
+            captured = evaluate_transform_smoke(
+                {"arms": {"leyline": leyline}, "leyline_execution": execution},
+                {
+                    "block_size": 128,
+                    "diagnostics": {
+                        "device_capture_enabled": True,
+                        "device_capture_dir": directory,
+                    },
+                },
+            )
+            self.assertTrue(captured["passed"])
+        execution["applied"] = False
+        self.assertFalse(
+            evaluate_transform_smoke(
+                {"arms": {"leyline": leyline}, "leyline_execution": execution},
+                {"block_size": 128},
+            )["passed"]
+        )
+
+        gates = {
+            "full_matches": True,
+            "honest_edited_matches": True,
+            "leyline_matches": True,
+            "leyline_execution_valid": True,
+        }
+        first = {
+            "gates": gates,
+            "arms": {"leyline": result([10], applied=True)},
+            "counterfactuals": [],
+        }
+        second = {
+            "gates": gates,
+            "arms": {"leyline": result([11], applied=True)},
+            "counterfactuals": [],
+        }
+        stability = _stability_summary([first, second])
+        self.assertTrue(stability["stable"])
+        self.assertTrue(stability["execution_stable"])
+        self.assertFalse(stability["generation_stable"])
 
 
 if __name__ == "__main__":

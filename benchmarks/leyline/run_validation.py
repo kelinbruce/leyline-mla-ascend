@@ -29,6 +29,40 @@ class PromptPlan:
     delete_start: int
     delete_end: int
     target_token_ids: tuple[int, ...] = ()
+    surviving_filler_repeat: int = 0
+
+
+@dataclass(frozen=True)
+class TransformFeasibility:
+    full_tokens: int
+    edited_tokens: int
+    block_size: int
+    complete_source_blocks: tuple[int, ...]
+    local_computed_tokens: int
+    max_target_tokens: int
+    reusable_target_start: int
+    reusable_target_end: int
+    predicted_transformed_tokens: int
+    predicted_shifted_tokens: int
+    blocking_source_block: int | None
+    reason: str | None
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "full_tokens": self.full_tokens,
+            "edited_tokens": self.edited_tokens,
+            "block_size": self.block_size,
+            "complete_source_blocks": list(self.complete_source_blocks),
+            "complete_source_block_count": len(self.complete_source_blocks),
+            "local_computed_tokens": self.local_computed_tokens,
+            "max_target_tokens": self.max_target_tokens,
+            "reusable_target_start": self.reusable_target_start,
+            "reusable_target_end": self.reusable_target_end,
+            "predicted_transformed_tokens": self.predicted_transformed_tokens,
+            "predicted_shifted_tokens": self.predicted_shifted_tokens,
+            "blocking_source_block": self.blocking_source_block,
+            "reason": self.reason,
+        }
 
 
 REFERENCE_PREFIX = "reference_prefix"
@@ -44,9 +78,74 @@ def _encode(tokenizer: Any, text: str, *, special: bool = False) -> list[int]:
 
 def _case_text(case: dict[str, Any], removed: str | None = None) -> tuple[str, str]:
     removed_text = (removed if removed is not None else case["removed"]) * case.get("removed_repeat", 1)
-    surviving_text = case["surviving"] * case.get("surviving_repeat", 1)
+    surviving_filler = case.get("surviving_filler_unit", "") * int(
+        case.get("_surviving_filler_repeat", 0)
+    )
+    surviving_text = surviving_filler + case["surviving"] * case.get("surviving_repeat", 1)
     return case["prefix"] + removed_text + surviving_text + case["query"], (
         case["prefix"] + surviving_text + case["query"]
+    )
+
+
+def plan_transform_feasibility(
+    plan: PromptPlan,
+    *,
+    block_size: int,
+    local_computed_tokens: int = 0,
+) -> TransformFeasibility:
+    """Predict the connector's longest reusable complete-block prefix."""
+
+    if block_size <= 0:
+        raise ValueError("block_size must be positive")
+    if local_computed_tokens < 0 or local_computed_tokens % block_size:
+        raise ValueError("local_computed_tokens must be non-negative and block aligned")
+    complete_source_blocks = tuple(range(len(plan.full) // block_size))
+    max_target_tokens = max(len(plan.edited) - 1, 0)
+    candidate_end = min(len(plan.edited), max_target_tokens)
+    candidate_end -= candidate_end % block_size
+    reusable_end = local_computed_tokens
+    blocking_source_block: int | None = None
+    resident = set(complete_source_blocks)
+    delete_length = plan.delete_end - plan.delete_start
+    for target_end in range(
+        local_computed_tokens + block_size,
+        candidate_end + 1,
+        block_size,
+    ):
+        target_start = target_end - block_size
+        required = {
+            (position if position < plan.delete_start else position + delete_length)
+            // block_size
+            for position in range(target_start, target_end)
+        }
+        missing = sorted(required - resident)
+        if missing:
+            blocking_source_block = missing[0]
+            break
+        reusable_end = target_end
+    transformed = max(reusable_end - local_computed_tokens, 0)
+    shifted = max(reusable_end - max(local_computed_tokens, plan.delete_start), 0)
+    if not complete_source_blocks:
+        reason = "missing_source_blocks"
+    elif transformed:
+        reason = None
+    elif blocking_source_block is not None:
+        reason = "mapped_source_block_not_resident"
+    else:
+        reason = "no_reusable_target_blocks"
+    return TransformFeasibility(
+        full_tokens=len(plan.full),
+        edited_tokens=len(plan.edited),
+        block_size=block_size,
+        complete_source_blocks=complete_source_blocks,
+        local_computed_tokens=local_computed_tokens,
+        max_target_tokens=candidate_end,
+        reusable_target_start=local_computed_tokens,
+        reusable_target_end=reusable_end,
+        predicted_transformed_tokens=transformed,
+        predicted_shifted_tokens=shifted,
+        blocking_source_block=blocking_source_block,
+        reason=reason,
     )
 
 
@@ -63,14 +162,24 @@ def _exact_deletion(full: list[int], edited: list[int]) -> tuple[int, int]:
     return start, end
 
 
-def _fit_removed_repeat(tokenizer: Any, case: dict[str, Any], requested_tokens: int) -> int:
+def _fit_removed_repeat(
+    tokenizer: Any,
+    case: dict[str, Any],
+    requested_tokens: int,
+    surviving_filler_repeat: int = 0,
+) -> int:
     if requested_tokens < 1:
         raise ValueError("position_coverage.delete_tokens must be positive")
     if not case.get("filler_unit"):
         return int(case.get("removed_repeat", 1))
 
     def achieved(repeat: int) -> int:
-        candidate = {**case, "removed": case["filler_unit"], "removed_repeat": repeat}
+        candidate = {
+            **case,
+            "removed": case["filler_unit"],
+            "removed_repeat": repeat,
+            "_surviving_filler_repeat": surviving_filler_repeat,
+        }
         full_text, edited_text = _case_text(candidate)
         full = _encode(tokenizer, full_text, special=True)
         edited = _encode(tokenizer, edited_text, special=True)
@@ -102,18 +211,29 @@ def _fit_removed_repeat(tokenizer: Any, case: dict[str, Any], requested_tokens: 
     )
 
 
-def build_prompt_plan(
+def _build_prompt_plan_once(
     tokenizer: Any,
     case: dict[str, Any],
     removed: str | None = None,
     *,
     prompt_format: str = RAW,
+    surviving_filler_repeat: int = 0,
 ) -> PromptPlan:
     working_case = case
     requested_delete = case.get("position_coverage", {}).get("delete_tokens")
     if removed is None and requested_delete is not None and case.get("filler_unit"):
-        repeat = _fit_removed_repeat(tokenizer, case, int(requested_delete))
+        repeat = _fit_removed_repeat(
+            tokenizer,
+            case,
+            int(requested_delete),
+            surviving_filler_repeat,
+        )
         working_case = {**case, "removed": case["filler_unit"], "removed_repeat": repeat}
+    if surviving_filler_repeat:
+        working_case = {
+            **working_case,
+            "_surviving_filler_repeat": surviving_filler_repeat,
+        }
     full_text, edited_text = _case_text(working_case, removed)
     if prompt_format == RAW:
         # Encode the canonical complete strings. This detects token-boundary
@@ -163,7 +283,60 @@ def build_prompt_plan(
         raise ValueError(
             f"requested {requested_delete} deleted tokens, achieved {delete_end - delete_start}"
         )
-    return PromptPlan(full, edited, delete_start, delete_end, target_token_ids)
+    return PromptPlan(
+        full,
+        edited,
+        delete_start,
+        delete_end,
+        target_token_ids,
+        surviving_filler_repeat,
+    )
+
+
+def build_prompt_plan(
+    tokenizer: Any,
+    case: dict[str, Any],
+    removed: str | None = None,
+    *,
+    prompt_format: str = RAW,
+    block_size: int = 128,
+) -> PromptPlan:
+    """Build an exact deletion plan and minimally expand surviving filler."""
+
+    filler_unit = case.get("surviving_filler_unit")
+    if not filler_unit:
+        return _build_prompt_plan_once(
+            tokenizer,
+            case,
+            removed,
+            prompt_format=prompt_format,
+        )
+    minimum = int(case.get("minimum_transform_tokens", block_size))
+    if minimum < 0 or minimum % block_size:
+        raise ValueError("minimum_transform_tokens must be non-negative and block aligned")
+    maximum_repeat = int(case.get("surviving_filler_max_repeat", 512))
+    if maximum_repeat < 1:
+        raise ValueError("surviving_filler_max_repeat must be at least 1")
+    last: TransformFeasibility | None = None
+    for repeat in range(1, maximum_repeat + 1):
+        plan = _build_prompt_plan_once(
+            tokenizer,
+            case,
+            removed,
+            prompt_format=prompt_format,
+            surviving_filler_repeat=repeat,
+        )
+        last = plan_transform_feasibility(plan, block_size=block_size)
+        if (
+            last.predicted_transformed_tokens >= minimum
+            and last.predicted_shifted_tokens > 0
+        ):
+            return plan
+    assert last is not None
+    raise ValueError(
+        "surviving filler cannot satisfy transform feasibility within "
+        f"{maximum_repeat} repeats: {json.dumps(last.as_dict(), sort_keys=True)}"
+    )
 
 
 def extract_json(text: str) -> dict[str, Any] | None:
@@ -508,7 +681,14 @@ def run_case(
     max_tokens = int(config.get("max_tokens", 64))
     mode, prompt_format, reference_tokens = evaluation_config(config)
     top_logprobs = int(config.get("diagnostics", {}).get("top_logprobs", 0))
-    plan = build_prompt_plan(tokenizer, case, prompt_format=prompt_format)
+    block_size = int(config.get("block_size", 128))
+    plan = build_prompt_plan(
+        tokenizer,
+        case,
+        prompt_format=prompt_format,
+        block_size=block_size,
+    )
+    feasibility = plan_transform_feasibility(plan, block_size=block_size)
     arms: dict[str, Any] = {}
 
     for arm in ("cache_off", "full", "vanilla_apc", "honest_edited", "patched_disabled"):
@@ -553,7 +733,13 @@ def run_case(
 
     counterfactuals = []
     for index, removed in enumerate(case.get("counterfactual_removed", [])) if "full" in endpoints else []:
-        variant = build_prompt_plan(tokenizer, case, removed, prompt_format=prompt_format)
+        variant = build_prompt_plan(
+            tokenizer,
+            case,
+            removed,
+            prompt_format=prompt_format,
+            block_size=block_size,
+        )
         result = request_completion(
             endpoints["full"],
             model,
@@ -578,7 +764,6 @@ def run_case(
     transform_metadata = ((arms.get("leyline", {}).get("kv_transfer_params") or {}).get("leyline") or {})
     target_start = int(transform_metadata.get("local_apc_tokens", 0) or 0)
     transformed_tokens = int(transform_metadata.get("transformed_tokens", 0) or 0)
-    block_size = int(config.get("block_size", 128))
     return {
         "id": case["id"],
         "category": case["category"],
@@ -594,6 +779,10 @@ def run_case(
         "oracle": case.get("oracle"),
         "expected_completion": case.get("expected_completion"),
         "target_token_ids": list(plan.target_token_ids),
+        "workload_feasibility": {
+            **feasibility.as_dict(),
+            "surviving_filler_repeat": plan.surviving_filler_repeat,
+        },
         "position_coverage": case.get("position_coverage"),
         "leyline_transform": {
             "target_start": target_start,
@@ -622,6 +811,135 @@ def run_case(
         "leyline_execution": evaluation["leyline_execution"],
         "pairwise": evaluation["pairwise"],
     }
+
+
+def _smoke_capture_evidence(
+    result: dict[str, Any],
+    config: dict[str, Any],
+) -> dict[str, Any]:
+    diagnostics = config.get("diagnostics", {})
+    required = bool(
+        config.get("smoke_gate", {}).get(
+            "require_device_capture",
+            diagnostics.get("device_capture_enabled", False),
+        )
+    )
+    if not required:
+        return {"required": False, "passed": True, "manifests": []}
+    capture_dir_value = diagnostics.get("device_capture_dir")
+    if not capture_dir_value:
+        return {
+            "required": True,
+            "passed": False,
+            "reason": "device_capture_dir_missing",
+            "manifests": [],
+        }
+    capture_dir = Path(capture_dir_value).expanduser()
+    request_id = result.get("arms", {}).get("leyline", {}).get("request_id")
+    manifests: list[dict[str, Any]] = []
+    if capture_dir.is_dir():
+        for path in sorted(capture_dir.glob("*.manifest.json")):
+            manifest = json.loads(path.read_text())
+            matching = [
+                item
+                for item in manifest.get("captures", [])
+                if item.get("request_id") == request_id
+            ]
+            if matching:
+                manifests.append(
+                    {
+                        "path": str(path),
+                        "rank": manifest.get("rank"),
+                        "complete_for_rank": manifest.get("complete_for_rank") is True,
+                        "matching_captures": len(matching),
+                    }
+                )
+    metadata = (
+        (result.get("arms", {}).get("leyline", {}).get("kv_transfer_params") or {})
+        .get("leyline", {})
+    )
+    expected_ranks = int(metadata.get("expected_ranks", 0) or 0)
+    observed_ranks = {
+        item["rank"] for item in manifests if item["complete_for_rank"]
+    }
+    passed = bool(
+        request_id
+        and expected_ranks > 0
+        and len(observed_ranks) == expected_ranks
+    )
+    return {
+        "required": True,
+        "passed": passed,
+        "request_id": request_id,
+        "expected_ranks": expected_ranks,
+        "observed_complete_ranks": sorted(observed_ranks),
+        "manifests": manifests,
+        "reason": None if passed else "capture_manifest_incomplete_or_missing",
+    }
+
+
+def evaluate_transform_smoke(
+    result: dict[str, Any],
+    config: dict[str, Any],
+) -> dict[str, Any]:
+    execution = result.get("leyline_execution", {})
+    metadata = (
+        (result.get("arms", {}).get("leyline", {}).get("kv_transfer_params") or {})
+        .get("leyline", {})
+    )
+    block_size = int(config.get("block_size", 128))
+    expected_layers = int(metadata.get("expected_layers", 0) or 0)
+    transformed_layers = int(metadata.get("transformed_layers", 0) or 0)
+    expected_ranks = int(metadata.get("expected_ranks", 0) or 0)
+    successful_ranks = int(metadata.get("successful_ranks", 0) or 0)
+    transformed_tokens = int(metadata.get("transformed_tokens", 0) or 0)
+    capture = _smoke_capture_evidence(result, config)
+    conditions = {
+        "recorded": execution.get("recorded") is True,
+        "applied": execution.get("applied") is True,
+        "positive_block_aligned_transform": (
+            transformed_tokens > 0 and transformed_tokens % block_size == 0
+        ),
+        "no_fallback": execution.get("no_fallback") is True,
+        "transform_complete": execution.get("transform_complete") is True,
+        "layer_complete": (
+            expected_layers > 0 and transformed_layers == expected_layers
+        ),
+        "rank_complete": (
+            expected_ranks > 0 and successful_ranks == expected_ranks
+        ),
+        "capture_complete": capture["passed"],
+    }
+    return {
+        "passed": all(conditions.values()),
+        "conditions": conditions,
+        "metadata": {
+            "expected_layers": expected_layers,
+            "transformed_layers": transformed_layers,
+            "expected_ranks": expected_ranks,
+            "successful_ranks": successful_ranks,
+            "transformed_tokens": transformed_tokens,
+            "fallback_reason": metadata.get("fallback_reason"),
+        },
+        "capture": capture,
+    }
+
+
+def run_transform_smoke(
+    case: dict[str, Any],
+    tokenizer: Any,
+    config: dict[str, Any],
+    *,
+    preflight_passed: bool,
+) -> dict[str, Any]:
+    result = run_case(
+        case,
+        tokenizer,
+        config,
+        preflight_passed=preflight_passed,
+    )
+    evaluation = evaluate_transform_smoke(result, config)
+    return {"case_id": case["id"], **evaluation, "result": result}
 
 
 class NpuMemorySampler:
@@ -701,7 +1019,12 @@ def run_performance(
     case: dict[str, Any], tokenizer: Any, config: dict[str, Any], concurrencies: list[int], repetitions: int
 ) -> list[dict[str, Any]]:
     _, prompt_format, _ = evaluation_config(config)
-    plan = build_prompt_plan(tokenizer, case, prompt_format=prompt_format)
+    plan = build_prompt_plan(
+        tokenizer,
+        case,
+        prompt_format=prompt_format,
+        block_size=int(config.get("block_size", 128)),
+    )
     api_key = config.get("api_key")
     model = config["model"]
     max_tokens = int(config.get("max_tokens", 64))
@@ -879,9 +1202,29 @@ def validate_workload_corpus(workloads: dict[str, Any], config: dict[str, Any]) 
         return
     if version != 2 or not isinstance(workloads.get("corpus_id"), str):
         raise ValueError("qualification workloads require version=2 and corpus_id")
+    block_size = int(config.get("block_size", 128))
     for case in cases:
         if not case.get("family") or not case.get("claim_type"):
             raise ValueError(f"case {case['id']} requires family and claim_type")
+        expectation = case.get("execution_expectation")
+        if expectation not in {"required", "diagnostic"}:
+            raise ValueError(
+                f"case {case['id']} requires execution_expectation=required|diagnostic"
+            )
+        minimum_transform_tokens = case.get("minimum_transform_tokens")
+        if (
+            not isinstance(minimum_transform_tokens, int)
+            or minimum_transform_tokens < 0
+            or minimum_transform_tokens % block_size
+        ):
+            raise ValueError(
+                f"case {case['id']} minimum_transform_tokens must be non-negative "
+                f"and aligned to block_size={block_size}"
+            )
+        if expectation == "required" and minimum_transform_tokens < block_size:
+            raise ValueError(
+                f"case {case['id']} requires at least one complete transform block"
+            )
         if case.get("evaluation_mode") != mode:
             raise ValueError(
                 f"case {case['id']} evaluation_mode must match configured mode {mode}"
@@ -923,6 +1266,117 @@ def validate_workload_corpus(workloads: dict[str, Any], config: dict[str, Any]) 
         raise ValueError("Chat corpus requires at least six cases")
 
 
+def workload_feasibility_report(
+    cases: list[dict[str, Any]],
+    tokenizer: Any,
+    config: dict[str, Any],
+) -> dict[str, Any]:
+    """Plan every canonical/counterfactual prompt before network requests."""
+
+    _, prompt_format, _ = evaluation_config(config)
+    block_size = int(config.get("block_size", 128))
+    entries: list[dict[str, Any]] = []
+    failures: list[dict[str, Any]] = []
+    for case in cases:
+        expectation = case.get("execution_expectation", "required")
+        if expectation not in {"required", "diagnostic"}:
+            raise ValueError(
+                f"case {case['id']} has unsupported execution_expectation {expectation!r}"
+            )
+        minimum = int(
+            case.get(
+                "minimum_transform_tokens",
+                block_size if expectation == "required" else 0,
+            )
+        )
+        variants: list[tuple[str, str | None]] = [("canonical", None)]
+        variants.extend(
+            (f"counterfactual-{index}", removed)
+            for index, removed in enumerate(case.get("counterfactual_removed", []))
+        )
+        for variant_id, removed in variants:
+            try:
+                plan = build_prompt_plan(
+                    tokenizer,
+                    case,
+                    removed,
+                    prompt_format=prompt_format,
+                    block_size=block_size,
+                )
+            except (TypeError, ValueError) as exc:
+                entry = {
+                    "case_id": case["id"],
+                    "variant": variant_id,
+                    "execution_expectation": expectation,
+                    "minimum_transform_tokens": minimum,
+                    "surviving_filler_repeat": None,
+                    "passed": False,
+                    "predicted_transformed_tokens": 0,
+                    "blocking_source_block": None,
+                    "reason": "prompt_planning_failed",
+                    "error": f"{type(exc).__name__}: {exc}",
+                }
+                entries.append(entry)
+                failures.append(entry)
+                continue
+            feasibility = plan_transform_feasibility(plan, block_size=block_size)
+            passed = (
+                expectation == "diagnostic"
+                or (
+                    feasibility.predicted_transformed_tokens >= minimum
+                    and feasibility.predicted_shifted_tokens > 0
+                )
+            )
+            admission_reason = feasibility.reason
+            if (
+                expectation == "required"
+                and feasibility.predicted_transformed_tokens >= minimum
+                and feasibility.predicted_shifted_tokens == 0
+            ):
+                admission_reason = "delete_outside_reusable_range"
+            entry = {
+                "case_id": case["id"],
+                "variant": variant_id,
+                "execution_expectation": expectation,
+                "minimum_transform_tokens": minimum,
+                "surviving_filler_repeat": plan.surviving_filler_repeat,
+                "passed": passed,
+                **feasibility.as_dict(),
+                "reason": admission_reason,
+            }
+            entries.append(entry)
+            if not passed:
+                failures.append(entry)
+    return {"passed": not failures, "entries": entries, "failures": failures}
+
+
+def validate_workload_feasibility(
+    cases: list[dict[str, Any]],
+    tokenizer: Any,
+    config: dict[str, Any],
+) -> dict[str, Any]:
+    report = workload_feasibility_report(cases, tokenizer, config)
+    if report["failures"]:
+        summary = [
+            {
+                "case_id": item["case_id"],
+                "variant": item["variant"],
+                "reason": item["reason"],
+                "predicted_transformed_tokens": item["predicted_transformed_tokens"],
+                "predicted_shifted_tokens": item.get("predicted_shifted_tokens", 0),
+                "minimum_transform_tokens": item["minimum_transform_tokens"],
+                "blocking_source_block": item["blocking_source_block"],
+                "error": item.get("error"),
+            }
+            for item in report["failures"]
+        ]
+        raise ValueError(
+            "Leyline workload feasibility failed before requests: "
+            f"{json.dumps(summary, sort_keys=True)}"
+        )
+    return report
+
+
 def _stability_summary(runs: list[dict[str, Any]]) -> dict[str, Any]:
     decisions = [
         (
@@ -939,13 +1393,51 @@ def _stability_summary(runs: list[dict[str, Any]]) -> dict[str, Any]:
     ]
     transformed = [item.get("transformed_tokens") for item in execution]
     complete = [item.get("transform_complete") for item in execution]
-    stable = len(set(decisions)) == 1 and len(set(transformed)) == 1 and len(set(complete)) == 1
+    fallback = [item.get("fallback_reason") for item in execution]
+    execution_stable = (
+        len(set(decisions)) == 1
+        and len(set(transformed)) == 1
+        and len(set(complete)) == 1
+        and len(set(fallback)) == 1
+    )
+    generation_identities = [
+        (
+            tuple(
+                (arm, tuple(result.get("output_token_ids") or ()))
+                for arm, result in sorted(run.get("arms", {}).items())
+            ),
+            tuple(
+                tuple(result.get("output_token_ids") or ())
+                for result in run.get("counterfactuals", [])
+            ),
+        )
+        for run in runs
+    ]
+    generation_stable = len(set(generation_identities)) == 1
     return {
         "repetitions": len(runs),
-        "stable": stable,
+        # Schema-v2 compatibility: stable historically meant connector/gate
+        # stability, not byte-for-byte generation stability.
+        "stable": execution_stable,
+        "execution_stable": execution_stable,
+        "generation_stable": generation_stable,
         "gate_decisions": [list(item) for item in decisions],
         "transformed_tokens": transformed,
         "transform_complete": complete,
+        "fallback_reason": fallback,
+        "generation_output_token_ids": [
+            {
+                "arms": {
+                    arm: result.get("output_token_ids")
+                    for arm, result in sorted(run.get("arms", {}).items())
+                },
+                "counterfactuals": [
+                    result.get("output_token_ids")
+                    for result in run.get("counterfactuals", [])
+                ],
+            }
+            for run in runs
+        ],
     }
 
 
@@ -1060,10 +1552,52 @@ def main() -> None:
         revision=config.get("tokenizer_revision"),
         trust_remote_code=bool(config.get("trust_remote_code", False)),
     )
+    expanded_cases = expand_workload_cases(workloads["cases"])
+    if config.get("legacy_diagnostic", False):
+        feasibility: dict[str, Any] = {
+            "passed": None,
+            "skipped_reason": "legacy_diagnostic_mode",
+            "entries": [],
+            "failures": [],
+        }
+    else:
+        feasibility = validate_workload_feasibility(
+            expanded_cases,
+            tokenizer,
+            config,
+        )
     preflight = run_preflight(tokenizer, config)
     allow_diagnostics = bool(config.get("diagnostics", {}).get("continue_after_preflight_failure", True))
+    smoke_settings = config.get("smoke_gate", {})
+    smoke: dict[str, Any] = {
+        "enabled": bool(smoke_settings.get("enabled", False)),
+        "passed": None,
+        "skipped_reason": "disabled",
+    }
+    if smoke["enabled"] and (preflight["passed"] or allow_diagnostics):
+        smoke_case_id = smoke_settings.get("case_id")
+        smoke_case = next(
+            (case for case in expanded_cases if case["id"] == smoke_case_id),
+            None,
+        )
+        if smoke_case is None:
+            raise ValueError(
+                f"smoke_gate.case_id {smoke_case_id!r} is not present in the expanded corpus"
+            )
+        smoke = {
+            "enabled": True,
+            "skipped_reason": None,
+            **run_transform_smoke(
+                smoke_case,
+                tokenizer,
+                config,
+                preflight_passed=bool(preflight["passed"]),
+            ),
+        }
     if not preflight["passed"] and not allow_diagnostics:
         cases: list[dict[str, Any]] = []
+    elif smoke["enabled"] and smoke["passed"] is not True:
+        cases = []
     else:
         cases = [
             run_case_repetitions(
@@ -1072,7 +1606,7 @@ def main() -> None:
                 config,
                 preflight_passed=bool(preflight["passed"]),
             )
-            for case in expand_workload_cases(workloads["cases"])
+            for case in expanded_cases
         ]
     report: dict[str, Any] = {
         "schema_version": 2,
@@ -1089,6 +1623,8 @@ def main() -> None:
             ),
         },
         "preflight": preflight,
+        "workload_feasibility": feasibility,
+        "smoke_gate": smoke,
         "cases": cases,
     }
     numerical_report = (

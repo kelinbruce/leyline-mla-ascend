@@ -52,7 +52,28 @@ python3 benchmarks/leyline/run_validation.py \
   --output results/leyline/correctness.json
 ```
 
+Qualification now has two fail-fast stages before the full repeated matrix:
+
+1. The tokenizer-aware workload planner calculates complete source blocks and the longest reusable target range for every canonical and counterfactual prompt. A case with `execution_expectation=required` must predict at least `minimum_transform_tokens`; otherwise the process exits before making any HTTP request and prints the case, variant, stable reason, predicted count, and blocking source block.
+2. The configured `smoke_gate.case_id` runs once. The matrix proceeds only when the paired request reports `recorded=true`, `applied=true`, a positive block-aligned transformed-token count, no fallback, complete expected layer/rank counts, and any capture evidence required by the active configuration.
+
+The report stores both stages under `workload_feasibility` and `smoke_gate`. If the smoke request fails, `cases` is empty so a fallback response cannot be mistaken for Leyline semantic evidence. Inspect the gate before reviewing case outputs:
+
+```bash
+jq '{feasibility: .workload_feasibility.passed,
+     smoke: .smoke_gate | {case_id, passed, conditions, metadata}}' \
+  results/leyline/correctness.json
+```
+
+When smoke capture is required, set `diagnostics.device_capture_enabled=true`, set `diagnostics.device_capture_dir` to the same directory as `VLLM_ASCEND_LEYLINE_CAPTURE_DIR`, and set `smoke_gate.require_device_capture=true`. The smoke gate joins manifests by the amortize request ID and requires one complete manifest for every expected rank.
+
+Legacy schema-v1/reference diagnostics remain available only with `legacy_diagnostic=true`; that explicit mode skips feasibility admission. Disabling `smoke_gate` is useful for historical diagnostics but does not produce qualification evidence.
+
 Prompts are sent to `/v1/completions` as explicit token-ID arrays with `add_special_tokens=false`. Raw and chat-template modes each encode their canonical full and edited strings, then fail unless one contiguous token deletion turns full into edited. Base completion targets are derived by tokenizing the prompt both with and without the declared suffix; whitespace-only and boundary-replacing targets fail closed. The versioned base corpus contains sixteen definitions across six admissible task families, four position-stress cases, two counterfactual cases, two mechanism diagnostics, and two negative controls. One stress definition expands to a 1024-token deletion variant. The Chat corpus contains six independent structured cases.
+
+For a transformable workload, length must remain after deletion. Set a deterministic `surviving_filler_unit`, a bounded `surviving_filler_max_repeat`, and a block-aligned `minimum_transform_tokens`. The planner chooses the smallest tokenizer-specific repeat count that preserves the exact deletion and completion boundary while making mapped source blocks resident. Do not make a case long only by increasing `removed_repeat`: that can record source blocks while leaving the edited prompt with no complete target block, which yields `no_reusable_blocks` at runtime.
+
+The `route-label` workloads use a closed lookup continuation and repeat the target row immediately before the query. Do not relabel a target from a single observed run; full, honest-edited, and every counterfactual must still empirically qualify the declared target on the pinned 910B checkpoint.
 
 The recommended 910 workflow has two parallel tracks after checkpoint/runtime identity is collected:
 
@@ -60,6 +81,8 @@ The recommended 910 workflow has two parallel tracks after checkpoint/runtime id
 2. Start mechanism diagnostics immediately: collect returned first-token IDs, top-N API log probabilities, common-prefix/divergence evidence, and per-layer/per-rank cache captures without making a semantic claim.
 
 Join the tracks only for acceptance. Leyline additionally requires `recorded=true` on the paired record response, `applied=true` and `transform_complete=true` on amortize, positive transformed tokens, no fallback, numerical success, and rollback success. A unique `cache_salt` prevents accidental APC contamination between honest baselines; Leyline record/amortize pairs deliberately share one salt. Qualification configurations run every correctness case at least three times.
+
+Repetition stability is reported in two dimensions. `execution_stable` compares gates, fallback reason, transformed-token count, and completion state; `generation_stable` compares exact output token-ID sequences for every arm and counterfactual. The legacy `stable` field remains an alias of `execution_stable` and must not be interpreted as exact text stability.
 
 API top-token values are log probabilities. Their top-1/top-2 difference equals the corresponding logit margin, but they are still labeled `api_logprobs`. To collect full-vocabulary logits before grammar processing and sampling, set `VLLM_ASCEND_LEYLINE_RAW_LOGITS_DIR`; those rank-scoped artifacts are separately labeled `internal_raw_logits` with worker provenance and use the request ID retained in the correctness report. Raw-logit capture is limited to the non-speculative validation path.
 
