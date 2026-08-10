@@ -2,6 +2,8 @@
 
 from types import SimpleNamespace
 
+import vllm_ascend.envs as envs
+
 from vllm_ascend.distributed.kv_transfer.leyline.connector import (
     LeylineConnector,
     LeylineTransformRequest,
@@ -70,6 +72,10 @@ def _worker_result(
     *,
     rank: int = 0,
     expected_ranks: int = 1,
+    injection_reached: bool = False,
+    injected_rank: int | None = None,
+    injected_layer: int | None = None,
+    destination_writes: int = 0,
 ) -> LeylineWorkerResult:
     return LeylineWorkerResult(
         success,
@@ -81,6 +87,10 @@ def _worker_result(
         expected_ranks=expected_ranks,
         successful_ranks=(rank,) if success else (),
         missing_layers=() if transformed_layers == 27 else ("missing-layer",),
+        injection_reached=injection_reached,
+        injected_rank=injected_rank,
+        injected_layer=injected_layer,
+        destination_writes=destination_writes,
     )
 
 
@@ -266,6 +276,82 @@ def test_tp_aggregation_reports_complete_rank_set() -> None:
     assert result.transform_complete
 
 
+def test_tp_aggregation_preserves_injected_failure_evidence() -> None:
+    rank0 = LeylineWorkerMetadata(
+        {"r": _worker_result(True, 1.0, 8, 27, rank=0, expected_ranks=2)}
+    )
+    rank1 = LeylineWorkerMetadata(
+        {
+            "r": _worker_result(
+                False,
+                1.5,
+                8,
+                9,
+                rank=1,
+                expected_ranks=2,
+                injection_reached=True,
+                injected_rank=1,
+                injected_layer=8,
+                destination_writes=9,
+            )
+        }
+    )
+    result = rank0.aggregate(rank1).results["r"]
+    assert not result.success
+    assert result.injection_reached
+    assert result.injected_rank == 1
+    assert result.injected_layer == 8
+    assert result.destination_writes == 9
+
+
+def test_fault_injection_requires_server_opt_in(monkeypatch) -> None:
+    connector, pool = _connector()
+    source_tokens = _record_source(connector, pool)
+    request = _request(
+        "fault-disabled",
+        source_tokens[:4] + source_tokens[8:],
+        "amortize",
+        delete=(4, 8),
+    )
+    request.kv_transfer_params["leyline"]["fault_injection"] = {
+        "rank": 0,
+        "layer": 0,
+        "stage": "after_layer_write",
+    }
+    monkeypatch.setattr(envs, "VLLM_ASCEND_LEYLINE_FAULT_INJECTION", None)
+    connector.on_new_request(request)
+    assert request.request_id not in connector._directives
+    delay, params = connector.request_finished(request, [])
+    assert not delay
+    assert params is not None
+    assert params["leyline"]["fallback_reason"] == "invalid_directive"
+
+
+def test_fault_injection_is_propagated_when_opted_in(monkeypatch) -> None:
+    connector, pool = _connector()
+    source_tokens = _record_source(connector, pool)
+    request = _request(
+        "fault-enabled",
+        source_tokens[:4] + source_tokens[8:],
+        "amortize",
+        delete=(4, 8),
+    )
+    request.kv_transfer_params["leyline"]["fault_injection"] = {
+        "rank": 0,
+        "layer": 3,
+        "stage": "after_layer_write",
+    }
+    monkeypatch.setattr(
+        envs, "VLLM_ASCEND_LEYLINE_FAULT_INJECTION", "validation-only"
+    )
+    connector.on_new_request(request)
+    assert connector.get_num_new_matched_tokens(request, 4) == (8, True)
+    connector.update_state_after_alloc(request, _CacheBlocks([10, 11, 12]), 8)
+    plan = connector._inflight[request.request_id]
+    assert plan.fault_rank == 0
+    assert plan.fault_layer == 3
+
+
 def test_failed_transform_rolls_back_and_counts_reprefill() -> None:
     connector, pool = _connector()
     source_tokens = _record_source(connector, pool)
@@ -275,7 +361,18 @@ def test_failed_transform_rolls_back_and_counts_reprefill() -> None:
     connector.update_connector_output(
         SimpleNamespace(
             kv_connector_worker_meta=LeylineWorkerMetadata(
-                {request.request_id: _worker_result(False, 3.0, 8, 0)}
+                {
+                    request.request_id: _worker_result(
+                        False,
+                        3.0,
+                        8,
+                        0,
+                        injection_reached=True,
+                        injected_rank=0,
+                        injected_layer=0,
+                        destination_writes=1,
+                    )
+                }
             ),
             invalid_block_ids=invalid_blocks,
             finished_recving={request.request_id},
@@ -288,6 +385,17 @@ def test_failed_transform_rolls_back_and_counts_reprefill() -> None:
     assert outcome.transformed_tokens == 8
     assert outcome.normal_prefill_tokens == 9
     assert invalid_blocks == set(plan.transformed_destination_blocks)
+    delay, params = connector.request_finished(request, [10, 11, 12])
+    assert not delay
+    assert params is not None
+    assert params["leyline"]["injection_reached"]
+    assert params["leyline"]["destination_writes"] == 1
+    assert params["leyline"]["invalidated_destination_blocks"] > 0
+    assert all(value == 0 for value in params["leyline"]["cleanup"].values())
+    assert [block.ref_cnt for block in pool.blocks[:4]] == [0, 0, 0, 0]
+    second_delay, second_params = connector.request_finished(request, [10, 11, 12])
+    assert not second_delay
+    assert second_params is None
     assert [block.ref_cnt for block in pool.blocks[:4]] == [0, 0, 0, 0]
 
 

@@ -42,11 +42,19 @@ class DeleteSpan:
 
 
 @dataclass(frozen=True)
+class LeylineFaultInjection:
+    rank: int
+    layer: int
+    stage: str = "after_layer_write"
+
+
+@dataclass(frozen=True)
 class LeylineDirective:
     version: int
     action: LeylineAction
     session_id: str
     delete: DeleteSpan | None = None
+    fault_injection: LeylineFaultInjection | None = None
 
 
 def _require_int(value: Any, field: str) -> int:
@@ -102,11 +110,12 @@ def parse_leyline_directive(
         )
 
     raw_delete = raw.get("delete")
+    raw_fault = raw.get("fault_injection")
     if action is LeylineAction.RECORD:
-        if raw_delete is not None:
+        if raw_delete is not None or raw_fault is not None:
             raise LeylineDirectiveError(
                 LeylineFallbackReason.INVALID_DIRECTIVE,
-                "record directives must not contain a delete span",
+                "record directives must not contain delete or fault injection",
             )
         return LeylineDirective(version, action, session_id)
 
@@ -122,4 +131,20 @@ def parse_leyline_directive(
             LeylineFallbackReason.INVALID_EDIT,
             "delete offsets must satisfy 0 <= start < end",
         )
-    return LeylineDirective(version, action, session_id, DeleteSpan(start, end))
+    fault = None
+    if raw_fault is not None:
+        if not isinstance(raw_fault, dict):
+            raise LeylineDirectiveError(
+                LeylineFallbackReason.INVALID_DIRECTIVE,
+                "leyline.fault_injection must be an object",
+            )
+        rank = _require_int(raw_fault.get("rank"), "fault_injection.rank")
+        layer = _require_int(raw_fault.get("layer"), "fault_injection.layer")
+        stage = raw_fault.get("stage")
+        if rank < 0 or layer < 0 or stage != "after_layer_write":
+            raise LeylineDirectiveError(
+                LeylineFallbackReason.INVALID_DIRECTIVE,
+                "fault injection requires non-negative rank/layer and stage=after_layer_write",
+            )
+        fault = LeylineFaultInjection(rank=rank, layer=layer, stage=stage)
+    return LeylineDirective(version, action, session_id, DeleteSpan(start, end), fault)

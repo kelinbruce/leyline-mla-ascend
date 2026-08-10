@@ -120,6 +120,39 @@ env_variables: dict[str, Callable[[], Any]] = {
     "VLLM_ASCEND_LEYLINE_RAW_LOGITS_DIR": lambda: os.getenv(
         "VLLM_ASCEND_LEYLINE_RAW_LOGITS_DIR", None
     ),
+    # Finite decode steps captured for selected validation requests. Step zero
+    # preserves the historical first-token behavior.
+    "VLLM_ASCEND_LEYLINE_RAW_LOGITS_STEPS": lambda: tuple(
+        int(value)
+        for value in os.getenv("VLLM_ASCEND_LEYLINE_RAW_LOGITS_STEPS", "0").split(",")
+        if value
+    ),
+    "VLLM_ASCEND_LEYLINE_RAW_LOGITS_MAX_STEP": lambda: int(
+        os.getenv("VLLM_ASCEND_LEYLINE_RAW_LOGITS_MAX_STEP", "32")
+    ),
+    "VLLM_ASCEND_LEYLINE_RAW_LOGITS_RUN_ID": lambda: os.getenv(
+        "VLLM_ASCEND_LEYLINE_RAW_LOGITS_RUN_ID", None
+    ),
+    "VLLM_ASCEND_LEYLINE_RAW_LOGITS_CASES": lambda: tuple(
+        value
+        for value in os.getenv("VLLM_ASCEND_LEYLINE_RAW_LOGITS_CASES", "").split(",")
+        if value
+    ),
+    "VLLM_ASCEND_LEYLINE_RAW_LOGITS_ARMS": lambda: tuple(
+        value
+        for value in os.getenv("VLLM_ASCEND_LEYLINE_RAW_LOGITS_ARMS", "").split(",")
+        if value
+    ),
+    "VLLM_ASCEND_LEYLINE_RAW_LOGITS_MAX_FILES": lambda: int(
+        os.getenv("VLLM_ASCEND_LEYLINE_RAW_LOGITS_MAX_FILES", "4096")
+    ),
+    "VLLM_ASCEND_LEYLINE_RAW_LOGITS_MAX_BYTES": lambda: int(
+        os.getenv("VLLM_ASCEND_LEYLINE_RAW_LOGITS_MAX_BYTES", str(8 * 1024**3))
+    ),
+    # Validation-only, two-key gate for request-scoped Leyline failpoints.
+    "VLLM_ASCEND_LEYLINE_FAULT_INJECTION": lambda: os.getenv(
+        "VLLM_ASCEND_LEYLINE_FAULT_INJECTION", None
+    ),
 }
 
 # end-env-vars-definition

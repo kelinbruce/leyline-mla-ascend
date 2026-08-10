@@ -3,6 +3,7 @@
   "tokenizer": "deepseek-ai/DeepSeek-V2-Lite",
   "tokenizer_revision": "PIN_TOKENIZER_COMMIT",
   "trust_remote_code": true,
+  "run_id": "PIN_UNIQUE_RUN_ID",
   "block_size": 128,
   "max_tokens": 64,
   "correctness_repetitions": 3,
@@ -13,13 +14,18 @@
   "diagnostics": {
     "top_logprobs": 10,
     "continue_after_preflight_failure": true,
-    "device_capture_enabled": false,
-    "raw_logits_capture_enabled": false
+    "device_capture_enabled": true,
+    "raw_logits_capture_enabled": true,
+    "device_capture_dir": "results/leyline/PIN_UNIQUE_RUN_ID/cache-captures",
+    "raw_logits_steps": [0],
+    "raw_logits_max_step": 32,
+    "raw_logits_max_files": 4096,
+    "raw_logits_max_bytes": 8589934592
   },
   "smoke_gate": {
     "enabled": true,
     "case_id": "inventory-reorder-label",
-    "require_device_capture": false
+    "require_device_capture": true
   },
   "performance_prerequisites": {
     "numerical_passed": false,

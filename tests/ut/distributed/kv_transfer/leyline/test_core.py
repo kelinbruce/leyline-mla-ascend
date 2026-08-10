@@ -44,6 +44,26 @@ def test_parse_record_and_amortize_directives():
     assert amortize.action is LeylineAction.AMORTIZE
     assert amortize.delete == DeleteSpan(4, 9)
 
+    injected = parse_leyline_directive(
+        {
+            "leyline": {
+                "version": 1,
+                "action": "amortize",
+                "session_id": "agent-1",
+                "delete": {"start": 4, "end": 9},
+                "fault_injection": {
+                    "rank": 1,
+                    "layer": 8,
+                    "stage": "after_layer_write",
+                },
+            }
+        }
+    )
+    assert injected is not None
+    assert injected.fault_injection is not None
+    assert injected.fault_injection.rank == 1
+    assert injected.fault_injection.layer == 8
+
 
 @pytest.mark.parametrize(
     "params,reason",

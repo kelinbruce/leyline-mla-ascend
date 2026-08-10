@@ -18,6 +18,7 @@ from vllm.distributed.kv_transfer.kv_connector.v1.base import (
 from vllm.logger import init_logger
 from vllm.v1.outputs import KVConnectorOutput
 
+import vllm_ascend.envs as envs
 from vllm_ascend.distributed.kv_transfer.leyline.capture import (
     capture_enabled,
     finish_capture,
@@ -66,6 +67,9 @@ class LeylineTransformRequest:
     source_length: int
     block_size: int
     inv_freq: tuple[float, ...]
+    fault_rank: int | None = None
+    fault_layer: int | None = None
+    fault_stage: str | None = None
 
     @property
     def transformed_tokens(self) -> int:
@@ -94,6 +98,10 @@ class LeylineWorkerResult:
     expected_ranks: int = 1
     successful_ranks: tuple[int, ...] = ()
     missing_layers: tuple[str, ...] = ()
+    injection_reached: bool = False
+    injected_rank: int | None = None
+    injected_layer: int | None = None
+    destination_writes: int = 0
 
     @property
     def observed_successful_ranks(self) -> tuple[int, ...]:
@@ -151,6 +159,18 @@ class LeylineWorkerMetadata(KVConnectorWorkerMetadata):
                         )
                     ),
                     missing_layers=tuple(sorted(set(current.missing_layers) | set(incoming.missing_layers))),
+                    injection_reached=current.injection_reached or incoming.injection_reached,
+                    injected_rank=(
+                        current.injected_rank
+                        if current.injection_reached
+                        else incoming.injected_rank
+                    ),
+                    injected_layer=(
+                        current.injected_layer
+                        if current.injection_reached
+                        else incoming.injected_layer
+                    ),
+                    destination_writes=max(current.destination_writes, incoming.destination_writes),
                 )
         return LeylineWorkerMetadata(merged)
 
@@ -197,6 +217,11 @@ class _Outcome:
     missing_layers: tuple[str, ...] = ()
     missing_ranks: tuple[int, ...] = ()
     transform_complete: bool = False
+    injection_reached: bool = False
+    injected_rank: int | None = None
+    injected_layer: int | None = None
+    destination_writes: int = 0
+    invalidated_destination_blocks: int = 0
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -213,6 +238,11 @@ class _Outcome:
             "missing_layers": list(self.missing_layers),
             "missing_ranks": list(self.missing_ranks),
             "transform_complete": self.transform_complete,
+            "injection_reached": self.injection_reached,
+            "injected_rank": self.injected_rank,
+            "injected_layer": self.injected_layer,
+            "destination_writes": self.destination_writes,
+            "invalidated_destination_blocks": self.invalidated_destination_blocks,
         }
 
 
@@ -340,6 +370,14 @@ class LeylineConnector(KVConnectorBase_V1, SupportsHMA):
             self._set_fallback(request.request_id, exc.reason)
             return
         if directive is not None:
+            if (
+                directive.fault_injection is not None
+                and envs.VLLM_ASCEND_LEYLINE_FAULT_INJECTION != "validation-only"
+            ):
+                self._set_fallback(
+                    request.request_id, LeylineFallbackReason.INVALID_DIRECTIVE
+                )
+                return
             self._directives[request.request_id] = directive
             self._outcomes.setdefault(request.request_id, _Outcome())
 
@@ -441,6 +479,9 @@ class LeylineConnector(KVConnectorBase_V1, SupportsHMA):
             source_length=match.deletion.source_length,
             block_size=self._block_size,
             inv_freq=self._inv_freq,
+            fault_rank=(directive.fault_injection.rank if directive.fault_injection else None),
+            fault_layer=(directive.fault_injection.layer if directive.fault_injection else None),
+            fault_stage=(directive.fault_injection.stage if directive.fault_injection else None),
         )
         # The session owns one reference, and every accepted transaction owns
         # another. This keeps the source resident until all concurrent TP-wide
@@ -487,12 +528,19 @@ class LeylineConnector(KVConnectorBase_V1, SupportsHMA):
                 outcome.missing_layers = result.missing_layers
                 outcome.missing_ranks = result.missing_ranks
                 outcome.transform_complete = result.transform_complete
+                outcome.injection_reached = result.injection_reached
+                outcome.injected_rank = result.injected_rank
+                outcome.injected_layer = result.injected_layer
+                outcome.destination_writes = result.destination_writes
             failed = failed or result is None or not result.transform_complete
             if failed:
                 outcome.applied = False
                 outcome.fallback_reason = LeylineFallbackReason.TRANSFORM_FAILED
                 outcome.normal_prefill_tokens += outcome.transformed_tokens
                 invalid.update(plan.transformed_destination_blocks)
+                outcome.invalidated_destination_blocks = len(
+                    plan.transformed_destination_blocks
+                )
             else:
                 outcome.applied = True
                 outcome.fallback_reason = None
@@ -567,7 +615,16 @@ class LeylineConnector(KVConnectorBase_V1, SupportsHMA):
             self._release_session(plan.session_id)
         elif directive.action is LeylineAction.AMORTIZE:
             self._release_session(directive.session_id)
-        return False, {"leyline": {**outcome.as_dict(), "recorded": recorded}}
+        cleanup = {
+            "sessions": int(directive.session_id in self._sessions),
+            "inflight": int(request.request_id in self._inflight),
+            "pending": int(request.request_id in self._metadata_pending),
+            "matches": int(request.request_id in self._matches),
+            "transaction_owned_references": int(request.request_id in self._inflight),
+        }
+        return False, {
+            "leyline": {**outcome.as_dict(), "recorded": recorded, "cleanup": cleanup}
+        }
 
     def request_finished(self, request: "Request", block_ids: list[int]) -> tuple[bool, dict[str, Any] | None]:
         return self._finish_request(request, block_ids)
@@ -608,6 +665,15 @@ class LeylineConnector(KVConnectorBase_V1, SupportsHMA):
             transformed_layers = 0
             missing_layers: tuple[str, ...] = ()
             success = True
+            injection_reached = False
+            injected_rank: int | None = None
+            injected_layer: int | None = None
+            destination_writes = 0
+            rank = (
+                torch.distributed.get_rank()
+                if torch.distributed.is_available() and torch.distributed.is_initialized()
+                else 0
+            )
             try:
                 deletion = DeletionMapping(
                     source_length=request.source_length,
@@ -682,10 +748,23 @@ class LeylineConnector(KVConnectorBase_V1, SupportsHMA):
                         slots.new_positions,
                         inv_freq,
                     )
+                    destination_writes += 1
                     if pending_capture is not None:
                         torch.npu.synchronize()
                         finish_capture(pending_capture, ckv_cache, kpe_cache)
                     transformed_layers += 1
+                    completed_layer_index = transformed_layers - 1
+                    if (
+                        request.fault_stage == "after_layer_write"
+                        and request.fault_rank == rank
+                        and request.fault_layer == completed_layer_index
+                    ):
+                        injection_reached = True
+                        injected_rank = rank
+                        injected_layer = completed_layer_index
+                        raise RuntimeError(
+                            "validation-only Leyline fault injection after layer write"
+                        )
                     logger.debug("Leyline transformed layer=%s request=%s", layer_name, request.request_id)
                 if transformed_layers != expected_layer_count:
                     raise RuntimeError(
@@ -699,11 +778,6 @@ class LeylineConnector(KVConnectorBase_V1, SupportsHMA):
                 success = False
                 self._invalid_block_ids.update(request.transformed_destination_blocks)
 
-            rank = (
-                torch.distributed.get_rank()
-                if torch.distributed.is_available() and torch.distributed.is_initialized()
-                else 0
-            )
             expected_ranks = self._expected_tp_ranks
             self._worker_results[request.request_id] = LeylineWorkerResult(
                 success=success,
@@ -715,6 +789,10 @@ class LeylineConnector(KVConnectorBase_V1, SupportsHMA):
                 expected_ranks=expected_ranks,
                 successful_ranks=(rank,) if success else (),
                 missing_layers=missing_layers,
+                injection_reached=injection_reached,
+                injected_rank=injected_rank,
+                injected_layer=injected_layer,
+                destination_writes=destination_writes,
             )
             self._finished_recving.add(request.request_id)
 

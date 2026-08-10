@@ -1,5 +1,9 @@
 # Leyline MLA validation on Ascend 910B
 
+For the complete staged qualification procedure, including immutable offline
+finalization, cache-off repetitions, decode-step logits, and guarded rollback
+injection, see [VALIDATION_910B.md](VALIDATION_910B.md).
+
 This schema-v2 harness treats evaluation-baseline validity, Leyline execution, and cache numerical correctness as separate gates. It supports three explicit contracts:
 
 - `completion_target` with `prompt_format=raw` for the DeepSeek-V2-Lite base checkpoint. Each case declares a tokenizer-stable non-whitespace continuation target, and full, honest-edited, and counterfactual baselines must produce it before Leyline is evaluated.

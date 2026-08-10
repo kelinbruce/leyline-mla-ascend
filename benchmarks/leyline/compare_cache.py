@@ -7,11 +7,16 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 
+if __package__ in {None, ""}:
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
+from benchmarks.leyline.evidence import parse_validation_request_id  # noqa: E402
 from vllm_ascend.distributed.kv_transfer.leyline.reference import (
     rotate_kpe_half_split,
     unit_delta_cos_sin,
@@ -92,6 +97,7 @@ def compare_capture(
         ]
     return {
         "capture": str(path),
+        "request_id": metadata.get("request_id"),
         "layer": metadata.get("layer"),
         "rank": metadata.get("rank"),
         "rows": int(old_positions.size),
@@ -173,6 +179,16 @@ def compare_captures(
         "atol": atol,
         "rtol": rtol,
         "frequency_atol": frequency_atol,
+    }
+    run_ids = {
+        parsed["run_id"]
+        for capture in captures
+        if capture.get("request_id")
+        and (parsed := parse_validation_request_id(capture["request_id"])) is not None
+    }
+    report["evidence_identity"] = {
+        "schema_version": 1,
+        "run_ids": sorted(run_ids),
     }
     report["passed"] = bool(
         captures

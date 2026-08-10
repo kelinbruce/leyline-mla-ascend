@@ -81,6 +81,7 @@
       "evaluation_mode": "structured_json",
       "family": "mechanism_diagnostic",
       "claim_type": "retained_context_diagnostic",
+      "diagnostic_family": "secret_lookup",
       "category": "mechanism_diagnostic",
       "execution_expectation": "required",
       "minimum_transform_tokens": 128,

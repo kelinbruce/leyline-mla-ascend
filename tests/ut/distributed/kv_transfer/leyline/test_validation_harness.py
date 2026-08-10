@@ -6,11 +6,14 @@ import io
 import json
 import tempfile
 import unittest
+from copy import deepcopy
 from pathlib import Path
 from unittest.mock import patch
 
 from benchmarks.leyline.collect_environment import artifact_manifest
+from benchmarks.leyline.evidence import retained_context_summary
 from benchmarks.leyline.merge_reports import merge_documents
+from benchmarks.leyline.run_rollback_validation import run_rollback
 from benchmarks.leyline.run_validation import (
     COMPLETION_TARGET,
     PromptPlan,
@@ -425,6 +428,172 @@ class ValidationHarnessTest(unittest.TestCase):
                 plan.edited,
             )
 
+    def test_retained_context_family_layout_and_empirical_admission(self) -> None:
+        root = Path(__file__).resolve().parents[5] / "benchmarks" / "leyline"
+        base = json.loads((root / "workloads.base.json").read_text())
+        schema = json.loads((root / "workload.schema.json").read_text())
+        case_schema = schema["$defs"]["case"]
+        self.assertIn(
+            "diagnostic_family",
+            case_schema["allOf"][0]["then"]["required"],
+        )
+        allowed_fields = set(case_schema["properties"])
+        required_fields = set(case_schema["required"])
+        for item in base["cases"]:
+            self.assertFalse(set(item) - allowed_fields)
+            self.assertFalse(required_fields - set(item))
+        diagnostics = [
+            item
+            for item in base["cases"]
+            if item.get("claim_type") == "retained_context_diagnostic"
+        ]
+        self.assertGreaterEqual(len(diagnostics), 4)
+        self.assertGreaterEqual(
+            len({item["diagnostic_family"] for item in diagnostics}), 3
+        )
+        tokenizer = CharacterTokenizer()
+        for item in diagnostics:
+            plan = build_prompt_plan(tokenizer, item, block_size=128)
+            self.assertEqual(
+                plan.full[: plan.delete_start] + plan.full[plan.delete_end :],
+                plan.edited,
+            )
+            self.assertGreaterEqual(
+                plan_transform_feasibility(plan, block_size=128).predicted_transformed_tokens,
+                128,
+            )
+            query_ids = tokenizer.encode(item["query"], add_special_tokens=False)
+            self.assertEqual(plan.edited[-len(query_ids) :], query_ids)
+
+        report_cases = []
+        for item in diagnostics:
+            runs = [
+                {
+                    "gates": {
+                        "full_matches": True,
+                        "honest_edited_matches": False,
+                        "leyline_matches": True,
+                    },
+                    "arms": {
+                        "full": {"output_token_ids": [1]},
+                        "honest_edited": {"output_token_ids": [2]},
+                        "leyline": {"output_token_ids": [1]},
+                    },
+                    "pairwise": {
+                        "full_honest_edited": {"first_token_agreement": False},
+                        "full_leyline": {"common_prefix_tokens": 1},
+                        "honest_edited_leyline": {"common_prefix_tokens": 0},
+                    },
+                }
+                for _ in range(3)
+            ]
+            report_cases.append(
+                {
+                    "id": item["id"],
+                    "family": item["family"],
+                    "diagnostic_family": item["diagnostic_family"],
+                    "claim_type": item["claim_type"],
+                    "repetitions": runs,
+                }
+            )
+        summary = retained_context_summary({"cases": report_cases})
+        self.assertTrue(summary["passed"])
+        report_cases[0]["repetitions"][0]["gates"]["honest_edited_matches"] = True
+        self.assertFalse(retained_context_summary({"cases": report_cases})["passed"])
+
+    def test_rollback_runner_emits_complete_post_write_evidence(self) -> None:
+        tokenizer = CharacterTokenizer()
+        workload_case = {
+            **case(),
+            "id": "rollback-case",
+            "evaluation_mode": COMPLETION_TARGET,
+            "family": "admissible",
+            "claim_type": "admissible_target",
+            "execution_expectation": "required",
+            "minimum_transform_tokens": 128,
+            "surviving_filler_unit": "neutral\n",
+            "surviving_filler_max_repeat": 64,
+            "expected_completion": " Y",
+        }
+        config = {
+            "run_id": "rollback-run",
+            "model": "model",
+            "prompt_format": "raw",
+            "evaluation": {"mode": COMPLETION_TARGET},
+            "block_size": 128,
+            "max_tokens": 2,
+            "arms": {"honest_edited": "http://honest", "leyline": "http://leyline"},
+        }
+        environment = {
+            "model": {"name": "model"},
+            "repositories": {
+                "vllm": {"path": "/src/vllm", "commit": "v"},
+                "vllm_ascend": {"path": "/src/ascend", "commit": "a"},
+            },
+            "imported_modules": {
+                "vllm": {"module_file": "/src/vllm/vllm/__init__.py"},
+                "vllm_ascend": {"module_file": "/src/ascend/vllm_ascend/__init__.py"},
+            },
+            "runtime_config": {"tensor_parallel_size": 4, "block_size": 128},
+            "topology": {"stdout": "TP4"},
+            "cann_installation": {"version_files": {"/cann/version.info": "9.0"}},
+        }
+
+        def completion(_endpoint, _model, prompt_ids, **kwargs):
+            directive = (kwargs.get("kv_transfer_params") or {}).get("leyline") or {}
+            request_id = kwargs["request_id"]
+            if directive.get("action") == "record":
+                return {
+                    "request_id": request_id,
+                    "output_token_ids": [32, 89],
+                    "kv_transfer_params": {"leyline": {"recorded": True}},
+                }
+            if directive.get("action") == "amortize":
+                return {
+                    "request_id": request_id,
+                    "output_token_ids": [32, 89],
+                    "kv_transfer_params": {
+                        "leyline": {
+                            "injection_reached": True,
+                            "injected_rank": 1,
+                            "injected_layer": 2,
+                            "destination_writes": 1,
+                            "applied": False,
+                            "fallback_reason": "transform_failed",
+                            "invalidated_destination_blocks": 1,
+                            "local_apc_tokens": 0,
+                            "normal_prefill_tokens": len(prompt_ids),
+                            "cleanup": {
+                                "sessions": 0,
+                                "inflight": 0,
+                                "pending": 0,
+                                "matches": 0,
+                                "transaction_owned_references": 0,
+                            },
+                        }
+                    },
+                }
+            return {"request_id": request_id, "output_token_ids": [32, 89]}
+
+        with patch.dict(
+            "os.environ",
+            {"VLLM_ASCEND_LEYLINE_FAULT_INJECTION": "validation-only"},
+        ), patch(
+            "benchmarks.leyline.run_rollback_validation.request_completion", completion
+        ):
+            report = run_rollback(
+                config,
+                {"version": 2, "corpus_id": "test", "cases": [workload_case]},
+                environment,
+                tokenizer,
+                case_id="rollback-case",
+                fail_rank=1,
+                fail_after_layer=2,
+            )
+        self.assertTrue(report["passed"])
+        self.assertTrue(all(report["conditions"].values()))
+        self.assertEqual(report["evidence_identity"]["run_id"], "rollback-run")
+
     def test_legacy_workloads_require_explicit_diagnostic_mode(self) -> None:
         legacy = {"version": 1, "cases": [case()]}
         config = {
@@ -483,6 +652,64 @@ class ValidationHarnessTest(unittest.TestCase):
             {"passed": True},
         )
         self.assertTrue(gate["passed"])
+
+    def test_merge_preserves_cache_off_repetitions_and_variants(self) -> None:
+        base_case = {
+            **case(),
+            "family": "counterfactual",
+            "claim_type": "counterfactual_invariance",
+            "evaluation": {"reference_tokens": None},
+            "target_token_ids": [10],
+        }
+        source_runs = []
+        cache_off_runs = []
+        for repetition in range(3):
+            source_runs.append(
+                {
+                    "arms": {
+                        "full": result([10]),
+                        "honest_edited": result([10]),
+                        "leyline": result([10], applied=True),
+                    },
+                    "counterfactuals": [result([10]), result([10])],
+                }
+            )
+            cache_off_runs.append(
+                {
+                    "arms": {"cache_off": result([10])},
+                    "counterfactuals": [
+                        {**result([10]), "variant": f"off-{repetition}-0"},
+                        {**result([10]), "variant": f"off-{repetition}-1"},
+                    ],
+                }
+            )
+        source_case = {**deepcopy(base_case), "repetitions": source_runs}
+        cache_off_case = {**deepcopy(base_case), "repetitions": cache_off_runs}
+        common = {
+            "schema_version": 2,
+            "evaluation_contract": {
+                "mode": COMPLETION_TARGET,
+                "prompt_format": "raw",
+            },
+            "preflight": {"passed": True},
+            "checkpoint_identity": {"name": "checkpoint", "revision": "pinned"},
+        }
+        merged = merge_documents(
+            [
+                {**common, "cases": [source_case]},
+                {**common, "cases": [cache_off_case]},
+            ],
+            ["source.json", "cache-off.json"],
+        )
+        runs = merged["cases"][0]["repetitions"]
+        self.assertEqual(len(runs), 3)
+        self.assertTrue(all(len(run["counterfactuals"]) == 2 for run in runs))
+        self.assertTrue(
+            all(len(run["cache_off_counterfactuals"]) == 2 for run in runs)
+        )
+        self.assertEqual(
+            runs[2]["cache_off_counterfactuals"][1]["variant"], "off-2-1"
+        )
 
     def test_transform_smoke_and_split_stability(self) -> None:
         leyline = result([10], applied=True)

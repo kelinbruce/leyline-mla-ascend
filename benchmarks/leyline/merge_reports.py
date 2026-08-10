@@ -7,10 +7,19 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
+from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
-from benchmarks.leyline.run_validation import evaluate_case_results
+if __package__ in {None, ""}:
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
+from benchmarks.leyline.evidence import identity_conflicts  # noqa: E402
+from benchmarks.leyline.run_validation import (  # noqa: E402
+    _stability_summary,
+    evaluate_case_results,
+)
 
 
 def _stable_identity(value: Any) -> Any:
@@ -35,12 +44,29 @@ def parse_args() -> argparse.Namespace:
 def merge_documents(documents: list[dict[str, Any]], sources: list[str]) -> dict[str, Any]:
     if not documents or any(document.get("schema_version") != 2 for document in documents):
         raise ValueError("only schema-v2 reports can be merged")
-    contracts = [document.get("evaluation_contract") for document in documents]
-    if any(contract != contracts[0] for contract in contracts[1:]):
+    contracts = [document.get("evaluation_contract") or {} for document in documents]
+    semantic_contracts = [
+        {
+            key: contract.get(key)
+            for key in ("mode", "prompt_format", "score_evidence")
+            if key in contract
+        }
+        for contract in contracts
+    ]
+    if any(contract != semantic_contracts[0] for contract in semantic_contracts[1:]):
         raise ValueError("reports use mixed evaluation contracts")
     identities = [_stable_identity(document.get("checkpoint_identity")) for document in documents]
     if not identities[0] or any(identity != identities[0] for identity in identities[1:]):
         raise ValueError("reports have missing or mixed checkpoint identities")
+    for document in documents[1:]:
+        conflicts = identity_conflicts(
+            documents[0],
+            document,
+            allow_missing=True,
+            allow_cache_mode_difference=True,
+        )
+        if conflicts:
+            raise ValueError(f"reports have mixed evidence identity: {conflicts}")
     preflights = [document.get("preflight") for document in documents]
     first_preflight_passed = bool(preflights[0] and preflights[0].get("passed"))
     if any(
@@ -65,40 +91,64 @@ def merge_documents(documents: list[dict[str, Any]], sources: list[str]) -> dict
     merged_cases: dict[str, dict[str, Any]] = {}
     for document in documents:
         for case in document.get("cases", []):
-            target = merged_cases.setdefault(
-                case["id"],
-                {
-                    "id": case["id"],
-                    "category": case["category"],
-                    "family": case.get("family"),
-                    "claim_type": case.get("claim_type"),
-                    "prompt_tokens": case["prompt_tokens"],
-                    "oracle": case.get("oracle"),
-                    "expected_completion": case.get("expected_completion"),
-                    "target_token_ids": case.get("target_token_ids", []),
-                    "evaluation": case["evaluation"],
-                    "arms": {},
-                    "counterfactuals": [],
-                },
-            )
-            target["arms"].update(case.get("arms", {}))
-            if case.get("counterfactuals"):
-                target["counterfactuals"] = case["counterfactuals"]
+            target = merged_cases.get(case["id"])
+            if target is None:
+                merged_cases[case["id"]] = deepcopy(case)
+                continue
+            target_runs = target.get("repetitions") or [target]
+            incoming_runs = case.get("repetitions") or [case]
+            if len(target_runs) != len(incoming_runs):
+                raise ValueError(f"reports disagree on repetitions for {case['id']}")
+            for target_run, incoming_run in zip(target_runs, incoming_runs):
+                incoming_arms = incoming_run.get("arms", {})
+                target_run.setdefault("arms", {}).update(deepcopy(incoming_arms))
+                incoming_counterfactuals = incoming_run.get("counterfactuals") or []
+                if incoming_counterfactuals:
+                    # Cache-off is independent baseline evidence. Preserve it
+                    # without replacing the connector-on variants.
+                    if "cache_off" in incoming_arms:
+                        target_run["cache_off_counterfactuals"] = deepcopy(
+                            incoming_counterfactuals
+                        )
+                    else:
+                        if target_run.get("counterfactuals") and len(
+                            target_run["counterfactuals"]
+                        ) != len(incoming_counterfactuals):
+                            raise ValueError(
+                                f"reports disagree on counterfactuals for {case['id']}"
+                            )
+                        target_run["counterfactuals"] = deepcopy(incoming_counterfactuals)
 
     contract = contracts[0]
     for case in merged_cases.values():
-        evaluation = evaluate_case_results(
-            case,
-            case["arms"],
-            case["counterfactuals"],
-            mode=contract["mode"],
-            reference_tokens=int(case["evaluation"].get("reference_tokens") or 1),
-            preflight_passed=bool(preflights[0] and preflights[0].get("passed")),
-            target_token_ids=tuple(case.get("target_token_ids", [])),
-        )
-        case["gates"] = evaluation["gates"]
-        case["leyline_execution"] = evaluation["leyline_execution"]
-        case["pairwise"] = evaluation["pairwise"]
+        runs = case.get("repetitions") or [case]
+        for run in runs:
+            evaluation = evaluate_case_results(
+                case,
+                run["arms"],
+                run.get("counterfactuals") or [],
+                mode=contract["mode"],
+                reference_tokens=int(case["evaluation"].get("reference_tokens") or 1),
+                preflight_passed=bool(preflights[0] and preflights[0].get("passed")),
+                target_token_ids=tuple(case.get("target_token_ids", [])),
+            )
+            run["gates"] = evaluation["gates"]
+            run["leyline_execution"] = evaluation["leyline_execution"]
+            run["pairwise"] = evaluation["pairwise"]
+        if case.get("repetitions"):
+            case.update(
+                {
+                    "arms": deepcopy(runs[0]["arms"]),
+                    "counterfactuals": deepcopy(runs[0].get("counterfactuals") or []),
+                    "cache_off_counterfactuals": deepcopy(
+                        runs[0].get("cache_off_counterfactuals") or []
+                    ),
+                    "gates": deepcopy(runs[0]["gates"]),
+                    "leyline_execution": deepcopy(runs[0]["leyline_execution"]),
+                    "pairwise": deepcopy(runs[0]["pairwise"]),
+                    "stability": _stability_summary(runs),
+                }
+            )
 
     return {
         "schema_version": 2,
@@ -108,6 +158,7 @@ def merge_documents(documents: list[dict[str, Any]], sources: list[str]) -> dict
         "preflight": preflights[0],
         "environments": [doc["environment"] for doc in documents if "environment" in doc],
         "cases": list(merged_cases.values()),
+        "evidence_identity": documents[0].get("evidence_identity"),
         "performance": [item for doc in documents for item in doc.get("performance", [])],
     }
 

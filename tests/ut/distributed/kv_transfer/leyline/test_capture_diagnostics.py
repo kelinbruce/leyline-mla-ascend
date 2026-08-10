@@ -11,7 +11,7 @@ import torch
 
 import vllm_ascend.envs as envs
 from benchmarks.leyline.compare_cache import compare_captures
-from benchmarks.leyline.compare_logits import compare_logit_vectors
+from benchmarks.leyline.compare_logits import compare_logit_vectors, compare_report
 from vllm_ascend.distributed.kv_transfer.leyline.capture import (
     bounded_indices,
     finish_capture,
@@ -264,6 +264,7 @@ def test_raw_logits_are_rank_scoped_and_provenanced(monkeypatch, tmp_path: Path)
         metadata = json.loads(str(capture["metadata_json"]))
         np.testing.assert_array_equal(capture["logits"], np.asarray([1.0, 2.0]))
     assert metadata["evidence_type"] == "internal_raw_logits"
+    assert metadata["decode_step"] == 0
     assert "before_grammar_and_sampler" in metadata["provenance"]
 
 
@@ -277,3 +278,151 @@ def test_raw_logit_comparison_reports_distribution_metrics() -> None:
     assert report["right_selected_token_id"] == 1
     assert report["topk_overlap_token_ids"] == [1, 2]
     assert report["max_abs_difference"] == 0.5
+
+
+def _configure_step_capture(monkeypatch, tmp_path: Path, *, steps=(1,), cases=("case",)) -> None:
+    monkeypatch.setattr(envs, "VLLM_ASCEND_LEYLINE_RAW_LOGITS_DIR", str(tmp_path))
+    monkeypatch.setattr(envs, "VLLM_ASCEND_LEYLINE_RAW_LOGITS_STEPS", steps)
+    monkeypatch.setattr(envs, "VLLM_ASCEND_LEYLINE_RAW_LOGITS_MAX_STEP", 4)
+    monkeypatch.setattr(envs, "VLLM_ASCEND_LEYLINE_RAW_LOGITS_RUN_ID", "run")
+    monkeypatch.setattr(envs, "VLLM_ASCEND_LEYLINE_RAW_LOGITS_CASES", cases)
+    monkeypatch.setattr(envs, "VLLM_ASCEND_LEYLINE_RAW_LOGITS_MAX_FILES", 16)
+    monkeypatch.setattr(envs, "VLLM_ASCEND_LEYLINE_RAW_LOGITS_MAX_BYTES", 1024 * 1024)
+
+
+def test_raw_logits_capture_selected_decode_step(monkeypatch, tmp_path: Path) -> None:
+    _configure_step_capture(monkeypatch, tmp_path)
+    request_id = "lv3.run.case.canonical.0.full.nonce"
+    with patch("vllm_ascend.worker.leyline_logits_capture._rank", return_value=1):
+        capture_raw_first_token_logits(
+            torch.tensor([[1.0, 3.0]]), [request_id], [[7]]
+        )
+    path = tmp_path / f"{request_id}.rank1.step0001-logits.npz"
+    with np.load(path) as capture:
+        metadata = json.loads(str(capture["metadata_json"]))
+    assert metadata["decode_step"] == 1
+    assert metadata["run_id"] == "run"
+
+
+def test_raw_logits_request_filter_and_budget(monkeypatch, tmp_path: Path) -> None:
+    _configure_step_capture(monkeypatch, tmp_path, steps=(0,))
+    monkeypatch.setattr(envs, "VLLM_ASCEND_LEYLINE_RAW_LOGITS_MAX_FILES", 1)
+    with patch("vllm_ascend.worker.leyline_logits_capture._rank", return_value=0):
+        capture_raw_first_token_logits(
+            torch.tensor([[1.0, 2.0]]),
+            ["lv3.run.other.canonical.0.full.nonce"],
+            [[]],
+        )
+        assert not list(tmp_path.glob("*.npz"))
+        capture_raw_first_token_logits(
+            torch.tensor([[1.0, 2.0]]),
+            ["lv3.run.case.canonical.0.full.one"],
+            [[]],
+        )
+        capture_raw_first_token_logits(
+            torch.tensor([[1.0, 2.0]]),
+            ["lv3.run.case.canonical.0.full.two"],
+            [[]],
+        )
+    status = json.loads((tmp_path / "capture-status.rank0.json").read_text())
+    assert status["reason"] == "capture_budget_exhausted"
+
+
+def _write_logit(path: Path, request_id: str, step: int, values: list[float]) -> None:
+    np.savez_compressed(
+        path,
+        logits=np.asarray(values, dtype=np.float32),
+        metadata_json=np.asarray(
+            json.dumps({"request_id": request_id, "rank": 0, "decode_step": step})
+        ),
+    )
+
+
+def test_divergence_logit_comparison_requires_reproduced_prefix(tmp_path: Path) -> None:
+    arms = {
+        name: {"request_id": name, "output_token_ids": tokens}
+        for name, tokens in {
+            "full": [1, 3],
+            "honest_edited": [1, 2],
+            "leyline": [1, 4],
+        }.items()
+    }
+    run = {
+        "arms": arms,
+        "pairwise": {
+            "full_leyline": {
+                "common_prefix_tokens": 1,
+                "first_divergence": {"index": 1, "left": 3, "right": 4},
+            }
+        },
+    }
+    report = {"cases": [{"id": "case", "repetitions": [run]}]}
+    plan = {
+        "entries": [
+            {
+                "case_id": "case",
+                "repetition": 0,
+                "decode_step": 1,
+                "source_prefix_token_ids": [1],
+                "source_request_ids": {"full": "source-full", "leyline": "source-l"},
+            }
+        ]
+    }
+    for request_id in arms:
+        _write_logit(
+            tmp_path / f"{request_id}.rank0.step0001-logits.npz",
+            request_id,
+            1,
+            [0.0, 1.0, 2.0],
+        )
+    comparison = compare_report(report, tmp_path, divergence_plan=plan)
+    assert comparison["complete"]
+    assert all(item["decode_step"] == 1 for item in comparison["comparisons"])
+    plan["entries"][0]["source_prefix_token_ids"] = [9]
+    comparison = compare_report(report, tmp_path, divergence_plan=plan)
+    assert not comparison["complete"]
+    assert not comparison["correlation"][0]["correlatable"]
+
+
+def test_logit_comparison_requires_every_tensor_parallel_rank(tmp_path: Path) -> None:
+    arms = {
+        name: {"request_id": name, "output_token_ids": [1]}
+        for name in ("full", "honest_edited", "leyline")
+    }
+    report = {
+        "environment": {"runtime_config": {"tensor_parallel_size": 2}},
+        "cases": [{"id": "case", "arms": arms}],
+    }
+    for request_id in arms:
+        _write_logit(
+            tmp_path / f"{request_id}.rank0.first-token-logits.npz",
+            request_id,
+            0,
+            [0.0, 1.0, 2.0],
+        )
+    comparison = compare_report(report, tmp_path)
+    assert not comparison["complete"]
+    assert comparison["missing_rank_pairs"]
+    assert all(item["ranks"] == [1] for item in comparison["missing_rank_pairs"])
+
+
+def test_logit_comparison_labels_legacy_first_token_capture(tmp_path: Path) -> None:
+    arms = {
+        name: {"request_id": name, "output_token_ids": [1]}
+        for name in ("full", "honest_edited", "leyline")
+    }
+    for request_id in arms:
+        np.savez_compressed(
+            tmp_path / f"{request_id}.rank0.first-token-logits.npz",
+            logits=np.asarray([0.0, 1.0, 2.0], dtype=np.float32),
+            metadata_json=np.asarray(
+                json.dumps({"request_id": request_id, "rank": 0})
+            ),
+        )
+    comparison = compare_report({"cases": [{"id": "case", "arms": arms}]}, tmp_path)
+    assert comparison["complete"]
+    assert all(
+        item["left_provenance"]["legacy_first_token"]
+        and item["right_provenance"]["legacy_first_token"]
+        for item in comparison["comparisons"]
+    )

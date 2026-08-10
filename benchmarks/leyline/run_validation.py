@@ -11,6 +11,7 @@ import math
 import re
 import statistics
 import subprocess
+import sys
 import threading
 import time
 import uuid
@@ -20,6 +21,20 @@ from pathlib import Path
 from typing import Any
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
+
+if __package__ in {None, ""}:
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
+from benchmarks.leyline.evidence import (  # noqa: E402
+    cache_comparison_errors,
+    classify_case,
+    ensure_run_id,
+    environment_blockers,
+    report_identity,
+    retained_context_summary,
+    rollback_report_errors,
+    validation_request_id,
+)
 
 
 @dataclass(frozen=True)
@@ -674,6 +689,7 @@ def run_case(
     config: dict[str, Any],
     *,
     preflight_passed: bool = True,
+    repetition: int = 0,
 ) -> dict[str, Any]:
     endpoints = config["arms"]
     model = config["model"]
@@ -690,6 +706,7 @@ def run_case(
     )
     feasibility = plan_transform_feasibility(plan, block_size=block_size)
     arms: dict[str, Any] = {}
+    run_id = str(config.get("run_id") or "adhoc")
 
     for arm in ("cache_off", "full", "vanilla_apc", "honest_edited", "patched_disabled"):
         if arm not in endpoints:
@@ -702,6 +719,7 @@ def run_case(
             max_tokens=max_tokens,
             cache_salt=uuid.uuid4().hex,
             top_logprobs=top_logprobs,
+            request_id=validation_request_id(run_id, case["id"], arm, repetition),
         )
         arms[arm] = result
 
@@ -717,6 +735,9 @@ def run_case(
             kv_transfer_params=_directive("record", session_id),
             cache_salt=cache_salt,
             top_logprobs=top_logprobs,
+            request_id=validation_request_id(
+                run_id, case["id"], "leyline-record", repetition
+            ),
         )
         result = request_completion(
             endpoints["leyline"],
@@ -727,12 +748,20 @@ def run_case(
             kv_transfer_params=_directive("amortize", session_id, plan),
             cache_salt=cache_salt,
             top_logprobs=top_logprobs,
+            request_id=validation_request_id(run_id, case["id"], "leyline", repetition),
         )
         result["record"] = record
         arms["leyline"] = result
 
     counterfactuals = []
-    for index, removed in enumerate(case.get("counterfactual_removed", [])) if "full" in endpoints else []:
+    counterfactual_arm = "full" if "full" in endpoints else (
+        "cache_off" if "cache_off" in endpoints else None
+    )
+    for index, removed in (
+        enumerate(case.get("counterfactual_removed", []))
+        if counterfactual_arm is not None
+        else []
+    ):
         variant = build_prompt_plan(
             tokenizer,
             case,
@@ -741,13 +770,20 @@ def run_case(
             block_size=block_size,
         )
         result = request_completion(
-            endpoints["full"],
+            endpoints[counterfactual_arm],
             model,
             variant.full,
             api_key=api_key,
             max_tokens=max_tokens,
             cache_salt=uuid.uuid4().hex,
             top_logprobs=top_logprobs,
+            request_id=validation_request_id(
+                run_id,
+                case["id"],
+                counterfactual_arm,
+                repetition,
+                variant=f"counterfactual-{index}",
+            ),
         )
         result["variant"] = index
         counterfactuals.append(result)
@@ -766,8 +802,10 @@ def run_case(
     transformed_tokens = int(transform_metadata.get("transformed_tokens", 0) or 0)
     return {
         "id": case["id"],
+        "repetition": repetition,
         "category": case["category"],
         "family": case.get("family"),
+        "diagnostic_family": case.get("diagnostic_family"),
         "claim_type": case.get("claim_type"),
         "prompt_tokens": {
             "full": len(plan.full),
@@ -1189,6 +1227,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--environment", type=Path)
     parser.add_argument("--numerical-report", type=Path)
     parser.add_argument("--logit-report", type=Path)
+    parser.add_argument("--rollback-report", type=Path)
+    parser.add_argument("--diagnostic-plan", type=Path)
     parser.add_argument("--performance", action="store_true")
     parser.add_argument("--concurrency", default="1,4,8,16")
     parser.add_argument("--repetitions", type=int, default=3)
@@ -1218,6 +1258,13 @@ def validate_workload_corpus(workloads: dict[str, Any], config: dict[str, Any]) 
     for case in cases:
         if not case.get("family") or not case.get("claim_type"):
             raise ValueError(f"case {case['id']} requires family and claim_type")
+        if (
+            case.get("claim_type") == "retained_context_diagnostic"
+            and not case.get("diagnostic_family")
+        ):
+            raise ValueError(
+                f"retained-context case {case['id']} requires diagnostic_family"
+            )
         expectation = case.get("execution_expectation")
         if expectation not in {"required", "diagnostic"}:
             raise ValueError(
@@ -1264,7 +1311,7 @@ def validate_workload_corpus(workloads: dict[str, Any], config: dict[str, Any]) 
             "admissible": 6,
             "position_stress": 4,
             "counterfactual": 2,
-            "mechanism_diagnostic": 2,
+            "mechanism_diagnostic": 4,
             "negative_control": 2,
         }
         missing = {
@@ -1274,6 +1321,16 @@ def validate_workload_corpus(workloads: dict[str, Any], config: dict[str, Any]) 
         }
         if len(cases) < 16 or missing:
             raise ValueError(f"base corpus family minimums are not met: {missing}")
+        diagnostic_families = {
+            case.get("diagnostic_family")
+            for case in cases
+            if case.get("claim_type") == "retained_context_diagnostic"
+        }
+        diagnostic_families.discard(None)
+        if len(diagnostic_families) < 3:
+            raise ValueError(
+                "base corpus requires retained-context candidates across at least three families"
+            )
     elif mode == STRUCTURED_JSON and len(cases) < 6:
         raise ValueError("Chat corpus requires at least six cases")
 
@@ -1464,8 +1521,14 @@ def run_case_repetitions(
     if repetitions < 1:
         raise ValueError("correctness_repetitions must be at least 1")
     runs = [
-        run_case(case, tokenizer, config, preflight_passed=preflight_passed)
-        for _ in range(repetitions)
+        run_case(
+            case,
+            tokenizer,
+            config,
+            preflight_passed=preflight_passed,
+            repetition=repetition,
+        )
+        for repetition in range(repetitions)
     ]
     result = dict(runs[0])
     result["repetitions"] = runs
@@ -1505,56 +1568,41 @@ def expand_workload_cases(cases: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return expanded
 
 
-def environment_blockers(environment: dict[str, Any] | None) -> list[str]:
-    if not environment:
-        return ["environment_manifest_missing"]
-    blockers: list[str] = []
-    repositories = environment.get("repositories") or {}
-    modules = environment.get("imported_modules") or {}
-    for module_name, repository_name in (("vllm", "vllm"), ("vllm_ascend", "vllm_ascend")):
-        module_path = (modules.get(module_name) or {}).get("module_file")
-        repository_path = (repositories.get(repository_name) or {}).get("path")
-        if not module_path or not repository_path:
-            blockers.append(f"{module_name}_import_provenance_missing")
-            continue
-        try:
-            Path(module_path).resolve().relative_to(Path(repository_path).resolve())
-        except ValueError:
-            blockers.append(f"{module_name}_import_outside_recorded_repository")
-    if not ((environment.get("cann_installation") or {}).get("version_files")):
-        blockers.append("cann_version_unresolved")
-    return blockers
-
-
 def classify_case_result(
     case: dict[str, Any],
     *,
     environment_errors: list[str],
-    numerical_passed: bool,
-    rollback_passed: bool,
+    numerical_state: str,
+    rollback_state: str,
+    baseline_state: str,
 ) -> str:
-    if environment_errors:
-        return "invalid_environment"
-    if not case.get("gates", {}).get("leyline_execution_valid"):
-        return "connector_failure"
-    if not numerical_passed:
-        return "numerical_unqualified"
-    if not rollback_passed:
-        return "rollback_unqualified"
-    if not case.get("gates", {}).get("admitted"):
-        return "invalid_workload_baseline"
-    if not case.get("gates", {}).get("leyline_accepted"):
-        return "leyline_target_limitation"
-    pairwise = case.get("pairwise", {}).get("full_leyline", {})
-    leyline_ids = case.get("arms", {}).get("leyline", {}).get("output_token_ids") or []
-    if pairwise.get("common_prefix_tokens", 0) < len(leyline_ids):
-        return "accepted_target_with_autoregressive_divergence"
-    return "accepted_target_and_generation"
+    return classify_case(
+        case,
+        environment_state="failed" if environment_errors else "passed",
+        numerical_state=numerical_state,
+        rollback_state=rollback_state,
+        baseline_state=baseline_state,
+    )
 
 
 def main() -> None:
     args = parse_args()
     config = json.loads(args.config.read_text())
+    diagnostic_plan = (
+        json.loads(args.diagnostic_plan.read_text()) if args.diagnostic_plan else None
+    )
+    if diagnostic_plan is not None:
+        if diagnostic_plan.get("schema_version") != 1:
+            raise ValueError("unsupported divergence diagnostic plan schema")
+        config["run_id"] = diagnostic_plan["target_run_id"]
+        config["smoke_gate"] = {"enabled": False}
+        selected_arms = {"full", "honest_edited", "leyline"}
+        config["arms"] = {
+            arm: endpoint
+            for arm, endpoint in (config.get("arms") or {}).items()
+            if arm in selected_arms
+        }
+    ensure_run_id(config)
     workloads = json.loads(args.workloads.read_text())
     validate_workload_corpus(workloads, config)
     from transformers import AutoTokenizer
@@ -1565,6 +1613,11 @@ def main() -> None:
         trust_remote_code=bool(config.get("trust_remote_code", False)),
     )
     expanded_cases = expand_workload_cases(workloads["cases"])
+    if diagnostic_plan is not None:
+        selected = set(diagnostic_plan.get("case_ids") or [])
+        expanded_cases = [case for case in expanded_cases if case["id"] in selected]
+        if not expanded_cases:
+            raise ValueError("diagnostic plan selected no workload cases")
     if config.get("legacy_diagnostic", False):
         feasibility: dict[str, Any] = {
             "passed": None,
@@ -1639,6 +1692,8 @@ def main() -> None:
         "smoke_gate": smoke,
         "cases": cases,
     }
+    if diagnostic_plan is not None:
+        report["diagnostic_plan"] = diagnostic_plan
     numerical_report = (
         json.loads(args.numerical_report.read_text()) if args.numerical_report else None
     )
@@ -1646,34 +1701,54 @@ def main() -> None:
         report["numerical_validation"] = numerical_report
     if args.logit_report:
         report["raw_logit_validation"] = json.loads(args.logit_report.read_text())
+    rollback_report = (
+        json.loads(args.rollback_report.read_text()) if args.rollback_report else None
+    )
+    if rollback_report is not None:
+        report["rollback_validation"] = rollback_report
     environment = json.loads(args.environment.read_text()) if args.environment else None
     if environment:
         report["environment"] = environment
         report["checkpoint_identity"] = report["environment"].get("model")
+    report["evidence_identity"] = report_identity(report)
+    report["retained_context_diagnostics"] = retained_context_summary(report)
     blockers = environment_blockers(environment)
     prerequisites = config.get("performance_prerequisites", {})
-    numerical_passed = (
-        numerical_report.get("passed") is True
-        if numerical_report is not None
-        else prerequisites.get("numerical_passed") is True
+    numerical_passed = bool(
+        numerical_report is not None and not cache_comparison_errors(numerical_report)
+    )
+    rollback_passed = bool(
+        rollback_report is not None and not rollback_report_errors(rollback_report)
+    )
+    numerical_state = (
+        "missing"
+        if numerical_report is None
+        else ("passed" if numerical_passed else "failed")
+    )
+    rollback_state = (
+        "missing"
+        if rollback_report is None
+        else ("passed" if rollback_passed else "failed")
     )
     effective_config = {
         **config,
         "performance_prerequisites": {
             **prerequisites,
             "numerical_passed": numerical_passed,
+            "rollback_passed": rollback_passed,
         },
     }
     report["qualification"] = {
         "environment_blockers": blockers,
         "numerical_passed": numerical_passed,
-        "rollback_passed": prerequisites.get("rollback_passed") is True,
+        "rollback_passed": rollback_passed,
         "case_classifications": {
             case["id"]: classify_case_result(
                 case,
                 environment_errors=blockers,
-                numerical_passed=numerical_passed,
-                rollback_passed=prerequisites.get("rollback_passed") is True,
+                numerical_state=numerical_state,
+                rollback_state=rollback_state,
+                baseline_state="missing",
             )
             for case in cases
         },
