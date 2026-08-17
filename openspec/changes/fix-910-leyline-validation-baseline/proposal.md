@@ -24,6 +24,6 @@ None.
 
 ## Impact
 
-- Affects `benchmarks/leyline/run_validation.py`, report merging, runner examples, environment evidence, validation documentation, and focused harness tests.
+- Affects `benchmarks/leyline/scripts/run_validation.py`, report merging, runner examples, environment evidence, validation documentation, and focused harness tests.
 - Adds configuration for evaluation mode and prompt format; existing schema-v1 reports remain historical inputs and are not silently interpreted as schema-v2 evidence.
 - Does not change the Leyline connector protocol, MLA cache transformation, BF16 runtime constraints, or any Ascend 310 code path.

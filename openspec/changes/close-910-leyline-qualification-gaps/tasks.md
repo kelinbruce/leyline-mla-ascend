@@ -8,7 +8,7 @@
 
 ## 2. Offline Finalization and Cache-Off Joining
 
-- [x] 2.1 Implement `benchmarks/leyline/finalize_validation.py` without any inference client dependency or endpoint calls
+- [x] 2.1 Implement `benchmarks/leyline/scripts/finalize_validation.py` without any inference client dependency or endpoint calls
 - [x] 2.2 Validate corpus, evaluation contract, checkpoint/tokenizer hashes, imported modules, commits, runtime topology, block size, TP ranks, and run identity across inputs
 - [x] 2.3 Preserve every connector-on repetition and reject auxiliary request IDs that cannot be traced to the immutable source report or an explicitly linked diagnostic rerun
 - [x] 2.4 Align cache-off cases, variants, and all repetitions while permitting only the documented connector/prefix-cache topology difference
@@ -44,7 +44,7 @@
 - [x] 5.2 Add a request-scoped, allow-listed post-write failpoint for one transaction, rank, and layer with no arbitrary code or path input
 - [x] 5.3 Propagate injected worker failure through TP aggregation while recording reached rank/layer and preventing `applied=true`
 - [x] 5.4 Expose non-sensitive rollback counters for touched-block invalidation, normal-prefill recovery, session/inflight/pending cleanup, and transaction-owned references
-- [x] 5.5 Implement `benchmarks/leyline/run_rollback_validation.py` with honest control, successful record, injected amortize, target comparison, and schema-versioned evidence output
+- [x] 5.5 Implement `benchmarks/leyline/scripts/run_rollback_validation.py` with honest control, successful record, injected amortize, target comparison, and schema-versioned evidence output
 - [x] 5.6 Make the rollback runner fail unless injection happens after a destination write, fallback is honest, cleanup counters reach zero, and the target agrees with the control
 - [x] 5.7 Reject request injection on a normal server and prove normal serving is unchanged when the environment gate is absent
 

@@ -10,11 +10,11 @@ from copy import deepcopy
 from pathlib import Path
 from unittest.mock import patch
 
-from benchmarks.leyline.collect_environment import artifact_manifest
-from benchmarks.leyline.evidence import retained_context_summary
-from benchmarks.leyline.merge_reports import merge_documents
-from benchmarks.leyline.run_rollback_validation import run_rollback
-from benchmarks.leyline.run_validation import (
+from benchmarks.leyline.common.evidence import retained_context_summary
+from benchmarks.leyline.scripts.collect_environment import artifact_manifest
+from benchmarks.leyline.scripts.merge_reports import merge_documents
+from benchmarks.leyline.scripts.run_rollback_validation import run_rollback
+from benchmarks.leyline.scripts.run_validation import (
     COMPLETION_TARGET,
     PromptPlan,
     REFERENCE_PREFIX,
@@ -269,7 +269,7 @@ class ValidationHarnessTest(unittest.TestCase):
                 ).encode()
             )
 
-        with patch("benchmarks.leyline.run_validation.urlopen", urlopen):
+        with patch("benchmarks.leyline.scripts.run_validation.urlopen", urlopen):
             output = request_completion(
                 "http://localhost:8000", "model", [1, 2], api_key=None, max_tokens=1, top_logprobs=2
             )
@@ -378,17 +378,18 @@ class ValidationHarnessTest(unittest.TestCase):
             "arms": {"full": "http://localhost"},
         }
         with patch(
-            "benchmarks.leyline.run_validation.request_completion",
+            "benchmarks.leyline.scripts.run_validation.request_completion",
             return_value={"structured": {"ok": True}},
         ):
             self.assertTrue(run_preflight(tokenizer, structured_config)["passed"])
         with patch(
-            "benchmarks.leyline.run_validation.request_completion",
+            "benchmarks.leyline.scripts.run_validation.request_completion",
             return_value={"structured": None},
         ):
             self.assertFalse(run_preflight(tokenizer, structured_config)["passed"])
         with patch(
-            "benchmarks.leyline.run_validation.request_completion", side_effect=RuntimeError("offline")
+            "benchmarks.leyline.scripts.run_validation.request_completion",
+            side_effect=RuntimeError("offline"),
         ):
             self.assertIn("offline", run_preflight(tokenizer, structured_config)["error"])
         mismatched = {
@@ -409,7 +410,7 @@ class ValidationHarnessTest(unittest.TestCase):
         self.assertTrue(all(len(item["sha256"]) == 64 for item in manifest["artifacts"]))
 
     def test_versioned_corpora_meet_family_contracts(self) -> None:
-        root = Path(__file__).resolve().parents[5] / "benchmarks" / "leyline"
+        root = Path(__file__).resolve().parents[5] / "benchmarks" / "leyline" / "workloads"
         base = json.loads((root / "workloads.base.json").read_text())
         chat = json.loads((root / "workloads.chat.json").read_text())
         validate_workload_corpus(
@@ -429,7 +430,7 @@ class ValidationHarnessTest(unittest.TestCase):
             )
 
     def test_retained_context_family_layout_and_empirical_admission(self) -> None:
-        root = Path(__file__).resolve().parents[5] / "benchmarks" / "leyline"
+        root = Path(__file__).resolve().parents[5] / "benchmarks" / "leyline" / "workloads"
         base = json.loads((root / "workloads.base.json").read_text())
         schema = json.loads((root / "workload.schema.json").read_text())
         case_schema = schema["$defs"]["case"]
@@ -579,7 +580,8 @@ class ValidationHarnessTest(unittest.TestCase):
             "os.environ",
             {"VLLM_ASCEND_LEYLINE_FAULT_INJECTION": "validation-only"},
         ), patch(
-            "benchmarks.leyline.run_rollback_validation.request_completion", completion
+            "benchmarks.leyline.scripts.run_rollback_validation.request_completion",
+            completion,
         ):
             report = run_rollback(
                 config,

@@ -51,9 +51,9 @@ chmod 700 "${LEYLINE_RUN_DIR}" "${LEYLINE_RUN_DIR}/cache-captures" "${LEYLINE_RU
 Copy and edit the runner/runtime examples into the run directory. Pin model/tokenizer paths or revisions and use a unique run ID in validation configuration.
 
 ```bash
-cp benchmarks/leyline/runner_config.example.json "${LEYLINE_RUN_DIR}/runner.connector.json"
-cp benchmarks/leyline/runner_config.cache_off.example.json "${LEYLINE_RUN_DIR}/runner.cache_off.json"
-cp benchmarks/leyline/runtime_config.example.json "${LEYLINE_RUN_DIR}/runtime.json"
+cp benchmarks/leyline/configs/runner_config.example.json "${LEYLINE_RUN_DIR}/runner.connector.json"
+cp benchmarks/leyline/configs/runner_config.cache_off.example.json "${LEYLINE_RUN_DIR}/runner.cache_off.json"
+cp benchmarks/leyline/configs/runtime_config.example.json "${LEYLINE_RUN_DIR}/runtime.json"
 ```
 
 Before starting, verify that the configured model, tokenizer, block size 128, TP4 topology, endpoint, capture directories, and repetition count 3 are correct.
@@ -77,7 +77,7 @@ Run the repository formatting, lint, and static commands required by the branch 
 With the runtime environment activated:
 
 ```bash
-python3 benchmarks/leyline/collect_environment.py \
+python3 benchmarks/leyline/scripts/collect_environment.py \
   --model /opt/foundation_model/DeepSeek-V2-Lite \
   --model-revision local \
   --tokenizer /opt/foundation_model/DeepSeek-V2-Lite \
@@ -123,9 +123,9 @@ LeylineConnector with recompute failure policy
 After the health check passes, run the base workload:
 
 ```bash
-python3 benchmarks/leyline/run_validation.py \
+python3 benchmarks/leyline/scripts/run_validation.py \
   --config "${LEYLINE_RUN_DIR}/runner.connector.json" \
-  --workloads benchmarks/leyline/workloads.base.json \
+  --workloads benchmarks/leyline/workloads/workloads.base.json \
   --environment "${LEYLINE_RUN_DIR}/environment.json" \
   --output "${LEYLINE_RUN_DIR}/correctness-source.json"
 ```
@@ -168,7 +168,7 @@ local_apc_tokens=0 for isolated Leyline runs
 Do not publish only manifest counts. The NPZ files must be compared on the 910B host:
 
 ```bash
-python3 benchmarks/leyline/compare_cache.py \
+python3 benchmarks/leyline/scripts/compare_cache.py \
   "${LEYLINE_RUN_DIR}/cache-captures" \
   --expected-ranks 0,1,2,3 \
   --required-deltas 0,1,127,128,129,1024 \
@@ -209,7 +209,7 @@ Any cKV mismatch, missing pair, native RoPE mismatch, or Kpe threshold failure i
 Join step-zero full-vocabulary captures with the immutable source report:
 
 ```bash
-python3 benchmarks/leyline/compare_logits.py \
+python3 benchmarks/leyline/scripts/compare_logits.py \
   --correctness "${LEYLINE_RUN_DIR}/correctness-source.json" \
   --captures "${LEYLINE_RUN_DIR}/raw-logits" \
   --output "${LEYLINE_RUN_DIR}/logit-comparison.first-token.json"
@@ -222,7 +222,7 @@ Verify that every admitted full/honest/Leyline request and required rank is pres
 Use the implemented divergence selector to list cases with a reproducible full/Leyline common prefix shorter than the generation length. Select only those cases and bound the maximum decode step, normally 32:
 
 ```bash
-python3 benchmarks/leyline/plan_divergence_capture.py \
+python3 benchmarks/leyline/scripts/plan_divergence_capture.py \
   --correctness "${LEYLINE_RUN_DIR}/correctness-source.json" \
   --max-step 32 \
   --output "${LEYLINE_RUN_DIR}/divergence-plan.json"
@@ -231,14 +231,14 @@ python3 benchmarks/leyline/plan_divergence_capture.py \
 Restart the correctness server with raw-logit steps and case filters from that plan, run the targeted diagnostic workload, and write a separate report:
 
 ```bash
-python3 benchmarks/leyline/run_validation.py \
+python3 benchmarks/leyline/scripts/run_validation.py \
   --config "${LEYLINE_RUN_DIR}/runner.connector.json" \
-  --workloads benchmarks/leyline/workloads.base.json \
+  --workloads benchmarks/leyline/workloads/workloads.base.json \
   --environment "${LEYLINE_RUN_DIR}/environment.json" \
   --diagnostic-plan "${LEYLINE_RUN_DIR}/divergence-plan.json" \
   --output "${LEYLINE_RUN_DIR}/divergence-correctness.json"
 
-python3 benchmarks/leyline/compare_logits.py \
+python3 benchmarks/leyline/scripts/compare_logits.py \
   --correctness "${LEYLINE_RUN_DIR}/divergence-correctness.json" \
   --captures "${LEYLINE_RUN_DIR}/raw-logits" \
   --divergence-plan "${LEYLINE_RUN_DIR}/divergence-plan.json" \
@@ -261,9 +261,9 @@ unset VLLM_ASCEND_LEYLINE_RAW_LOGITS_RUN_ID
 Run the same corpus for three isolated repetitions:
 
 ```bash
-python3 benchmarks/leyline/run_validation.py \
+python3 benchmarks/leyline/scripts/run_validation.py \
   --config "${LEYLINE_RUN_DIR}/runner.cache_off.json" \
-  --workloads benchmarks/leyline/workloads.base.json \
+  --workloads benchmarks/leyline/workloads/workloads.base.json \
   --environment "${LEYLINE_RUN_DIR}/environment.json" \
   --output "${LEYLINE_RUN_DIR}/correctness-cache-off.json"
 ```
@@ -281,7 +281,7 @@ export VLLM_ASCEND_LEYLINE_FAULT_INJECTION=validation-only
 Run the rollback validator with a post-write failpoint on one selected layer/rank:
 
 ```bash
-python3 benchmarks/leyline/run_rollback_validation.py \
+python3 benchmarks/leyline/scripts/run_rollback_validation.py \
   --config "${LEYLINE_RUN_DIR}/runner.connector.json" \
   --environment "${LEYLINE_RUN_DIR}/environment.json" \
   --case inventory-reorder-label \
@@ -337,7 +337,7 @@ For each informative case, compare Leyline with both baselines at the token and 
 Finalize only after all staged reports exist:
 
 ```bash
-python3 benchmarks/leyline/finalize_validation.py \
+python3 benchmarks/leyline/scripts/finalize_validation.py \
   --correctness "${LEYLINE_RUN_DIR}/correctness-source.json" \
   --environment "${LEYLINE_RUN_DIR}/environment.json" \
   --cache-comparison "${LEYLINE_RUN_DIR}/cache-comparison.json" \

@@ -186,7 +186,7 @@ def artifact_manifest(location: str, revision: str) -> dict[str, Any]:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    repo = Path(__file__).resolve().parents[2]
+    repo = Path(__file__).resolve().parents[3]
     parser.add_argument("--vllm-ascend", type=Path, default=repo)
     parser.add_argument("--vllm", type=Path, default=repo.parent / "vllm")
     parser.add_argument("--model", required=True)

@@ -31,11 +31,11 @@ export LEYLINE_RUN_DIR="/opt/leyline/vllm-ascend/results/leyline/${LEYLINE_RUN_I
 mkdir -p "${LEYLINE_RUN_DIR}/cache-captures" "${LEYLINE_RUN_DIR}/raw-logits"
 chmod 700 "${LEYLINE_RUN_DIR}" "${LEYLINE_RUN_DIR}/cache-captures" "${LEYLINE_RUN_DIR}/raw-logits"
 
-cp benchmarks/leyline/runner_config.example.json "${LEYLINE_RUN_DIR}/runner.connector.json"
-cp benchmarks/leyline/runner_config.cache_off.example.json "${LEYLINE_RUN_DIR}/runner.cache-off.json"
-cp benchmarks/leyline/runner_config.rollback.example.json "${LEYLINE_RUN_DIR}/runner.rollback.json"
-cp benchmarks/leyline/runtime_config.example.json "${LEYLINE_RUN_DIR}/runtime.connector.json"
-cp benchmarks/leyline/runtime_config.cache_off.example.json "${LEYLINE_RUN_DIR}/runtime.cache-off.json"
+cp benchmarks/leyline/configs/runner_config.example.json "${LEYLINE_RUN_DIR}/runner.connector.json"
+cp benchmarks/leyline/configs/runner_config.cache_off.example.json "${LEYLINE_RUN_DIR}/runner.cache-off.json"
+cp benchmarks/leyline/configs/runner_config.rollback.example.json "${LEYLINE_RUN_DIR}/runner.rollback.json"
+cp benchmarks/leyline/configs/runtime_config.example.json "${LEYLINE_RUN_DIR}/runtime.connector.json"
+cp benchmarks/leyline/configs/runtime_config.cache_off.example.json "${LEYLINE_RUN_DIR}/runtime.cache-off.json"
 ```
 
 Edit the copied files. Pin the local model/tokenizer, set `run_id`, use block size 128, TP4, three correctness repetitions, and the actual endpoints. Create a cache-off runtime manifest with only these intended differences:
@@ -59,7 +59,7 @@ python3 -m pytest -q \
 ## 2. Collect connector-on identity
 
 ```bash
-python3 benchmarks/leyline/collect_environment.py \
+python3 benchmarks/leyline/scripts/collect_environment.py \
   --model /opt/foundation_model/DeepSeek-V2-Lite \
   --model-revision local \
   --tokenizer /opt/foundation_model/DeepSeek-V2-Lite \
@@ -92,9 +92,9 @@ export VLLM_ASCEND_LEYLINE_RAW_LOGITS_MAX_BYTES=8589934592
 Run the corpus:
 
 ```bash
-python3 benchmarks/leyline/run_validation.py \
+python3 benchmarks/leyline/scripts/run_validation.py \
   --config "${LEYLINE_RUN_DIR}/runner.connector.json" \
-  --workloads benchmarks/leyline/workloads.base.json \
+  --workloads benchmarks/leyline/workloads/workloads.base.json \
   --environment "${LEYLINE_RUN_DIR}/environment.connector.json" \
   --output "${LEYLINE_RUN_DIR}/correctness-source.json"
 ```
@@ -115,7 +115,7 @@ Every required Leyline repetition must show `recorded=true` on its paired record
 ## 4. Compare cKV, Kpe, and native RoPE
 
 ```bash
-python3 benchmarks/leyline/compare_cache.py \
+python3 benchmarks/leyline/scripts/compare_cache.py \
   "${LEYLINE_RUN_DIR}/cache-captures" \
   --expected-ranks 0,1,2,3 \
   --required-deltas 0,1,127,128,129,1024 \
@@ -130,7 +130,7 @@ Required: 27×4 layer/rank coverage, no missing deltas/pairs, zero cKV, Kpe, and
 ## 5. Compare first-token logits
 
 ```bash
-python3 benchmarks/leyline/compare_logits.py \
+python3 benchmarks/leyline/scripts/compare_logits.py \
   --correctness "${LEYLINE_RUN_DIR}/correctness-source.json" \
   --captures "${LEYLINE_RUN_DIR}/raw-logits" \
   --output "${LEYLINE_RUN_DIR}/logit-comparison.first-token.json"
@@ -141,7 +141,7 @@ Check `complete=true`, no missing rank pairs, and no capture-budget status failu
 ## 6. Target first-divergence logits
 
 ```bash
-python3 benchmarks/leyline/plan_divergence_capture.py \
+python3 benchmarks/leyline/scripts/plan_divergence_capture.py \
   --correctness "${LEYLINE_RUN_DIR}/correctness-source.json" \
   --max-step 32 \
   --output "${LEYLINE_RUN_DIR}/divergence-plan.json"
@@ -158,14 +158,14 @@ export VLLM_ASCEND_LEYLINE_RAW_LOGITS_CASES="$(jq -r '.case_ids|join(",")' "${LE
 Then run and compare:
 
 ```bash
-python3 benchmarks/leyline/run_validation.py \
+python3 benchmarks/leyline/scripts/run_validation.py \
   --config "${LEYLINE_RUN_DIR}/runner.connector.json" \
-  --workloads benchmarks/leyline/workloads.base.json \
+  --workloads benchmarks/leyline/workloads/workloads.base.json \
   --environment "${LEYLINE_RUN_DIR}/environment.connector.json" \
   --diagnostic-plan "${LEYLINE_RUN_DIR}/divergence-plan.json" \
   --output "${LEYLINE_RUN_DIR}/divergence-correctness.json"
 
-python3 benchmarks/leyline/compare_logits.py \
+python3 benchmarks/leyline/scripts/compare_logits.py \
   --correctness "${LEYLINE_RUN_DIR}/divergence-correctness.json" \
   --captures "${LEYLINE_RUN_DIR}/raw-logits" \
   --divergence-plan "${LEYLINE_RUN_DIR}/divergence-plan.json" \
@@ -190,7 +190,7 @@ unset VLLM_ASCEND_LEYLINE_RAW_LOGITS_ARMS
 Collect the cache-off environment from its own runtime file, then run all cases for three repetitions:
 
 ```bash
-python3 benchmarks/leyline/collect_environment.py \
+python3 benchmarks/leyline/scripts/collect_environment.py \
   --model /opt/foundation_model/DeepSeek-V2-Lite \
   --model-revision local \
   --tokenizer /opt/foundation_model/DeepSeek-V2-Lite \
@@ -198,9 +198,9 @@ python3 benchmarks/leyline/collect_environment.py \
   --runtime-config "${LEYLINE_RUN_DIR}/runtime.cache-off.json" \
   --output "${LEYLINE_RUN_DIR}/environment.cache-off.json"
 
-python3 benchmarks/leyline/run_validation.py \
+python3 benchmarks/leyline/scripts/run_validation.py \
   --config "${LEYLINE_RUN_DIR}/runner.cache-off.json" \
-  --workloads benchmarks/leyline/workloads.base.json \
+  --workloads benchmarks/leyline/workloads/workloads.base.json \
   --environment "${LEYLINE_RUN_DIR}/environment.cache-off.json" \
   --output "${LEYLINE_RUN_DIR}/correctness-cache-off.json"
 ```
@@ -216,7 +216,7 @@ export VLLM_ASCEND_LEYLINE_FAULT_INJECTION=validation-only
 ```
 
 ```bash
-python3 benchmarks/leyline/run_rollback_validation.py \
+python3 benchmarks/leyline/scripts/run_rollback_validation.py \
   --config "${LEYLINE_RUN_DIR}/runner.rollback.json" \
   --environment "${LEYLINE_RUN_DIR}/environment.connector.json" \
   --case inventory-reorder-label \
@@ -232,7 +232,7 @@ Required conditions include: injection reached after a destination write, `appli
 ## 9. Finalize immutable evidence
 
 ```bash
-python3 benchmarks/leyline/finalize_validation.py \
+python3 benchmarks/leyline/scripts/finalize_validation.py \
   --correctness "${LEYLINE_RUN_DIR}/correctness-source.json" \
   --environment "${LEYLINE_RUN_DIR}/environment.connector.json" \
   --cache-comparison "${LEYLINE_RUN_DIR}/cache-comparison.json" \

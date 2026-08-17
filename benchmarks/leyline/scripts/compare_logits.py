@@ -14,9 +14,9 @@ from typing import Any
 import numpy as np
 
 if __package__ in {None, ""}:
-    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+    sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 
-from benchmarks.leyline.evidence import (  # noqa: E402
+from benchmarks.leyline.common.evidence import (  # noqa: E402
     parse_validation_request_id,
     request_id_matches,
 )

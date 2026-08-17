@@ -13,10 +13,10 @@ from pathlib import Path
 from typing import Any
 
 if __package__ in {None, ""}:
-    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+    sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 
-from benchmarks.leyline.evidence import identity_conflicts  # noqa: E402
-from benchmarks.leyline.run_validation import (  # noqa: E402
+from benchmarks.leyline.common.evidence import identity_conflicts  # noqa: E402
+from benchmarks.leyline.scripts.run_validation import (  # noqa: E402
     _stability_summary,
     evaluate_case_results,
 )

@@ -14,9 +14,9 @@ from typing import Any
 import numpy as np
 
 if __package__ in {None, ""}:
-    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+    sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 
-from benchmarks.leyline.evidence import parse_validation_request_id  # noqa: E402
+from benchmarks.leyline.common.evidence import parse_validation_request_id  # noqa: E402
 from vllm_ascend.distributed.kv_transfer.leyline.reference import (
     rotate_kpe_half_split,
     unit_delta_cos_sin,

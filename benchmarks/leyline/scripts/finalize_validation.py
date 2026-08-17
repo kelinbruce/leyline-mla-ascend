@@ -13,9 +13,9 @@ from pathlib import Path
 from typing import Any
 
 if __package__ in {None, ""}:
-    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+    sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 
-from benchmarks.leyline.evidence import (  # noqa: E402
+from benchmarks.leyline.common.evidence import (  # noqa: E402
     FINAL_REPORT_SCHEMA_VERSION,
     align_cache_off,
     auxiliary_request_ids,

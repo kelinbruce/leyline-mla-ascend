@@ -4,6 +4,19 @@ For the complete staged qualification procedure, including immutable offline
 finalization, cache-off repetitions, decode-step logits, and guarded rollback
 injection, see [VALIDATION_910B.md](VALIDATION_910B.md).
 
+## Layout
+
+- `scripts/`: executable collection, validation, comparison, and finalization
+  entry points.
+- `configs/`: version-controlled configuration templates; copy and edit these
+  into a timestamped run directory before an NPU run.
+- `workloads/`: versioned workload corpora and their JSON schema.
+- `common/`: shared evidence and report helpers, not direct commands.
+
+Write new run artifacts under `results/leyline/<run-id>/`. Historical schema-v2
+evidence is retained separately under `results/leyline/historical/` and must
+not be used as current qualification evidence.
+
 This schema-v2 harness treats evaluation-baseline validity, Leyline execution, and cache numerical correctness as separate gates. It supports three explicit contracts:
 
 - `completion_target` with `prompt_format=raw` for the DeepSeek-V2-Lite base checkpoint. Each case declares a tokenizer-stable non-whitespace continuation target, and full, honest-edited, and counterfactual baselines must produce it before Leyline is evaluated.
@@ -34,24 +47,24 @@ python3 -m vllm.entrypoints.openai.api_server \
   --kv-transfer-config '{"kv_connector":"LeylineConnector","kv_role":"kv_both","kv_connector_module_path":"vllm_ascend.distributed.kv_transfer.leyline.connector","kv_load_failure_policy":"recompute"}'
 ```
 
-The `full`, `honest_edited`, `patched_disabled`, `vanilla_apc`, and `leyline` arms may point to this one server. Requests without a Leyline directive exercise the patched-disabled path. `cache_off` requires a separate run after restarting without the KV connector and with `--no-enable-prefix-caching`; use `runner_config.cache_off.example.json` and merge staged reports with `merge_reports.py`.
+The `full`, `honest_edited`, `patched_disabled`, `vanilla_apc`, and `leyline` arms may point to this one server. Requests without a Leyline directive exercise the patched-disabled path. `cache_off` requires a separate run after restarting without the KV connector and with `--no-enable-prefix-caching`; use `configs/runner_config.cache_off.example.json` and merge staged reports with `scripts/merge_reports.py`.
 
 ## Correctness and semantic gates
 
-Use `runner_config.example.json` for the base checkpoint or `runner_config.chat.example.json` for the Chat checkpoint. Replace both revisions and endpoints, then run:
+Use `configs/runner_config.example.json` for the base checkpoint or `configs/runner_config.chat.example.json` for the Chat checkpoint. Replace both revisions and endpoints, then run:
 
 ```bash
-python3 benchmarks/leyline/collect_environment.py \
+python3 benchmarks/leyline/scripts/collect_environment.py \
   --model deepseek-ai/DeepSeek-V2-Lite \
   --model-revision PIN_MODEL_COMMIT \
   --tokenizer deepseek-ai/DeepSeek-V2-Lite \
   --tokenizer-revision PIN_TOKENIZER_COMMIT \
-  --runtime-config benchmarks/leyline/runtime_config.json \
+  --runtime-config benchmarks/leyline/configs/runtime_config.example.json \
   --output results/leyline/environment.json
 
-python3 benchmarks/leyline/run_validation.py \
-  --config benchmarks/leyline/runner_config.json \
-  --workloads benchmarks/leyline/workloads.base.json \
+python3 benchmarks/leyline/scripts/run_validation.py \
+  --config benchmarks/leyline/configs/runner_config.example.json \
+  --workloads benchmarks/leyline/workloads/workloads.base.json \
   --environment results/leyline/environment.json \
   --output results/leyline/correctness.json
 ```
@@ -103,7 +116,7 @@ export VLLM_ASCEND_LEYLINE_CAPTURE_REQUIRED_DELTAS=0,1,127,128,129,1024
 Each TP rank writes permission-restricted per-layer NPZ files plus a rank manifest. Source rows are cloned before the transform and destination rows are read after NPU synchronization. Captures include both connector-derived and native runtime RoPE inverse frequencies; a mismatch fails before Kpe is evaluated. Include position deltas 0, 1, 127, 128, 129, and 1024 in the workload/captures, then run:
 
 ```bash
-python3 benchmarks/leyline/compare_cache.py results/leyline/cache-captures \
+python3 benchmarks/leyline/scripts/compare_cache.py results/leyline/cache-captures \
   --expected-layers model.layers.0.self_attn,model.layers.1.self_attn \
   --expected-ranks 0,1,2,3 \
   --output results/leyline/cache-comparison.json
@@ -114,7 +127,7 @@ cKV must be bitwise identical. Kpe is checked against the independent FP32, unit
 Join internal raw-logit captures with the correctness report using:
 
 ```bash
-python3 benchmarks/leyline/compare_logits.py \
+python3 benchmarks/leyline/scripts/compare_logits.py \
   --correctness results/leyline/correctness.json \
   --captures results/leyline/raw-logits \
   --output results/leyline/logit-comparison.json
@@ -127,8 +140,8 @@ The comparison reports selected tokens, margins, top-k overlap, maximum absolute
 Run performance only after the selected semantic/reference baseline, Leyline execution, numerical, and rollback gates pass. Set both `performance_prerequisites` values to true only from recorded evidence, and disable both capture environment variables before starting:
 
 ```bash
-python3 benchmarks/leyline/run_validation.py \
-  --config benchmarks/leyline/runner_config.json \
+python3 benchmarks/leyline/scripts/run_validation.py \
+  --config benchmarks/leyline/configs/runner_config.example.json \
   --environment results/leyline/environment.json \
   --performance --concurrency 1,4,8,16 --repetitions 3 \
   --output results/leyline/performance.json

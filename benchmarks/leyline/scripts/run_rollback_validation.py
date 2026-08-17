@@ -13,16 +13,16 @@ from pathlib import Path
 from typing import Any
 
 if __package__ in {None, ""}:
-    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+    sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 
-from benchmarks.leyline.evidence import (  # noqa: E402
+from benchmarks.leyline.common.evidence import (  # noqa: E402
     ensure_run_id,
     environment_blockers,
     file_evidence,
     report_identity,
     validation_request_id,
 )
-from benchmarks.leyline.run_validation import (  # noqa: E402
+from benchmarks.leyline.scripts.run_validation import (  # noqa: E402
     RAW,
     build_prompt_plan,
     expand_workload_cases,
@@ -181,10 +181,14 @@ def run_rollback(
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    here = Path(__file__).resolve().parent
+    resource_root = Path(__file__).resolve().parents[1]
     parser.add_argument("--config", type=Path, required=True)
     parser.add_argument("--environment", type=Path, required=True)
-    parser.add_argument("--workloads", type=Path, default=here / "workloads.base.json")
+    parser.add_argument(
+        "--workloads",
+        type=Path,
+        default=resource_root / "workloads" / "workloads.base.json",
+    )
     parser.add_argument("--case", required=True)
     parser.add_argument("--fail-rank", type=int, required=True)
     parser.add_argument("--fail-after-layer", type=int, required=True)

@@ -8,15 +8,15 @@ from pathlib import Path
 
 import pytest
 
-from benchmarks.leyline.evidence import (
+from benchmarks.leyline.common.evidence import (
     align_cache_off,
     file_evidence,
     parse_validation_request_id,
     request_id_matches,
     validation_request_id,
 )
-from benchmarks.leyline.finalize_validation import finalize_documents
-from benchmarks.leyline.plan_divergence_capture import build_plan
+from benchmarks.leyline.scripts.finalize_validation import finalize_documents
+from benchmarks.leyline.scripts.plan_divergence_capture import build_plan
 
 
 def _environment() -> dict:
