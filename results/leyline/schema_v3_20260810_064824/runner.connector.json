@@ -1,0 +1,47 @@
+{
+  "model": "deepseek-v2-lite",
+  "tokenizer": "/opt/foundation_model/DeepSeek-V2-Lite",
+  "tokenizer_revision": null,
+  "trust_remote_code": true,
+  "run_id": "schema_v3_20260810_064824",
+  "block_size": 128,
+  "max_tokens": 64,
+  "correctness_repetitions": 3,
+  "prompt_format": "raw",
+  "evaluation": {
+    "mode": "completion_target"
+  },
+  "diagnostics": {
+    "top_logprobs": 10,
+    "continue_after_preflight_failure": true,
+    "device_capture_enabled": true,
+    "raw_logits_capture_enabled": true,
+    "device_capture_dir": "/opt/z00927893/project/1_leyline/7_leyline/leyline-mla-ascend/results/leyline/schema_v3_20260810_064824/cache-captures",
+    "raw_logits_steps": [
+      0
+    ],
+    "raw_logits_max_step": 32,
+    "raw_logits_max_files": 4096,
+    "raw_logits_max_bytes": 8589934592
+  },
+  "smoke_gate": {
+    "enabled": true,
+    "case_id": "inventory-reorder-label",
+    "require_device_capture": true
+  },
+  "performance_prerequisites": {
+    "numerical_passed": false,
+    "rollback_passed": false
+  },
+  "arms": {
+    "full": "http://127.0.0.1:9119",
+    "honest_edited": "http://127.0.0.1:9119",
+    "patched_disabled": "http://127.0.0.1:9119",
+    "vanilla_apc": "http://127.0.0.1:9119",
+    "leyline": "http://127.0.0.1:9119"
+  },
+  "npu_memory_command": [
+    "npu-smi",
+    "info"
+  ]
+}

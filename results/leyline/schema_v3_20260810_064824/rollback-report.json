@@ -1,0 +1,477 @@
+{
+  "amortize_metadata": {
+    "applied": false,
+    "cleanup": {
+      "inflight": 0,
+      "matches": 0,
+      "pending": 0,
+      "sessions": 0,
+      "transaction_owned_references": 0
+    },
+    "destination_writes": 27,
+    "expected_layers": 27,
+    "expected_ranks": 4,
+    "fallback_reason": "transform_failed",
+    "injected_layer": 8,
+    "injected_rank": 1,
+    "injection_reached": true,
+    "invalidated_destination_blocks": 1,
+    "local_apc_tokens": 0,
+    "missing_layers": [],
+    "missing_ranks": [
+      1
+    ],
+    "normal_prefill_tokens": 244,
+    "recorded": false,
+    "successful_ranks": 3,
+    "transform_complete": false,
+    "transform_duration_ms": 135.95939008519053,
+    "transformed_layers": 9,
+    "transformed_tokens": 128
+  },
+  "case_id": "inventory-reorder-label",
+  "conditions": {
+    "cleanup_complete": true,
+    "destination_blocks_invalidated": true,
+    "environment_valid": true,
+    "fallback_target": true,
+    "honest_reprefill_accounting": true,
+    "honest_target": true,
+    "injection_layer": true,
+    "injection_rank": true,
+    "injection_reached": true,
+    "not_applied": true,
+    "post_write": true,
+    "recorded": true,
+    "server_validation_opt_in": true,
+    "transform_failed": true
+  },
+  "evidence_identity": {
+    "block_size": 128,
+    "checkpoint_identity": {
+      "checkpoint_identity": {
+        "artifacts": [
+          {
+            "path": "config.json",
+            "sha256": "f346286b0f1c8b044252fd54cb4fa78b9fab6472a6e8bebb9edfe03d414ea03d",
+            "size": 1522
+          },
+          {
+            "path": "tokenizer_config.json",
+            "sha256": "31181eaf79394ea26728d95ecb54fe7c8413e6f56085dbabc8b0818134380ec8",
+            "size": 1279
+          },
+          {
+            "path": "tokenizer.json",
+            "sha256": "41f3bf64213da8c012d8bd0871a58a1fdf70463e8f08f110ddbb1082f529f669",
+            "size": 4607451
+          },
+          {
+            "path": "model.safetensors.index.json",
+            "sha256": "d2cdb2f325f6682cf3ad1ad2526a9f979d857390b579380c0331d975136e0acf",
+            "size": 479924
+          },
+          {
+            "path": "model-00001-of-000004.safetensors",
+            "sha256": "0d7e9f39bde40111a4c0f390b87497dce4565cf578d916395e6b2c7851f1e8da",
+            "size": 8594887408
+          },
+          {
+            "path": "model-00002-of-000004.safetensors",
+            "sha256": "e0656832b0d594b4a64cad40ff8465231de6ed44c854f74f6b217797660aa4bb",
+            "size": 8591757448
+          },
+          {
+            "path": "model-00003-of-000004.safetensors",
+            "sha256": "843ec689624f3a520526e040f0326c4dc9865e8172942ca98a084fe136fdb21a",
+            "size": 8590718520
+          },
+          {
+            "path": "model-00004-of-000004.safetensors",
+            "sha256": "cfb51658f67cedfbbc4d62ad14187830ceec8ee82c788c5f718feea98905ef31",
+            "size": 5636263200
+          }
+        ],
+        "chat_template_present": true,
+        "hashing_seconds": 37.30291261989623,
+        "local": true,
+        "requested": "/opt/foundation_model/DeepSeek-V2-Lite",
+        "resolved_path": "/opt/foundation_model/DeepSeek-V2-Lite",
+        "revision": "local",
+        "selected_configuration": {
+          "config.json": {
+            "architectures": [
+              "DeepseekV2ForCausalLM"
+            ],
+            "hidden_size": 2048,
+            "model_type": "deepseek_v2",
+            "num_attention_heads": 16,
+            "num_hidden_layers": 27,
+            "num_key_value_heads": 16,
+            "rope_scaling": {
+              "beta_fast": 32,
+              "beta_slow": 1,
+              "factor": 40,
+              "mscale": 0.707,
+              "mscale_all_dim": 0.707,
+              "original_max_position_embeddings": 4096,
+              "type": "yarn"
+            },
+            "torch_dtype": "bfloat16",
+            "vocab_size": 102400
+          },
+          "model.safetensors.index.json": {},
+          "tokenizer.json": {},
+          "tokenizer_config.json": {
+            "chat_template": "{% if not add_generation_prompt is defined %}{% set add_generation_prompt = false %}{% endif %}{{ bos_token }}{% for message in messages %}{% if message['role'] == 'user' %}{{ 'User: ' + message['content'] + '\n\n' }}{% elif message['role'] == 'assistant' %}{{ 'Assistant: ' + message['content'] + eos_token }}{% elif message['role'] == 'system' %}{{ message['content'] + '\n\n' }}{% endif %}{% endfor %}{% if add_generation_prompt %}{{ 'Assistant:' }}{% endif %}",
+            "tokenizer_class": "LlamaTokenizerFast"
+          }
+        }
+      },
+      "name": "/opt/foundation_model/DeepSeek-V2-Lite",
+      "revision": "local",
+      "tokenizer": "/opt/foundation_model/DeepSeek-V2-Lite",
+      "tokenizer_identity": {
+        "artifacts": [
+          {
+            "path": "config.json",
+            "sha256": "f346286b0f1c8b044252fd54cb4fa78b9fab6472a6e8bebb9edfe03d414ea03d",
+            "size": 1522
+          },
+          {
+            "path": "tokenizer_config.json",
+            "sha256": "31181eaf79394ea26728d95ecb54fe7c8413e6f56085dbabc8b0818134380ec8",
+            "size": 1279
+          },
+          {
+            "path": "tokenizer.json",
+            "sha256": "41f3bf64213da8c012d8bd0871a58a1fdf70463e8f08f110ddbb1082f529f669",
+            "size": 4607451
+          },
+          {
+            "path": "model.safetensors.index.json",
+            "sha256": "d2cdb2f325f6682cf3ad1ad2526a9f979d857390b579380c0331d975136e0acf",
+            "size": 479924
+          },
+          {
+            "path": "model-00001-of-000004.safetensors",
+            "sha256": "0d7e9f39bde40111a4c0f390b87497dce4565cf578d916395e6b2c7851f1e8da",
+            "size": 8594887408
+          },
+          {
+            "path": "model-00002-of-000004.safetensors",
+            "sha256": "e0656832b0d594b4a64cad40ff8465231de6ed44c854f74f6b217797660aa4bb",
+            "size": 8591757448
+          },
+          {
+            "path": "model-00003-of-000004.safetensors",
+            "sha256": "843ec689624f3a520526e040f0326c4dc9865e8172942ca98a084fe136fdb21a",
+            "size": 8590718520
+          },
+          {
+            "path": "model-00004-of-000004.safetensors",
+            "sha256": "cfb51658f67cedfbbc4d62ad14187830ceec8ee82c788c5f718feea98905ef31",
+            "size": 5636263200
+          }
+        ],
+        "chat_template_present": true,
+        "hashing_seconds": 36.61514629982412,
+        "local": true,
+        "requested": "/opt/foundation_model/DeepSeek-V2-Lite",
+        "resolved_path": "/opt/foundation_model/DeepSeek-V2-Lite",
+        "revision": "local",
+        "selected_configuration": {
+          "config.json": {
+            "architectures": [
+              "DeepseekV2ForCausalLM"
+            ],
+            "hidden_size": 2048,
+            "model_type": "deepseek_v2",
+            "num_attention_heads": 16,
+            "num_hidden_layers": 27,
+            "num_key_value_heads": 16,
+            "rope_scaling": {
+              "beta_fast": 32,
+              "beta_slow": 1,
+              "factor": 40,
+              "mscale": 0.707,
+              "mscale_all_dim": 0.707,
+              "original_max_position_embeddings": 4096,
+              "type": "yarn"
+            },
+            "torch_dtype": "bfloat16",
+            "vocab_size": 102400
+          },
+          "model.safetensors.index.json": {},
+          "tokenizer.json": {},
+          "tokenizer_config.json": {
+            "chat_template": "{% if not add_generation_prompt is defined %}{% set add_generation_prompt = false %}{% endif %}{{ bos_token }}{% for message in messages %}{% if message['role'] == 'user' %}{{ 'User: ' + message['content'] + '\n\n' }}{% elif message['role'] == 'assistant' %}{{ 'Assistant: ' + message['content'] + eos_token }}{% elif message['role'] == 'system' %}{{ message['content'] + '\n\n' }}{% endif %}{% endfor %}{% if add_generation_prompt %}{{ 'Assistant:' }}{% endif %}",
+            "tokenizer_class": "LlamaTokenizerFast"
+          }
+        }
+      },
+      "tokenizer_revision": "local"
+    },
+    "corpus_id": "deepseek-v2-lite-base-completion-v3",
+    "evaluation_contract": {
+      "mode": "completion_target",
+      "prompt_format": "raw"
+    },
+    "evidence_schema_version": 1,
+    "imported_modules": {
+      "vllm": {
+        "module_file": "/vllm-workspace/vllm/vllm/__init__.py"
+      },
+      "vllm_ascend": {
+        "module_file": "/opt/z00927893/project/1_leyline/7_leyline/leyline-mla-ascend/vllm_ascend/__init__.py"
+      }
+    },
+    "repositories": {
+      "vllm": {
+        "commit": {
+          "returncode": 0,
+          "stderr": "",
+          "stdout": "752a3a504485790a2e8491cacbb35c137339ad34"
+        },
+        "path": "/vllm-workspace/vllm"
+      },
+      "vllm_ascend": {
+        "commit": {
+          "returncode": 0,
+          "stderr": "",
+          "stdout": "c47d6cc0164e088d409a256178c4f17258e6c1fa"
+        },
+        "path": "/opt/z00927893/project/1_leyline/7_leyline/leyline-mla-ascend"
+      }
+    },
+    "run_id": "schema_v3_20260810_064824_rollback",
+    "runtime": {
+      "block_size": 128,
+      "decode_context_parallel_size": 1,
+      "dtype": "bfloat16",
+      "enable_chunked_prefill": true,
+      "enable_prefix_caching": true,
+      "enforce_eager": true,
+      "kv_connector": "LeylineConnector",
+      "kv_connector_module_path": "vllm_ascend.distributed.kv_transfer.leyline.connector",
+      "kv_load_failure_policy": "recompute",
+      "kv_role": "kv_both",
+      "model": "deepseek-ai/DeepSeek-V2-Lite",
+      "model_revision": "PIN_MODEL_COMMIT",
+      "prefill_context_parallel_size": 1,
+      "quantization": null,
+      "speculative_config": null,
+      "tensor_parallel_size": 4,
+      "tokenizer": "deepseek-ai/DeepSeek-V2-Lite",
+      "tokenizer_revision": "PIN_TOKENIZER_COMMIT"
+    },
+    "topology": {
+      "command": [
+        "npu-smi",
+        "info",
+        "-t",
+        "topo"
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "NPU0       NPU1       NPU2       NPU3       NPU4       NPU5       NPU6       NPU7       CPU Affinity\nNPU0       X          HCCS       HCCS       HCCS       HCCS       HCCS       HCCS       HCCS       144-167\nNPU1       HCCS       X          HCCS       HCCS       HCCS       HCCS       HCCS       HCCS       144-167\nNPU2       HCCS       HCCS       X          HCCS       HCCS       HCCS       HCCS       HCCS       96-119\nNPU3       HCCS       HCCS       HCCS       X          HCCS       HCCS       HCCS       HCCS       96-119\nNPU4       HCCS       HCCS       HCCS       HCCS       X          HCCS       HCCS       HCCS       0-23\nNPU5       HCCS       HCCS       HCCS       HCCS       HCCS       X          HCCS       HCCS       0-23\nNPU6       HCCS       HCCS       HCCS       HCCS       HCCS       HCCS       X          HCCS       48-71\nNPU7       HCCS       HCCS       HCCS       HCCS       HCCS       HCCS       HCCS       X          48-71\n\nLegend:\n\n  X    = Self\n  SYS  = Path traversing PCIe and NUMA nodes. Nodes are connected through SMP, such as QPI, UPI.\n  PHB  = Path traversing PCIe and the PCIe host bridge of a CPU.\n  PIX  = Path traversing a single PCIe switch\n  PXB  = Path traversing multipul PCIe switches\n  HCCS = Connection traversing HCCS.\n  NA   = Unknown relationship."
+    },
+    "workload_version": 2
+  },
+  "fallback_output_token_ids": [
+    770,
+    185,
+    16586,
+    28,
+    17,
+    15,
+    11,
+    248,
+    2862,
+    62,
+    3784,
+    28,
+    16,
+    17,
+    5052,
+    461,
+    185,
+    16586,
+    28,
+    15,
+    11,
+    248,
+    2862,
+    62,
+    3784,
+    28,
+    16,
+    17,
+    5052,
+    770,
+    185,
+    6345,
+    28,
+    35413,
+    185,
+    6345,
+    28,
+    35413,
+    185,
+    6345,
+    28,
+    35413,
+    185,
+    6345,
+    28,
+    35413,
+    185,
+    6345,
+    28,
+    35413,
+    185,
+    6345,
+    28,
+    35413,
+    185,
+    6345,
+    28,
+    35413,
+    185,
+    6345,
+    28,
+    35413,
+    185,
+    6345
+  ],
+  "honest_output_token_ids": [
+    770,
+    185,
+    16586,
+    28,
+    17,
+    15,
+    11,
+    248,
+    2862,
+    62,
+    3784,
+    28,
+    16,
+    17,
+    5052,
+    461,
+    185,
+    16586,
+    28,
+    15,
+    11,
+    248,
+    2862,
+    62,
+    3784,
+    28,
+    16,
+    17,
+    5052,
+    770,
+    185,
+    6345,
+    28,
+    35413,
+    185,
+    6345,
+    28,
+    35413,
+    185,
+    6345,
+    28,
+    35413,
+    185,
+    6345,
+    28,
+    35413,
+    185,
+    6345,
+    28,
+    35413,
+    185,
+    6345,
+    28,
+    35413,
+    185,
+    6345,
+    28,
+    35413,
+    185,
+    6345,
+    28,
+    35413,
+    185,
+    6345
+  ],
+  "injection": {
+    "layer": 8,
+    "rank": 1,
+    "stage": "after_layer_write"
+  },
+  "passed": true,
+  "record_metadata": {
+    "applied": false,
+    "cleanup": {
+      "inflight": 0,
+      "matches": 0,
+      "pending": 0,
+      "sessions": 1,
+      "transaction_owned_references": 0
+    },
+    "destination_writes": 0,
+    "expected_layers": 0,
+    "expected_ranks": 0,
+    "fallback_reason": null,
+    "injected_layer": null,
+    "injected_rank": null,
+    "injection_reached": false,
+    "invalidated_destination_blocks": 0,
+    "local_apc_tokens": 0,
+    "missing_layers": [],
+    "missing_ranks": [],
+    "normal_prefill_tokens": 256,
+    "recorded": true,
+    "successful_ranks": 0,
+    "transform_complete": false,
+    "transform_duration_ms": 0.0,
+    "transformed_layers": 0,
+    "transformed_tokens": 0
+  },
+  "report_type": "leyline_rollback_validation",
+  "request_ids": {
+    "amortize": "lv3.schema_v3_20260810_064824_rollback.inventory-reorder-label.canonical.0.rollback-amortize.124d2ba51c064102bd6e86daf0038502",
+    "honest": "lv3.schema_v3_20260810_064824_rollback.inventory-reorder-label.canonical.0.rollback-honest.76f0c41838c346428e81ceab521657c4",
+    "record": "lv3.schema_v3_20260810_064824_rollback.inventory-reorder-label.canonical.0.rollback-record.3867d4a65ae74ec39333458a6ce1a537"
+  },
+  "schema_version": 1,
+  "sources": [
+    {
+      "name": "config",
+      "path": "/opt/z00927893/project/1_leyline/7_leyline/leyline-mla-ascend/results/leyline/schema_v3_20260810_064824/runner.rollback.json",
+      "sha256": "ec779c0234fa0002a917e818b10ed804342238726f252b6a9dbeb61401add44f",
+      "size": 638
+    },
+    {
+      "name": "environment",
+      "path": "/opt/z00927893/project/1_leyline/7_leyline/leyline-mla-ascend/results/leyline/schema_v3_20260810_064824/environment.rollback.json",
+      "sha256": "9a0e463366ab927a44db26ec9f1f559674b580f50ebf29ce43c7f18a837e812c",
+      "size": 18896
+    },
+    {
+      "name": "workloads",
+      "path": "/opt/z00927893/project/1_leyline/7_leyline/leyline-mla-ascend/benchmarks/leyline/workloads.base.json",
+      "sha256": "8fd1161abad78775546555742d1011471e100b51e65f9310b98764fc11a0d6c7",
+      "size": 14736
+    }
+  ],
+  "target_token_ids": [
+    770
+  ]
+}

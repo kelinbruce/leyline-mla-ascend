@@ -1,0 +1,665 @@
+{
+  "capture_steps": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    8,
+    18,
+    26,
+    31
+  ],
+  "case_ids": [
+    "build-language-label",
+    "code-comment-variants",
+    "delete-delta-1",
+    "delete-delta-129-and-long-delta-1024",
+    "deleted-codeword",
+    "deleted-label-example",
+    "deleted-state-transition",
+    "deleted-symbol-definition",
+    "feature-state-label",
+    "inventory-reorder-label",
+    "python-square-next-token"
+  ],
+  "entries": [
+    {
+      "case_id": "inventory-reorder-label",
+      "decode_step": 2,
+      "repetition": 0,
+      "source_prefix_token_ids": [
+        770,
+        185
+      ],
+      "source_request_ids": {
+        "full": "lv3.schema_v3_20260810_064824.inventory-reorder-label.canonical.0.full.fc7a258e44da495aa3ca44ea37515a6d",
+        "honest_edited": "lv3.schema_v3_20260810_064824.inventory-reorder-label.canonical.0.honest_edited.af020786c00d47c3bc4dbc1b31259e6e",
+        "leyline": "lv3.schema_v3_20260810_064824.inventory-reorder-label.canonical.0.leyline.31a2322cbe164275998ce7bc7d89b273"
+      }
+    },
+    {
+      "case_id": "inventory-reorder-label",
+      "decode_step": 31,
+      "repetition": 1,
+      "source_prefix_token_ids": [
+        770,
+        185,
+        16586,
+        28,
+        17,
+        15,
+        11,
+        248,
+        2862,
+        62,
+        3784,
+        28,
+        16,
+        17,
+        5052,
+        461,
+        185,
+        16586,
+        28,
+        15,
+        11,
+        248,
+        2862,
+        62,
+        3784,
+        28,
+        16,
+        17,
+        5052,
+        770,
+        185
+      ],
+      "source_request_ids": {
+        "full": "lv3.schema_v3_20260810_064824.inventory-reorder-label.canonical.1.full.22dae6b836894d0e9ffca5c3b618a0d9",
+        "honest_edited": "lv3.schema_v3_20260810_064824.inventory-reorder-label.canonical.1.honest_edited.713e8e6d19064968b80a006ebb61a9b9",
+        "leyline": "lv3.schema_v3_20260810_064824.inventory-reorder-label.canonical.1.leyline.1d57f4a755654ea98fb57f47c537228f"
+      }
+    },
+    {
+      "case_id": "inventory-reorder-label",
+      "decode_step": 2,
+      "repetition": 2,
+      "source_prefix_token_ids": [
+        770,
+        185
+      ],
+      "source_request_ids": {
+        "full": "lv3.schema_v3_20260810_064824.inventory-reorder-label.canonical.2.full.c08be7348d284d0db4280ac6086907de",
+        "honest_edited": "lv3.schema_v3_20260810_064824.inventory-reorder-label.canonical.2.honest_edited.c5881fcf15e5409f9c04a5094fb3e8ec",
+        "leyline": "lv3.schema_v3_20260810_064824.inventory-reorder-label.canonical.2.leyline.a3a914038b134318a8f3a4d448ac7abe"
+      }
+    },
+    {
+      "case_id": "feature-state-label",
+      "decode_step": 8,
+      "repetition": 0,
+      "source_prefix_token_ids": [
+        414,
+        185,
+        17437,
+        28,
+        4492,
+        11,
+        66977,
+        28
+      ],
+      "source_request_ids": {
+        "full": "lv3.schema_v3_20260810_064824.feature-state-label.canonical.0.full.56de299084334f8795ac985fcc33604b",
+        "honest_edited": "lv3.schema_v3_20260810_064824.feature-state-label.canonical.0.honest_edited.4159ac50b0f944c5b4c2fb41c0a51296",
+        "leyline": "lv3.schema_v3_20260810_064824.feature-state-label.canonical.0.leyline.87405c83eb0e4f0593d4f504f9fd7fa6"
+      }
+    },
+    {
+      "case_id": "feature-state-label",
+      "decode_step": 8,
+      "repetition": 1,
+      "source_prefix_token_ids": [
+        414,
+        185,
+        17437,
+        28,
+        4492,
+        11,
+        66977,
+        28
+      ],
+      "source_request_ids": {
+        "full": "lv3.schema_v3_20260810_064824.feature-state-label.canonical.1.full.31578976f2054a7fbb071814302d9d81",
+        "honest_edited": "lv3.schema_v3_20260810_064824.feature-state-label.canonical.1.honest_edited.f009f9e6c46542d59f980f0d4051212c",
+        "leyline": "lv3.schema_v3_20260810_064824.feature-state-label.canonical.1.leyline.3c19a2a6e000433d9283a3e18baab7ad"
+      }
+    },
+    {
+      "case_id": "feature-state-label",
+      "decode_step": 8,
+      "repetition": 2,
+      "source_prefix_token_ids": [
+        414,
+        185,
+        17437,
+        28,
+        4492,
+        11,
+        66977,
+        28
+      ],
+      "source_request_ids": {
+        "full": "lv3.schema_v3_20260810_064824.feature-state-label.canonical.2.full.43fbe7d1117442278ceca4e077c8755d",
+        "honest_edited": "lv3.schema_v3_20260810_064824.feature-state-label.canonical.2.honest_edited.4e2ed018c1234677a9a1cb731c9a259d",
+        "leyline": "lv3.schema_v3_20260810_064824.feature-state-label.canonical.2.leyline.3bc37ed2945d4d7ba4c391dd5233d90e"
+      }
+    },
+    {
+      "case_id": "build-language-label",
+      "decode_step": 2,
+      "repetition": 0,
+      "source_prefix_token_ids": [
+        375,
+        185
+      ],
+      "source_request_ids": {
+        "full": "lv3.schema_v3_20260810_064824.build-language-label.canonical.0.full.0d6980258c28424fbcbcf5def9509c5c",
+        "honest_edited": "lv3.schema_v3_20260810_064824.build-language-label.canonical.0.honest_edited.0a2f49fd72e44b84bbab6b7afade64b3",
+        "leyline": "lv3.schema_v3_20260810_064824.build-language-label.canonical.0.leyline.5e863e0adfeb40c796a4650de4277e90"
+      }
+    },
+    {
+      "case_id": "build-language-label",
+      "decode_step": 2,
+      "repetition": 1,
+      "source_prefix_token_ids": [
+        375,
+        185
+      ],
+      "source_request_ids": {
+        "full": "lv3.schema_v3_20260810_064824.build-language-label.canonical.1.full.a101ca6bd7234905ab58e4216d61fccc",
+        "honest_edited": "lv3.schema_v3_20260810_064824.build-language-label.canonical.1.honest_edited.0e3b3fafd46b4515b135425b4b7c8878",
+        "leyline": "lv3.schema_v3_20260810_064824.build-language-label.canonical.1.leyline.901fed1661964c12a2632db319a46162"
+      }
+    },
+    {
+      "case_id": "build-language-label",
+      "decode_step": 2,
+      "repetition": 2,
+      "source_prefix_token_ids": [
+        375,
+        185
+      ],
+      "source_request_ids": {
+        "full": "lv3.schema_v3_20260810_064824.build-language-label.canonical.2.full.c56eaa06440d4915a0640f019f7d811d",
+        "honest_edited": "lv3.schema_v3_20260810_064824.build-language-label.canonical.2.honest_edited.8ead6000ec584698983b09a6e7bf352e",
+        "leyline": "lv3.schema_v3_20260810_064824.build-language-label.canonical.2.leyline.196d5f76384f421a9221930e2d49b09f"
+      }
+    },
+    {
+      "case_id": "python-square-next-token",
+      "decode_step": 4,
+      "repetition": 0,
+      "source_prefix_token_ids": [
+        1376,
+        185,
+        185,
+        1558
+      ],
+      "source_request_ids": {
+        "full": "lv3.schema_v3_20260810_064824.python-square-next-token.canonical.0.full.d022b498def54413ab36ea9efa339267",
+        "honest_edited": "lv3.schema_v3_20260810_064824.python-square-next-token.canonical.0.honest_edited.53ab7be6446245f1bd73170cf79dfc0d",
+        "leyline": "lv3.schema_v3_20260810_064824.python-square-next-token.canonical.0.leyline.38ba5668652845f1b29ecd606f25cd79"
+      }
+    },
+    {
+      "case_id": "python-square-next-token",
+      "decode_step": 4,
+      "repetition": 1,
+      "source_prefix_token_ids": [
+        1376,
+        185,
+        185,
+        1558
+      ],
+      "source_request_ids": {
+        "full": "lv3.schema_v3_20260810_064824.python-square-next-token.canonical.1.full.622dd987982a491ba9c077691e94fc1b",
+        "honest_edited": "lv3.schema_v3_20260810_064824.python-square-next-token.canonical.1.honest_edited.177e16af6c0248ad9c8028da3c63f4a2",
+        "leyline": "lv3.schema_v3_20260810_064824.python-square-next-token.canonical.1.leyline.b6ec4cc2d8304f62b036b8805de5d542"
+      }
+    },
+    {
+      "case_id": "python-square-next-token",
+      "decode_step": 4,
+      "repetition": 2,
+      "source_prefix_token_ids": [
+        1376,
+        185,
+        185,
+        1558
+      ],
+      "source_request_ids": {
+        "full": "lv3.schema_v3_20260810_064824.python-square-next-token.canonical.2.full.54821b0efd8a4e69849167a82be4e07b",
+        "honest_edited": "lv3.schema_v3_20260810_064824.python-square-next-token.canonical.2.honest_edited.0c9c3baead534bf69aa71bc010040a5a",
+        "leyline": "lv3.schema_v3_20260810_064824.python-square-next-token.canonical.2.leyline.cc49e0ef076346888004c2a15bc0f5d1"
+      }
+    },
+    {
+      "case_id": "delete-delta-1",
+      "decode_step": 18,
+      "repetition": 0,
+      "source_prefix_token_ids": [
+        770,
+        185,
+        6345,
+        28,
+        12053,
+        185,
+        6345,
+        28,
+        12053,
+        185,
+        6345,
+        28,
+        12053,
+        185,
+        6345,
+        28,
+        12053,
+        185
+      ],
+      "source_request_ids": {
+        "full": "lv3.schema_v3_20260810_064824.delete-delta-1.canonical.0.full.fc94a219c68e4e8b8666b1d16f0f735a",
+        "honest_edited": "lv3.schema_v3_20260810_064824.delete-delta-1.canonical.0.honest_edited.2a606ebf2a364d4f9be78ad88e7d8eca",
+        "leyline": "lv3.schema_v3_20260810_064824.delete-delta-1.canonical.0.leyline.7eb2975780724fc68fc338cee0e92d82"
+      }
+    },
+    {
+      "case_id": "delete-delta-1",
+      "decode_step": 18,
+      "repetition": 1,
+      "source_prefix_token_ids": [
+        770,
+        185,
+        6345,
+        28,
+        12053,
+        185,
+        6345,
+        28,
+        12053,
+        185,
+        6345,
+        28,
+        12053,
+        185,
+        6345,
+        28,
+        12053,
+        185
+      ],
+      "source_request_ids": {
+        "full": "lv3.schema_v3_20260810_064824.delete-delta-1.canonical.1.full.6e856e9e10df454b8a5a26d02dba4434",
+        "honest_edited": "lv3.schema_v3_20260810_064824.delete-delta-1.canonical.1.honest_edited.a2d2edaa480e4b87a443d440272169a0",
+        "leyline": "lv3.schema_v3_20260810_064824.delete-delta-1.canonical.1.leyline.f970b2760eb0404c909ed31da065bc75"
+      }
+    },
+    {
+      "case_id": "delete-delta-1",
+      "decode_step": 18,
+      "repetition": 2,
+      "source_prefix_token_ids": [
+        770,
+        185,
+        6345,
+        28,
+        12053,
+        185,
+        6345,
+        28,
+        12053,
+        185,
+        6345,
+        28,
+        12053,
+        185,
+        6345,
+        28,
+        12053,
+        185
+      ],
+      "source_request_ids": {
+        "full": "lv3.schema_v3_20260810_064824.delete-delta-1.canonical.2.full.04a17fcb56174cdca942f3c253d816d4",
+        "honest_edited": "lv3.schema_v3_20260810_064824.delete-delta-1.canonical.2.honest_edited.60467d744b404a1c80d21732a5432ea4",
+        "leyline": "lv3.schema_v3_20260810_064824.delete-delta-1.canonical.2.leyline.09e4386d4482489eb2b94a9b52edaae0"
+      }
+    },
+    {
+      "case_id": "delete-delta-129-and-long-delta-1024",
+      "decode_step": 18,
+      "repetition": 0,
+      "source_prefix_token_ids": [
+        770,
+        185,
+        6345,
+        28,
+        12053,
+        185,
+        6345,
+        28,
+        12053,
+        185,
+        6345,
+        28,
+        12053,
+        185,
+        6345,
+        28,
+        12053,
+        185
+      ],
+      "source_request_ids": {
+        "full": "lv3.schema_v3_20260810_064824.delete-delta-129-and-long-delta-1024.canonical.0.full.7883271544d84f65b1da0b5490d69921",
+        "honest_edited": "lv3.schema_v3_20260810_064824.delete-delta-129-and-long-delta-1024.canonical.0.honest_edited.3aba289c836f499ebc3076875a3bb6eb",
+        "leyline": "lv3.schema_v3_20260810_064824.delete-delta-129-and-long-delta-1024.canonical.0.leyline.d6d1332e52264764b835821cb3551640"
+      }
+    },
+    {
+      "case_id": "delete-delta-129-and-long-delta-1024",
+      "decode_step": 18,
+      "repetition": 1,
+      "source_prefix_token_ids": [
+        770,
+        185,
+        6345,
+        28,
+        12053,
+        185,
+        6345,
+        28,
+        12053,
+        185,
+        6345,
+        28,
+        12053,
+        185,
+        6345,
+        28,
+        12053,
+        185
+      ],
+      "source_request_ids": {
+        "full": "lv3.schema_v3_20260810_064824.delete-delta-129-and-long-delta-1024.canonical.1.full.224517a6ac47414fa01a7ab89e307f04",
+        "honest_edited": "lv3.schema_v3_20260810_064824.delete-delta-129-and-long-delta-1024.canonical.1.honest_edited.730a5c9503f340b7a9144944803b4b48",
+        "leyline": "lv3.schema_v3_20260810_064824.delete-delta-129-and-long-delta-1024.canonical.1.leyline.4933cc1e13324b978e745019bca695ed"
+      }
+    },
+    {
+      "case_id": "delete-delta-129-and-long-delta-1024",
+      "decode_step": 18,
+      "repetition": 2,
+      "source_prefix_token_ids": [
+        770,
+        185,
+        6345,
+        28,
+        12053,
+        185,
+        6345,
+        28,
+        12053,
+        185,
+        6345,
+        28,
+        12053,
+        185,
+        6345,
+        28,
+        12053,
+        185
+      ],
+      "source_request_ids": {
+        "full": "lv3.schema_v3_20260810_064824.delete-delta-129-and-long-delta-1024.canonical.2.full.b0efd6592c134f78a1b9ec19592e6636",
+        "honest_edited": "lv3.schema_v3_20260810_064824.delete-delta-129-and-long-delta-1024.canonical.2.honest_edited.3a8badda120a4f4eb67ce87e52989eae",
+        "leyline": "lv3.schema_v3_20260810_064824.delete-delta-129-and-long-delta-1024.canonical.2.leyline.ac478802b6e1428a96556bd034c5205f"
+      }
+    },
+    {
+      "case_id": "code-comment-variants",
+      "decode_step": 3,
+      "repetition": 0,
+      "source_prefix_token_ids": [
+        1376,
+        185,
+        1558
+      ],
+      "source_request_ids": {
+        "full": "lv3.schema_v3_20260810_064824.code-comment-variants.canonical.0.full.4413e584e5084437a536acfcf9a834d8",
+        "honest_edited": "lv3.schema_v3_20260810_064824.code-comment-variants.canonical.0.honest_edited.04cbd0c1c48240149a2943b768fe1029",
+        "leyline": "lv3.schema_v3_20260810_064824.code-comment-variants.canonical.0.leyline.aeb02c7f064840689ac7244243079741"
+      }
+    },
+    {
+      "case_id": "code-comment-variants",
+      "decode_step": 3,
+      "repetition": 1,
+      "source_prefix_token_ids": [
+        1376,
+        185,
+        1558
+      ],
+      "source_request_ids": {
+        "full": "lv3.schema_v3_20260810_064824.code-comment-variants.canonical.1.full.94c23d2cbb3e4cf18a8bb28db12a29af",
+        "honest_edited": "lv3.schema_v3_20260810_064824.code-comment-variants.canonical.1.honest_edited.39e34beeb9e44a2b972aa247e8a6ed42",
+        "leyline": "lv3.schema_v3_20260810_064824.code-comment-variants.canonical.1.leyline.c63e9a0a70bc49b086ca4c1ae378a523"
+      }
+    },
+    {
+      "case_id": "code-comment-variants",
+      "decode_step": 26,
+      "repetition": 2,
+      "source_prefix_token_ids": [
+        1376,
+        185,
+        1558,
+        7742,
+        62,
+        6960,
+        7,
+        87,
+        1780,
+        185,
+        300,
+        972,
+        1376,
+        9217,
+        207,
+        15,
+        13,
+        20,
+        185,
+        1558,
+        7742,
+        62,
+        6960,
+        62,
+        994,
+        62
+      ],
+      "source_request_ids": {
+        "full": "lv3.schema_v3_20260810_064824.code-comment-variants.canonical.2.full.d03563343a1e4665a443f5aaa9a4e9b2",
+        "honest_edited": "lv3.schema_v3_20260810_064824.code-comment-variants.canonical.2.honest_edited.c965728463dc49c88a5eedccae7dd3ce",
+        "leyline": "lv3.schema_v3_20260810_064824.code-comment-variants.canonical.2.leyline.56c036822c3147cf9875336465776fe1"
+      }
+    },
+    {
+      "case_id": "deleted-codeword",
+      "decode_step": 0,
+      "repetition": 0,
+      "source_prefix_token_ids": [],
+      "source_request_ids": {
+        "full": "lv3.schema_v3_20260810_064824.deleted-codeword.canonical.0.full.ca7503b7992d4ddfa7083c2549cb28c5",
+        "honest_edited": "lv3.schema_v3_20260810_064824.deleted-codeword.canonical.0.honest_edited.98fe93a2b10d419fa127ada512c106e0",
+        "leyline": "lv3.schema_v3_20260810_064824.deleted-codeword.canonical.0.leyline.6f81cbb68f6a48379249ea234430b58f"
+      }
+    },
+    {
+      "case_id": "deleted-codeword",
+      "decode_step": 0,
+      "repetition": 1,
+      "source_prefix_token_ids": [],
+      "source_request_ids": {
+        "full": "lv3.schema_v3_20260810_064824.deleted-codeword.canonical.1.full.e02f77f0d784465e9b85decdffebfe81",
+        "honest_edited": "lv3.schema_v3_20260810_064824.deleted-codeword.canonical.1.honest_edited.088d7097505140a0b19eea24941dcddc",
+        "leyline": "lv3.schema_v3_20260810_064824.deleted-codeword.canonical.1.leyline.0fa96a11bb254edc9045ef1ee26d56c8"
+      }
+    },
+    {
+      "case_id": "deleted-codeword",
+      "decode_step": 0,
+      "repetition": 2,
+      "source_prefix_token_ids": [],
+      "source_request_ids": {
+        "full": "lv3.schema_v3_20260810_064824.deleted-codeword.canonical.2.full.643fb882f34644ce8c847bb78da3a42a",
+        "honest_edited": "lv3.schema_v3_20260810_064824.deleted-codeword.canonical.2.honest_edited.a4948a549fa64c8c88138e22bea329bc",
+        "leyline": "lv3.schema_v3_20260810_064824.deleted-codeword.canonical.2.leyline.4a6a45111f334431bd52c51ffc1d44bf"
+      }
+    },
+    {
+      "case_id": "deleted-label-example",
+      "decode_step": 2,
+      "repetition": 0,
+      "source_prefix_token_ids": [
+        324,
+        185
+      ],
+      "source_request_ids": {
+        "full": "lv3.schema_v3_20260810_064824.deleted-label-example.canonical.0.full.8da3623020c74b4581c1cded319200ee",
+        "honest_edited": "lv3.schema_v3_20260810_064824.deleted-label-example.canonical.0.honest_edited.4b921219d4c444f8942f667982dbeaa7",
+        "leyline": "lv3.schema_v3_20260810_064824.deleted-label-example.canonical.0.leyline.7a28eafc789c4fa8874398d234c1356b"
+      }
+    },
+    {
+      "case_id": "deleted-label-example",
+      "decode_step": 2,
+      "repetition": 1,
+      "source_prefix_token_ids": [
+        324,
+        185
+      ],
+      "source_request_ids": {
+        "full": "lv3.schema_v3_20260810_064824.deleted-label-example.canonical.1.full.0314618a8abb47a8b14e4328cedfb09b",
+        "honest_edited": "lv3.schema_v3_20260810_064824.deleted-label-example.canonical.1.honest_edited.25cf1e53b3d640b38e2fa03dc6523271",
+        "leyline": "lv3.schema_v3_20260810_064824.deleted-label-example.canonical.1.leyline.b9bd729ab20547b988b2b4a4ec0e4d81"
+      }
+    },
+    {
+      "case_id": "deleted-label-example",
+      "decode_step": 2,
+      "repetition": 2,
+      "source_prefix_token_ids": [
+        324,
+        185
+      ],
+      "source_request_ids": {
+        "full": "lv3.schema_v3_20260810_064824.deleted-label-example.canonical.2.full.8bc453aad47a48a398d3fcd8222a8a4e",
+        "honest_edited": "lv3.schema_v3_20260810_064824.deleted-label-example.canonical.2.honest_edited.b6a66a09d27f4ca4b9907f2b7c5777df",
+        "leyline": "lv3.schema_v3_20260810_064824.deleted-label-example.canonical.2.leyline.f3359e9b0fda4eaaa2b1941cc082a41b"
+      }
+    },
+    {
+      "case_id": "deleted-state-transition",
+      "decode_step": 0,
+      "repetition": 0,
+      "source_prefix_token_ids": [],
+      "source_request_ids": {
+        "full": "lv3.schema_v3_20260810_064824.deleted-state-transition.canonical.0.full.a5ec648ecb6941a6820c6154e4114d10",
+        "honest_edited": "lv3.schema_v3_20260810_064824.deleted-state-transition.canonical.0.honest_edited.ee367267d8924c8ebe7defdd0a01e5e2",
+        "leyline": "lv3.schema_v3_20260810_064824.deleted-state-transition.canonical.0.leyline.1659f5bcd92c41499ba9ae1f0b7d4dd6"
+      }
+    },
+    {
+      "case_id": "deleted-state-transition",
+      "decode_step": 0,
+      "repetition": 1,
+      "source_prefix_token_ids": [],
+      "source_request_ids": {
+        "full": "lv3.schema_v3_20260810_064824.deleted-state-transition.canonical.1.full.4f468c102d284a1096ede058c6b9949d",
+        "honest_edited": "lv3.schema_v3_20260810_064824.deleted-state-transition.canonical.1.honest_edited.44b0dabd4b95473ba56cb20ab6a736fd",
+        "leyline": "lv3.schema_v3_20260810_064824.deleted-state-transition.canonical.1.leyline.ebf6c8b4ab374463acc5d70a1237adcf"
+      }
+    },
+    {
+      "case_id": "deleted-state-transition",
+      "decode_step": 0,
+      "repetition": 2,
+      "source_prefix_token_ids": [],
+      "source_request_ids": {
+        "full": "lv3.schema_v3_20260810_064824.deleted-state-transition.canonical.2.full.69155c92a7894d2b972872e8a3b5648f",
+        "honest_edited": "lv3.schema_v3_20260810_064824.deleted-state-transition.canonical.2.honest_edited.cd5cf231f01a4c9b99e2242d36b2ee10",
+        "leyline": "lv3.schema_v3_20260810_064824.deleted-state-transition.canonical.2.leyline.94b7c4bd09814cadbecdfc426a131893"
+      }
+    },
+    {
+      "case_id": "deleted-symbol-definition",
+      "decode_step": 1,
+      "repetition": 0,
+      "source_prefix_token_ids": [
+        440
+      ],
+      "source_request_ids": {
+        "full": "lv3.schema_v3_20260810_064824.deleted-symbol-definition.canonical.0.full.86a09e2b2bd3400696bccf456e0344ad",
+        "honest_edited": "lv3.schema_v3_20260810_064824.deleted-symbol-definition.canonical.0.honest_edited.c17a40cc39bc4c6a9024ef48a3e5beb3",
+        "leyline": "lv3.schema_v3_20260810_064824.deleted-symbol-definition.canonical.0.leyline.239ecb49c4a6401e806fa4a9a3ee7e51"
+      }
+    },
+    {
+      "case_id": "deleted-symbol-definition",
+      "decode_step": 1,
+      "repetition": 1,
+      "source_prefix_token_ids": [
+        440
+      ],
+      "source_request_ids": {
+        "full": "lv3.schema_v3_20260810_064824.deleted-symbol-definition.canonical.1.full.15a1e4cdeb0a477c86e06d48fced14cb",
+        "honest_edited": "lv3.schema_v3_20260810_064824.deleted-symbol-definition.canonical.1.honest_edited.2b4da1996dd14b04beaeabc99504d05c",
+        "leyline": "lv3.schema_v3_20260810_064824.deleted-symbol-definition.canonical.1.leyline.2b372e73f0c946b198f4443506ef65ff"
+      }
+    },
+    {
+      "case_id": "deleted-symbol-definition",
+      "decode_step": 1,
+      "repetition": 2,
+      "source_prefix_token_ids": [
+        440
+      ],
+      "source_request_ids": {
+        "full": "lv3.schema_v3_20260810_064824.deleted-symbol-definition.canonical.2.full.53ac53a89d544a14983dbae2f741c97f",
+        "honest_edited": "lv3.schema_v3_20260810_064824.deleted-symbol-definition.canonical.2.honest_edited.7389b5894729441fb337800a05faf6b4",
+        "leyline": "lv3.schema_v3_20260810_064824.deleted-symbol-definition.canonical.2.leyline.d7a0eec5d43a43849756e7dd43d4b5d7"
+      }
+    }
+  ],
+  "estimated_capture": {
+    "arms": [
+      "full",
+      "honest_edited",
+      "leyline"
+    ],
+    "files": 3564,
+    "ranks": 4,
+    "uncompressed_bytes": 1459814400,
+    "vocab_size": 102400
+  },
+  "max_step": 32,
+  "report_type": "leyline_divergence_capture_plan",
+  "schema_version": 1,
+  "source": {
+    "path": "/opt/z00927893/project/1_leyline/7_leyline/leyline-mla-ascend/results/leyline/schema_v3_20260810_064824/correctness-source.json",
+    "sha256": "4939a7993c66eff5bd5ca27c43c911d8ed3a65d16fa879fca45d973a37c67d5b",
+    "size": 3117535
+  },
+  "source_run_id": "schema_v3_20260810_064824",
+  "target_run_id": "divergence-7a7bfbba5a044e849faba1bc34703371"
+}

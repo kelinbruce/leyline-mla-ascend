@@ -199,6 +199,7 @@ def compare_report(
                             "repetition": repetition,
                             "rank": rank,
                             "pair": f"full_{arm}",
+                            "decode_step": decode_step,
                             "correlatable": correlatable,
                             "left_provenance": full_metadata,
                             "right_provenance": other_metadata,

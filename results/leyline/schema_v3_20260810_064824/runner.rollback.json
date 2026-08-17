@@ -1,0 +1,27 @@
+{
+  "model": "deepseek-v2-lite",
+  "tokenizer": "/opt/foundation_model/DeepSeek-V2-Lite",
+  "tokenizer_revision": null,
+  "trust_remote_code": true,
+  "run_id": "schema_v3_20260810_064824_rollback",
+  "block_size": 128,
+  "max_tokens": 64,
+  "correctness_repetitions": 3,
+  "prompt_format": "raw",
+  "evaluation": {
+    "mode": "completion_target"
+  },
+  "diagnostics": {
+    "top_logprobs": 10,
+    "device_capture_enabled": false,
+    "raw_logits_capture_enabled": false
+  },
+  "arms": {
+    "honest_edited": "http://127.0.0.1:9119",
+    "leyline": "http://127.0.0.1:9119"
+  },
+  "npu_memory_command": [
+    "npu-smi",
+    "info"
+  ]
+}

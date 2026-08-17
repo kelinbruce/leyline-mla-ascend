@@ -1,0 +1,311 @@
+{
+  "cann_installation": {
+    "environment": {
+      "ASCEND_HOME_PATH": "/usr/local/Ascend/cann-9.0.1",
+      "ASCEND_OPP_PATH": "/usr/local/Ascend/cann-9.0.1/opp",
+      "ASCEND_RT_VISIBLE_DEVICES": null
+    },
+    "listing": {
+      "command": [
+        "ls",
+        "-1",
+        "/usr/local/Ascend/ascend-toolkit/latest"
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "aarch64-linux\narm64-linux\nasc\nbin\ncann_uninstall.sh\ncombo_script\ncompat\ncompiler\nconf\ndevlib\nfwkacllib\ninclude\nlib64\nopp\nops_uninstall.sh\npkg_inc\npython\nruntime\nset_env.sh\nshare\ntest-ops\ntoolkit\ntools\nvar"
+    },
+    "version_files": {
+      "/usr/local/Ascend/cann-9.0.1/aarch64-linux/ascend_toolkit_install.info": "package_name=Ascend-cann-toolkit\nversion=9.0.1\ninnerversion=V100R001C10SPC002B220\ncompatible_version=[V100R001C21],[V100R001C22],[V100R001C23],[V100R001C25],[V100R001C10]\narch=aarch64\nos=linux\npath=/usr/local/Ascend/cann-9.0.1"
+    }
+  },
+  "created_unix": 1786957997.8705814,
+  "imported_modules": {
+    "vllm": {
+      "module_file": "/vllm-workspace/vllm/vllm/__init__.py"
+    },
+    "vllm_ascend": {
+      "module_file": "/opt/z00927893/project/1_leyline/7_leyline/leyline-mla-ascend/vllm_ascend/__init__.py"
+    }
+  },
+  "model": {
+    "checkpoint_identity": {
+      "artifacts": [
+        {
+          "path": "config.json",
+          "sha256": "f346286b0f1c8b044252fd54cb4fa78b9fab6472a6e8bebb9edfe03d414ea03d",
+          "size": 1522
+        },
+        {
+          "path": "tokenizer_config.json",
+          "sha256": "31181eaf79394ea26728d95ecb54fe7c8413e6f56085dbabc8b0818134380ec8",
+          "size": 1279
+        },
+        {
+          "path": "tokenizer.json",
+          "sha256": "41f3bf64213da8c012d8bd0871a58a1fdf70463e8f08f110ddbb1082f529f669",
+          "size": 4607451
+        },
+        {
+          "path": "model.safetensors.index.json",
+          "sha256": "d2cdb2f325f6682cf3ad1ad2526a9f979d857390b579380c0331d975136e0acf",
+          "size": 479924
+        },
+        {
+          "path": "model-00001-of-000004.safetensors",
+          "sha256": "0d7e9f39bde40111a4c0f390b87497dce4565cf578d916395e6b2c7851f1e8da",
+          "size": 8594887408
+        },
+        {
+          "path": "model-00002-of-000004.safetensors",
+          "sha256": "e0656832b0d594b4a64cad40ff8465231de6ed44c854f74f6b217797660aa4bb",
+          "size": 8591757448
+        },
+        {
+          "path": "model-00003-of-000004.safetensors",
+          "sha256": "843ec689624f3a520526e040f0326c4dc9865e8172942ca98a084fe136fdb21a",
+          "size": 8590718520
+        },
+        {
+          "path": "model-00004-of-000004.safetensors",
+          "sha256": "cfb51658f67cedfbbc4d62ad14187830ceec8ee82c788c5f718feea98905ef31",
+          "size": 5636263200
+        }
+      ],
+      "chat_template_present": true,
+      "hashing_seconds": 37.30291261989623,
+      "local": true,
+      "requested": "/opt/foundation_model/DeepSeek-V2-Lite",
+      "resolved_path": "/opt/foundation_model/DeepSeek-V2-Lite",
+      "revision": "local",
+      "selected_configuration": {
+        "config.json": {
+          "architectures": [
+            "DeepseekV2ForCausalLM"
+          ],
+          "hidden_size": 2048,
+          "model_type": "deepseek_v2",
+          "num_attention_heads": 16,
+          "num_hidden_layers": 27,
+          "num_key_value_heads": 16,
+          "rope_scaling": {
+            "beta_fast": 32,
+            "beta_slow": 1,
+            "factor": 40,
+            "mscale": 0.707,
+            "mscale_all_dim": 0.707,
+            "original_max_position_embeddings": 4096,
+            "type": "yarn"
+          },
+          "torch_dtype": "bfloat16",
+          "vocab_size": 102400
+        },
+        "model.safetensors.index.json": {},
+        "tokenizer.json": {},
+        "tokenizer_config.json": {
+          "chat_template": "{% if not add_generation_prompt is defined %}{% set add_generation_prompt = false %}{% endif %}{{ bos_token }}{% for message in messages %}{% if message['role'] == 'user' %}{{ 'User: ' + message['content'] + '\n\n' }}{% elif message['role'] == 'assistant' %}{{ 'Assistant: ' + message['content'] + eos_token }}{% elif message['role'] == 'system' %}{{ message['content'] + '\n\n' }}{% endif %}{% endfor %}{% if add_generation_prompt %}{{ 'Assistant:' }}{% endif %}",
+          "tokenizer_class": "LlamaTokenizerFast"
+        }
+      }
+    },
+    "name": "/opt/foundation_model/DeepSeek-V2-Lite",
+    "revision": "local",
+    "tokenizer": "/opt/foundation_model/DeepSeek-V2-Lite",
+    "tokenizer_identity": {
+      "artifacts": [
+        {
+          "path": "config.json",
+          "sha256": "f346286b0f1c8b044252fd54cb4fa78b9fab6472a6e8bebb9edfe03d414ea03d",
+          "size": 1522
+        },
+        {
+          "path": "tokenizer_config.json",
+          "sha256": "31181eaf79394ea26728d95ecb54fe7c8413e6f56085dbabc8b0818134380ec8",
+          "size": 1279
+        },
+        {
+          "path": "tokenizer.json",
+          "sha256": "41f3bf64213da8c012d8bd0871a58a1fdf70463e8f08f110ddbb1082f529f669",
+          "size": 4607451
+        },
+        {
+          "path": "model.safetensors.index.json",
+          "sha256": "d2cdb2f325f6682cf3ad1ad2526a9f979d857390b579380c0331d975136e0acf",
+          "size": 479924
+        },
+        {
+          "path": "model-00001-of-000004.safetensors",
+          "sha256": "0d7e9f39bde40111a4c0f390b87497dce4565cf578d916395e6b2c7851f1e8da",
+          "size": 8594887408
+        },
+        {
+          "path": "model-00002-of-000004.safetensors",
+          "sha256": "e0656832b0d594b4a64cad40ff8465231de6ed44c854f74f6b217797660aa4bb",
+          "size": 8591757448
+        },
+        {
+          "path": "model-00003-of-000004.safetensors",
+          "sha256": "843ec689624f3a520526e040f0326c4dc9865e8172942ca98a084fe136fdb21a",
+          "size": 8590718520
+        },
+        {
+          "path": "model-00004-of-000004.safetensors",
+          "sha256": "cfb51658f67cedfbbc4d62ad14187830ceec8ee82c788c5f718feea98905ef31",
+          "size": 5636263200
+        }
+      ],
+      "chat_template_present": true,
+      "hashing_seconds": 36.61514629982412,
+      "local": true,
+      "requested": "/opt/foundation_model/DeepSeek-V2-Lite",
+      "resolved_path": "/opt/foundation_model/DeepSeek-V2-Lite",
+      "revision": "local",
+      "selected_configuration": {
+        "config.json": {
+          "architectures": [
+            "DeepseekV2ForCausalLM"
+          ],
+          "hidden_size": 2048,
+          "model_type": "deepseek_v2",
+          "num_attention_heads": 16,
+          "num_hidden_layers": 27,
+          "num_key_value_heads": 16,
+          "rope_scaling": {
+            "beta_fast": 32,
+            "beta_slow": 1,
+            "factor": 40,
+            "mscale": 0.707,
+            "mscale_all_dim": 0.707,
+            "original_max_position_embeddings": 4096,
+            "type": "yarn"
+          },
+          "torch_dtype": "bfloat16",
+          "vocab_size": 102400
+        },
+        "model.safetensors.index.json": {},
+        "tokenizer.json": {},
+        "tokenizer_config.json": {
+          "chat_template": "{% if not add_generation_prompt is defined %}{% set add_generation_prompt = false %}{% endif %}{{ bos_token }}{% for message in messages %}{% if message['role'] == 'user' %}{{ 'User: ' + message['content'] + '\n\n' }}{% elif message['role'] == 'assistant' %}{{ 'Assistant: ' + message['content'] + eos_token }}{% elif message['role'] == 'system' %}{{ message['content'] + '\n\n' }}{% endif %}{% endfor %}{% if add_generation_prompt %}{{ 'Assistant:' }}{% endif %}",
+          "tokenizer_class": "LlamaTokenizerFast"
+        }
+      }
+    },
+    "tokenizer_revision": "local"
+  },
+  "npu_smi": {
+    "command": [
+      "npu-smi",
+      "info"
+    ],
+    "returncode": 0,
+    "stderr": "",
+    "stdout": "+------------------------------------------------------------------------------------------------------------------+\n| npu-smi 26.0.rc1.b082                       Version: 26.0.rc1.b082                                               |\n+---------------------------+---------------+----------------------------------------------------------------------+\n| NPU   Name                | Health        | Power(W)             Temp(C)                 Hugepages-Usage(page)   |\n| Chip                      | Bus-Id        | AICore(%)            Memory-Usage(MB)        HBM-Usage(MB)           |\n+===========================+===============+======================================================================+\n| 0     910B3               | OK            | 95.0                 39                      0    / 0                |\n| 0                         | 0000:C1:00.0  | 0                    0    / 0                41654/ 65536            |\n+===========================+===============+======================================================================+\n| 1     910B3               | OK            | 90.4                 38                      0    / 0                |\n| 0                         | 0000:C2:00.0  | 0                    0    / 0                3426 / 65536            |\n+===========================+===============+======================================================================+\n| 2     910B3               | OK            | 93.9                 37                      0    / 0                |\n| 0                         | 0000:81:00.0  | 0                    0    / 0                3429 / 65536            |\n+===========================+===============+======================================================================+\n| 3     910B3               | OK            | 96.0                 37                      0    / 0                |\n| 0                         | 0000:82:00.0  | 0                    0    / 0                3425 / 65536            |\n+===========================+===============+======================================================================+\n| 4     910B3               | OK            | 95.0                 44                      0    / 0                |\n| 0                         | 0000:01:00.0  | 0                    0    / 0                61235/ 65536            |\n+===========================+===============+======================================================================+\n| 5     910B3               | OK            | 97.0                 44                      0    / 0                |\n| 0                         | 0000:02:00.0  | 0                    0    / 0                61236/ 65536            |\n+===========================+===============+======================================================================+\n| 6     910B3               | OK            | 98.6                 43                      0    / 0                |\n| 0                         | 0000:41:00.0  | 0                    0    / 0                61610/ 65536            |\n+===========================+===============+======================================================================+\n| 7     910B3               | OK            | 96.6                 41                      0    / 0                |\n| 0                         | 0000:42:00.0  | 0                    0    / 0                61233/ 65536            |\n+===========================+===============+======================================================================+\n+---------------------------+---------------+----------------------------------------------------------------------+\n| NPU     Chip              | Process id    | Process name       | Process memory(MB)    | Process id in container |\n+===========================+===============+======================================================================+\n| 0       0                 | 130808        |                    | 12869                 | 130808                  |\n| 0       0                 | 130810        |                    | 12799                 | 130810                  |\n| 0       0                 | 1155400       |                    | 113                   | 1155400                 |\n| 0       0                 | 760601        |                    | 12143                 | 760601                  |\n+===========================+===============+======================================================================+\n| No running processes found in NPU 1                                                                              |\n+===========================+===============+======================================================================+\n| No running processes found in NPU 2                                                                              |\n+===========================+===============+======================================================================+\n| No running processes found in NPU 3                                                                              |\n+===========================+===============+======================================================================+\n| 4       0                 | 2961647       |                    | 57864                 | 478584                  |\n+===========================+===============+======================================================================+\n| 5       0                 | 2961648       |                    | 57864                 | 478585                  |\n+===========================+===============+======================================================================+\n| 6       0                 | 2283367       |                    | 283                   | -1                      |\n| 6       0                 | 2961649       |                    | 57864                 | 478586                  |\n+===========================+===============+======================================================================+\n| 7       0                 | 2961650       |                    | 57864                 | 478587                  |\n+===========================+===============+======================================================================+"
+  },
+  "packages": {
+    "torch": "2.10.0+cpu",
+    "torch-npu": "2.10.0.post2",
+    "transformers": "5.14.1",
+    "triton-ascend": "3.2.1",
+    "vllm": "0.25.1+empty",
+    "vllm-ascend": "0.1.dev4273+g346c2ca15"
+  },
+  "platform": "Linux-5.10.0-136.12.0.86.h2196.eulerosv2r12.aarch64-aarch64-with-glibc2.38",
+  "python": {
+    "executable": "/usr/local/python3.12.13/bin/python3",
+    "version": "3.12.13 (main, Jul  7 2026, 18:34:05) [GCC 12.3.1 (openEuler 12.3.1-105.oe2403sp3)]"
+  },
+  "repositories": {
+    "vllm": {
+      "commit": {
+        "command": [
+          "git",
+          "rev-parse",
+          "HEAD"
+        ],
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "752a3a504485790a2e8491cacbb35c137339ad34"
+      },
+      "path": "/vllm-workspace/vllm",
+      "status": {
+        "command": [
+          "git",
+          "status",
+          "--short"
+        ],
+        "returncode": 0,
+        "stderr": "",
+        "stdout": ""
+      }
+    },
+    "vllm_ascend": {
+      "commit": {
+        "command": [
+          "git",
+          "rev-parse",
+          "HEAD"
+        ],
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "c47d6cc0164e088d409a256178c4f17258e6c1fa"
+      },
+      "path": "/opt/z00927893/project/1_leyline/7_leyline/leyline-mla-ascend",
+      "status": {
+        "command": [
+          "git",
+          "status",
+          "--short"
+        ],
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "M benchmarks/leyline/compare_logits.py\n M results/leyline/schema_v2_20260807_033716/request_trace.log\n M tests/ut/distributed/kv_transfer/leyline/test_connector.py\n M vllm_ascend/distributed/kv_transfer/leyline/connector.py\n?? benchmarks/__init__.py\n?? benchmarks/leyline/__init__.py\n?? benchmarks/leyline/run_validation.py.bak.20260807_064515\n?? env_divergence.sh\n?? results/leyline/schema_v2_20260807_033716/cache-captures.before_request_id_fix_20260807_064536/\n?? results/leyline/schema_v2_20260807_033716/cache-captures/\n?? \"results/leyline/schema_v2_\\350\\277\\231\\351\\207\\214\\346\\233\\277\\346\\215\\242\\346\\210\\220\\345\\210\\232\\346\\211\\215\\347\\232\\204\\346\\227\\266\\351\\227\\264\\346\\210\\263/\"\n?? results/leyline/schema_v3_20260810_064824/\n?? vllm_ascend/distributed/kv_transfer/leyline/connector.py.bak.s4"
+      }
+    }
+  },
+  "runtime_config": {
+    "block_size": 128,
+    "decode_context_parallel_size": 1,
+    "dtype": "bfloat16",
+    "enable_chunked_prefill": true,
+    "enable_prefix_caching": true,
+    "enforce_eager": true,
+    "kv_connector": "LeylineConnector",
+    "kv_connector_module_path": "vllm_ascend.distributed.kv_transfer.leyline.connector",
+    "kv_load_failure_policy": "recompute",
+    "kv_role": "kv_both",
+    "model": "deepseek-ai/DeepSeek-V2-Lite",
+    "model_revision": "PIN_MODEL_COMMIT",
+    "prefill_context_parallel_size": 1,
+    "quantization": null,
+    "speculative_config": null,
+    "tensor_parallel_size": 4,
+    "tokenizer": "deepseek-ai/DeepSeek-V2-Lite",
+    "tokenizer_revision": "PIN_TOKENIZER_COMMIT"
+  },
+  "schema_version": 2,
+  "topology": {
+    "command": [
+      "npu-smi",
+      "info",
+      "-t",
+      "topo"
+    ],
+    "returncode": 0,
+    "stderr": "",
+    "stdout": "NPU0       NPU1       NPU2       NPU3       NPU4       NPU5       NPU6       NPU7       CPU Affinity\nNPU0       X          HCCS       HCCS       HCCS       HCCS       HCCS       HCCS       HCCS       144-167\nNPU1       HCCS       X          HCCS       HCCS       HCCS       HCCS       HCCS       HCCS       144-167\nNPU2       HCCS       HCCS       X          HCCS       HCCS       HCCS       HCCS       HCCS       96-119\nNPU3       HCCS       HCCS       HCCS       X          HCCS       HCCS       HCCS       HCCS       96-119\nNPU4       HCCS       HCCS       HCCS       HCCS       X          HCCS       HCCS       HCCS       0-23\nNPU5       HCCS       HCCS       HCCS       HCCS       HCCS       X          HCCS       HCCS       0-23\nNPU6       HCCS       HCCS       HCCS       HCCS       HCCS       HCCS       X          HCCS       48-71\nNPU7       HCCS       HCCS       HCCS       HCCS       HCCS       HCCS       HCCS       X          48-71\n\nLegend:\n\n  X    = Self\n  SYS  = Path traversing PCIe and NUMA nodes. Nodes are connected through SMP, such as QPI, UPI.\n  PHB  = Path traversing PCIe and the PCIe host bridge of a CPU.\n  PIX  = Path traversing a single PCIe switch\n  PXB  = Path traversing multipul PCIe switches\n  HCCS = Connection traversing HCCS.\n  NA   = Unknown relationship."
+  },
+  "torch": {
+    "npu_count": 8,
+    "npu_names": [
+      "Ascend910B3",
+      "Ascend910B3",
+      "Ascend910B3",
+      "Ascend910B3",
+      "Ascend910B3",
+      "Ascend910B3",
+      "Ascend910B3",
+      "Ascend910B3"
+    ],
+    "version": "2.10.0+cpu"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "bytes": 745394777,
+  "complete": false,
+  "files": 4096,
+  "max_bytes": 8589934592,
+  "max_files": 4096,
+  "rank": 2,
+  "reason": "capture_budget_exhausted",
+  "schema_version": 1
+}

@@ -360,6 +360,14 @@ class LeylineConnector(KVConnectorBase_V1, SupportsHMA):
 
     def _set_fallback(self, request_id: str, reason: LeylineFallbackReason) -> None:
         outcome = self._outcomes.setdefault(request_id, _Outcome())
+
+        # Preserve the root cause of a failed transform. After rollback the
+        # source session is released and the honest-recompute path may enter
+        # matching again, which can otherwise overwrite TRANSFORM_FAILED with
+        # MISSING_SOURCE.
+        if outcome.fallback_reason is LeylineFallbackReason.TRANSFORM_FAILED:
+            return
+
         outcome.fallback_reason = reason
         logger.info("Leyline fallback request=%s reason=%s", request_id, reason.value)
 

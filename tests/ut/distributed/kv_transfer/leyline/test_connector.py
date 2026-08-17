@@ -132,23 +132,42 @@ def _record_source(connector: LeylineConnector, pool: _BlockPool) -> list[int]:
     connector.on_new_request(request)
     delay, params = connector.request_finished(request, [0, 1, 2, 3])
     assert not delay
-    assert params == {
-        "leyline": {
-            "applied": False,
-            "transformed_tokens": 0,
-            "local_apc_tokens": 0,
-            "normal_prefill_tokens": 0,
-            "transform_duration_ms": 0.0,
-            "fallback_reason": None,
-            "expected_layers": 0,
-            "transformed_layers": 0,
-            "expected_ranks": 0,
-            "successful_ranks": 0,
-            "missing_layers": [],
-            "missing_ranks": [],
-            "transform_complete": False,
-            "recorded": True,
-        }
+    assert params is not None
+    leyline = params["leyline"]
+
+    expected = {
+        "applied": False,
+        "transformed_tokens": 0,
+        "local_apc_tokens": 0,
+        "normal_prefill_tokens": 0,
+        "transform_duration_ms": 0.0,
+        "fallback_reason": None,
+        "expected_layers": 0,
+        "transformed_layers": 0,
+        "expected_ranks": 0,
+        "successful_ranks": 0,
+        "missing_layers": [],
+        "missing_ranks": [],
+        "transform_complete": False,
+        "recorded": True,
+        "injection_reached": False,
+        "injected_rank": None,
+        "injected_layer": None,
+        "destination_writes": 0,
+        "invalidated_destination_blocks": 0,
+    }
+
+    for key, value in expected.items():
+        assert leyline[key] == value
+
+    # A recorded source session must remain pinned until the paired
+    # amortize request consumes/releases it.
+    assert leyline["cleanup"] == {
+        "sessions": 1,
+        "inflight": 0,
+        "pending": 0,
+        "matches": 0,
+        "transaction_owned_references": 0,
     }
     # Model the scheduler dropping the finished request's original reference.
     pool.free_blocks(pool.blocks[:4])
